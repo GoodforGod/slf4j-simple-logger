@@ -24,8 +24,10 @@ package io.goodforgod.slf4j.simplelogger;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Predicate;
 import org.slf4j.ILoggerFactory;
 import org.slf4j.Logger;
+import org.slf4j.event.Level;
 
 /**
  * An implementation of {@link ILoggerFactory} which always returns
@@ -37,10 +39,10 @@ import org.slf4j.Logger;
  */
 public class SimpleLoggerFactory implements ILoggerFactory {
 
-    private final ConcurrentMap<String, Logger> loggerMap;
+    private final ConcurrentMap<String, SimpleLogger> loggerMap;
 
     public SimpleLoggerFactory() {
-        loggerMap = new ConcurrentHashMap<>();
+        this.loggerMap = new ConcurrentHashMap<>();
         SimpleLogger.lazyInit();
     }
 
@@ -49,6 +51,18 @@ public class SimpleLoggerFactory implements ILoggerFactory {
      */
     public Logger getLogger(String name) {
         return loggerMap.computeIfAbsent(name, k -> new SimpleLogger(name));
+    }
+
+    public void setLogLevel(Level logLevel) {
+        setLogLevel(logLevel, l -> true);
+    }
+
+    public void setLogLevel(Level logLevel, Predicate<Logger> loggerPredicate) {
+        if (logLevel != null && loggerPredicate != null) {
+            loggerMap.values().stream()
+                    .filter(loggerPredicate)
+                    .forEach(l -> l.setCurrentLogLevel(logLevel));
+        }
     }
 
     /**

@@ -1,5 +1,7 @@
 package io.goodforgod.slf4j.simplelogger;
 
+import static io.goodforgod.slf4j.simplelogger.SimpleLoggerProperties.*;
+
 import io.goodforgod.slf4j.simplelogger.OutputChoice.OutputChoiceType;
 import java.io.*;
 import java.security.AccessController;
@@ -57,22 +59,23 @@ public class SimpleLoggerConfiguration {
     void init() {
         loadProperties();
 
-        final String defaultLogLevelString = getStringProperty(SimpleLogger.DEFAULT_LOG_LEVEL_KEY, null);
-        if (defaultLogLevelString != null)
+        final String defaultLogLevelString = getStringProperty(DEFAULT_LOG_LEVEL_KEY, null);
+        if (defaultLogLevelString != null) {
             defaultLogLevel = stringToLevel(defaultLogLevelString);
+        }
 
-        showLogName = getBooleanProperty(SimpleLogger.SHOW_LOG_NAME_KEY, SimpleLoggerConfiguration.SHOW_LOG_NAME_DEFAULT);
-        showShortLogName = getBooleanProperty(SimpleLogger.SHOW_SHORT_LOG_NAME_KEY, SHOW_SHORT_LOG_NAME_DEFAULT);
-        showDateTime = getBooleanProperty(SimpleLogger.SHOW_DATE_TIME_KEY, SHOW_DATE_TIME_DEFAULT);
-        showThreadName = getBooleanProperty(SimpleLogger.SHOW_THREAD_NAME_KEY, SHOW_THREAD_NAME_DEFAULT);
-        levelInBrackets = getBooleanProperty(SimpleLogger.LEVEL_IN_BRACKETS_KEY, LEVEL_IN_BRACKETS_DEFAULT);
-        warnLevelString = getStringProperty(SimpleLogger.WARN_LEVEL_STRING_KEY, Level.WARN.name());
-        logFile = getStringProperty(SimpleLogger.LOG_FILE_KEY, logFile);
+        showLogName = getBooleanProperty(SHOW_LOG_NAME_KEY, SimpleLoggerConfiguration.SHOW_LOG_NAME_DEFAULT);
+        showShortLogName = getBooleanProperty(SHOW_SHORT_LOG_NAME_KEY, SHOW_SHORT_LOG_NAME_DEFAULT);
+        showDateTime = getBooleanProperty(SHOW_DATE_TIME_KEY, SHOW_DATE_TIME_DEFAULT);
+        showThreadName = getBooleanProperty(SHOW_THREAD_NAME_KEY, SHOW_THREAD_NAME_DEFAULT);
+        levelInBrackets = getBooleanProperty(LEVEL_IN_BRACKETS_KEY, LEVEL_IN_BRACKETS_DEFAULT);
+        warnLevelString = getStringProperty(WARN_LEVEL_STRING_KEY, Level.WARN.name());
+        logFile = getStringProperty(LOG_FILE_KEY, logFile);
 
-        final boolean cacheOutputStream = getBooleanProperty(SimpleLogger.CACHE_OUTPUT_STREAM_STRING_KEY, CACHE_OUTPUT_STREAM_DEFAULT);
+        final boolean cacheOutputStream = getBooleanProperty(CACHE_OUTPUT_STREAM_STRING_KEY, CACHE_OUTPUT_STREAM_DEFAULT);
         outputChoice = computeOutputChoice(logFile, cacheOutputStream);
 
-        final String dateTimeFormatStr = getStringProperty(SimpleLogger.DATE_TIME_FORMAT_KEY, DATE_TIME_FORMAT_STR_DEFAULT);
+        final String dateTimeFormatStr = getStringProperty(DATE_TIME_FORMAT_KEY, DATE_TIME_FORMAT_STR_DEFAULT);
         if (dateTimeFormatStr != null) {
             try {
                 dateFormatter = DateTimeFormatter.ofPattern(dateTimeFormatStr);

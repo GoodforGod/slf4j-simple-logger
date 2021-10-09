@@ -22,6 +22,8 @@
  */
 package io.goodforgod.slf4j.simplelogger;
 
+import static io.goodforgod.slf4j.simplelogger.SimpleLoggerProperties.LOG_KEY_PREFIX;
+
 import java.io.PrintStream;
 import java.time.LocalDateTime;
 import org.slf4j.Logger;
@@ -162,6 +164,7 @@ public class SimpleLogger extends MarkerIgnoringBase {
         if (isInitialized) {
             return;
         }
+
         isInitialized = true;
         init();
     }
@@ -173,26 +176,10 @@ public class SimpleLogger extends MarkerIgnoringBase {
     }
 
     /** The current log level */
-    protected final int currentLogLevel;
+    protected int currentLogLevel;
+    protected final int originalLogLevel;
     /** The short name of this simple log instance */
     private transient String shortLogName = null;
-
-    /**
-     * All system properties used by <code>SimpleLogger</code> start with this
-     * prefix
-     */
-    public static final String SYSTEM_PREFIX = "org.slf4j.simpleLogger.";
-    public static final String LOG_KEY_PREFIX = SimpleLogger.SYSTEM_PREFIX + "log.";
-    public static final String CACHE_OUTPUT_STREAM_STRING_KEY = SimpleLogger.SYSTEM_PREFIX + "cacheOutputStream";
-    public static final String WARN_LEVEL_STRING_KEY = SimpleLogger.SYSTEM_PREFIX + "warnLevelString";
-    public static final String LEVEL_IN_BRACKETS_KEY = SimpleLogger.SYSTEM_PREFIX + "levelInBrackets";
-    public static final String LOG_FILE_KEY = SimpleLogger.SYSTEM_PREFIX + "logFile";
-    public static final String SHOW_SHORT_LOG_NAME_KEY = SimpleLogger.SYSTEM_PREFIX + "showShortLogName";
-    public static final String SHOW_LOG_NAME_KEY = SimpleLogger.SYSTEM_PREFIX + "showLogName";
-    public static final String SHOW_THREAD_NAME_KEY = SimpleLogger.SYSTEM_PREFIX + "showThreadName";
-    public static final String DATE_TIME_FORMAT_KEY = SimpleLogger.SYSTEM_PREFIX + "dateTimeFormat";
-    public static final String SHOW_DATE_TIME_KEY = SimpleLogger.SYSTEM_PREFIX + "showDateTime";
-    public static final String DEFAULT_LOG_LEVEL_KEY = SimpleLogger.SYSTEM_PREFIX + "defaultLogLevel";
 
     /**
      * Package access allows only {@link SimpleLoggerFactory} to instantiate
@@ -200,12 +187,19 @@ public class SimpleLogger extends MarkerIgnoringBase {
      */
     SimpleLogger(String name) {
         this.name = name;
+        final String levelString = recursivelyComputeLevelString();
+        this.currentLogLevel = (levelString != null)
+                ? SimpleLoggerConfiguration.stringToLevel(levelString)
+                : CONFIG_PARAMS.defaultLogLevel;
+        this.originalLogLevel = this.currentLogLevel;
+    }
 
-        String levelString = recursivelyComputeLevelString();
-        if (levelString != null) {
-            this.currentLogLevel = SimpleLoggerConfiguration.stringToLevel(levelString);
+    void setCurrentLogLevel(Level logLevel) {
+        final int nextLogLevel = SimpleLoggerConfiguration.stringToLevel(logLevel.name());
+        if (nextLogLevel < originalLogLevel) {
+            this.currentLogLevel = nextLogLevel;
         } else {
-            this.currentLogLevel = CONFIG_PARAMS.defaultLogLevel;
+            this.currentLogLevel = originalLogLevel;
         }
     }
 
@@ -215,7 +209,7 @@ public class SimpleLogger extends MarkerIgnoringBase {
         int indexOfLastDot = tempName.length();
         while ((levelString == null) && (indexOfLastDot > -1)) {
             tempName = tempName.substring(0, indexOfLastDot);
-            levelString = CONFIG_PARAMS.getStringProperty(SimpleLogger.LOG_KEY_PREFIX + tempName, null);
+            levelString = CONFIG_PARAMS.getStringProperty(LOG_KEY_PREFIX + tempName, null);
             indexOfLastDot = tempName.lastIndexOf(".");
         }
         return levelString;
@@ -366,8 +360,7 @@ public class SimpleLogger extends MarkerIgnoringBase {
      * @param logLevel is this level enabled?
      */
     protected boolean isLevelEnabled(int logLevel) {
-        // log level are numerically ordered so can use simple numeric
-        // comparison
+        // log level are numerically ordered so can use simple numeric comparison
         return (logLevel >= currentLogLevel);
     }
 
