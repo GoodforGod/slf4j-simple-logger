@@ -1,29 +1,29 @@
 /**
- * Copyright (c) 2004-2012 QOS.ch
- * All rights reserved.
+ * Copyright (c) 2004-2012 QOS.ch All rights reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to  deal in  the Software without  restriction, including
- * without limitation  the rights to  use, copy, modify,  merge, publish,
- * distribute,  sublicense, and/or sell  copies of  the Software,  and to
- * permit persons to whom the Software  is furnished to do so, subject to
- * the following conditions:
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * The  above  copyright  notice  and  this permission  notice  shall  be
- * included in all copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- * THE  SOFTWARE IS  PROVIDED  "AS  IS", WITHOUT  WARRANTY  OF ANY  KIND,
- * EXPRESS OR  IMPLIED, INCLUDING  BUT NOT LIMITED  TO THE  WARRANTIES OF
- * MERCHANTABILITY,    FITNESS    FOR    A   PARTICULAR    PURPOSE    AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
- * OF CONTRACT, TORT OR OTHERWISE,  ARISING FROM, OUT OF OR IN CONNECTION
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  *
  */
 package io.goodforgod.slf4j.simplelogger;
 
+import java.io.PrintStream;
+import java.time.LocalDateTime;
 import org.slf4j.Logger;
 import org.slf4j.event.Level;
 import org.slf4j.event.LoggingEvent;
@@ -31,10 +31,6 @@ import org.slf4j.helpers.FormattingTuple;
 import org.slf4j.helpers.MarkerIgnoringBase;
 import org.slf4j.helpers.MessageFormatter;
 import org.slf4j.spi.LocationAwareLogger;
-
-import java.io.PrintStream;
-import java.time.LocalDateTime;
-import java.util.Date;
 
 /**
  * <p>
@@ -51,11 +47,10 @@ import java.util.Date;
  * <li><code>org.slf4j.simpleLogger.cacheOutputStream</code> - If the output
  * target is set to "System.out" or "System.err" (see preceding entry), by
  * default, logs will be output to the latest value referenced by
- * <code>System.out/err</code> variables. By setting this
- * parameter to true, the output stream will be cached, i.e. assigned once at
- * initialization time and re-used independently of the current value referenced by
- *  <code>System.out/err</code>.
- * </li>
+ * <code>System.out/err</code> variables. By setting this parameter to true, the
+ * output stream will be cached, i.e. assigned once at initialization time and
+ * re-used independently of the current value referenced by
+ * <code>System.out/err</code>.</li>
  * 
  * <li><code>org.slf4j.simpleLogger.defaultLogLevel</code> - Default log level
  * for all instances of SimpleLogger. Must be one of ("trace", "debug", "info",
@@ -159,7 +154,7 @@ public class SimpleLogger extends MarkerIgnoringBase {
     // It has
     // no printing method associated with it in o.s.Logger interface.
     protected static final int LOG_LEVEL_OFF = LOG_LEVEL_ERROR + 10;
-    private static final SimpleLoggerConfiguration CONFIG_PARAMS =  new SimpleLoggerConfiguration();
+    private static final SimpleLoggerConfiguration CONFIG_PARAMS = new SimpleLoggerConfiguration();
 
     private static boolean isInitialized = false;
 
@@ -227,15 +222,12 @@ public class SimpleLogger extends MarkerIgnoringBase {
     }
 
     /**
-     * This is our internal implementation for logging regular
-     * (non-parameterized) log messages.
+     * This is our internal implementation for logging regular (non-parameterized)
+     * log messages.
      *
-     * @param level
-     *            One of the LOG_LEVEL_XXX constants defining the log level
-     * @param message
-     *            The message itself
-     * @param t
-     *            The exception whose stack trace should be logged
+     * @param level   One of the LOG_LEVEL_XXX constants defining the log level
+     * @param message The message itself
+     * @param t       The exception whose stack trace should be logged
      */
     private void log(int level, String message, Throwable t) {
         if (!isLevelEnabled(level)) {
@@ -338,10 +330,10 @@ public class SimpleLogger extends MarkerIgnoringBase {
     /**
      * For formatted messages, first substitute arguments and then log.
      *
-     * @param level to log
+     * @param level  to log
      * @param format to parse message
-     * @param arg1 to format
-     * @param arg2 to format
+     * @param arg1   to format
+     * @param arg2   to format
      */
     private void formatAndLog(int level, String format, Object arg1, Object arg2) {
         if (!isLevelEnabled(level)) {
@@ -355,8 +347,8 @@ public class SimpleLogger extends MarkerIgnoringBase {
     /**
      * For formatted messages, first substitute arguments and then log.
      *
-     * @param level to log
-     * @param format to parse message
+     * @param level     to log
+     * @param format    to parse message
      * @param arguments a list of 3 ore more arguments
      */
     private void formatAndLog(int level, String format, Object... arguments) {
@@ -371,8 +363,7 @@ public class SimpleLogger extends MarkerIgnoringBase {
     /**
      * Is the given log level currently enabled?
      *
-     * @param logLevel
-     *            is this level enabled?
+     * @param logLevel is this level enabled?
      */
     protected boolean isLevelEnabled(int logLevel) {
         // log level are numerically ordered so can use simple numeric
@@ -386,8 +377,8 @@ public class SimpleLogger extends MarkerIgnoringBase {
     }
 
     /**
-     * A simple implementation which logs messages of level TRACE according to
-     * the format outlined above.
+     * A simple implementation which logs messages of level TRACE according to the
+     * format outlined above.
      */
     public void trace(String msg) {
         log(LOG_LEVEL_TRACE, msg, null);
@@ -428,8 +419,8 @@ public class SimpleLogger extends MarkerIgnoringBase {
     }
 
     /**
-     * A simple implementation which logs messages of level DEBUG according to
-     * the format outlined above.
+     * A simple implementation which logs messages of level DEBUG according to the
+     * format outlined above.
      */
     public void debug(String msg) {
         log(LOG_LEVEL_DEBUG, msg, null);
@@ -470,8 +461,8 @@ public class SimpleLogger extends MarkerIgnoringBase {
     }
 
     /**
-     * A simple implementation which logs messages of level INFO according to
-     * the format outlined above.
+     * A simple implementation which logs messages of level INFO according to the
+     * format outlined above.
      */
     public void info(String msg) {
         log(LOG_LEVEL_INFO, msg, null);
@@ -512,8 +503,8 @@ public class SimpleLogger extends MarkerIgnoringBase {
     }
 
     /**
-     * A simple implementation which always logs messages of level WARN
-     * according to the format outlined above.
+     * A simple implementation which always logs messages of level WARN according to
+     * the format outlined above.
      */
     public void warn(String msg) {
         log(LOG_LEVEL_WARN, msg, null);
@@ -554,8 +545,8 @@ public class SimpleLogger extends MarkerIgnoringBase {
     }
 
     /**
-     * A simple implementation which always logs messages of level ERROR
-     * according to the format outlined above.
+     * A simple implementation which always logs messages of level ERROR according
+     * to the format outlined above.
      */
     public void error(String msg) {
         log(LOG_LEVEL_ERROR, msg, null);

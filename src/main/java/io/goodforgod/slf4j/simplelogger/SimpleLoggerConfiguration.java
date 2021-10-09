@@ -1,21 +1,18 @@
 package io.goodforgod.slf4j.simplelogger;
 
 import io.goodforgod.slf4j.simplelogger.OutputChoice.OutputChoiceType;
-import org.slf4j.event.Level;
-import org.slf4j.helpers.Util;
-
 import java.io.*;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.Properties;
+import org.slf4j.event.Level;
+import org.slf4j.helpers.Util;
 
 /**
- * This class holds configuration values for {@link SimpleLogger}. The
- * values are computed at runtime. See {@link SimpleLogger} documentation for
- * more information.
+ * This class holds configuration values for {@link SimpleLogger}. The values
+ * are computed at runtime. See {@link SimpleLogger} documentation for more
+ * information.
  *
  * @author Ceki G&uuml;lc&uuml;
  * @author Scott Sanders
@@ -159,7 +156,7 @@ public class SimpleLoggerConfiguration {
                 return new OutputChoice(OutputChoiceType.SYS_OUT);
             }
         } else {
-            try(PrintStream printStream = new PrintStream(new FileOutputStream(logFile))) {
+            try (PrintStream printStream = new PrintStream(new FileOutputStream(logFile))) {
                 return new OutputChoice(printStream);
             } catch (IOException e) {
                 Util.report("Could not open [" + logFile + "]. Defaulting to System.err", e);
