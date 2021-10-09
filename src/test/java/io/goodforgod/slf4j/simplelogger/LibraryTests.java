@@ -1,4 +1,4 @@
-package io.library;
+package io.goodforgod.slf4j.simplelogger;
 
 /**
  * @author GoodforGod

@@ -29,9 +29,11 @@ spotless {
 }
 
 dependencies {
-    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.7.2"
-    testImplementation "org.junit.jupiter:junit-jupiter-api:5.7.2"
-    testImplementation "org.junit.jupiter:junit-jupiter-params:5.7.2"
+    api "org.slf4j:slf4j-api:1.7.32"
+
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.8.1"
+    testImplementation "org.junit.jupiter:junit-jupiter-api:5.8.1"
+    testImplementation "org.junit.jupiter:junit-jupiter-params:5.8.1"
 }
 
 test {
@@ -39,6 +41,7 @@ test {
     testLogging {
         events("passed", "skipped", "failed")
         exceptionFormat("full")
+        showStandardStreams(false)
     }
 
     reports {
@@ -47,26 +50,15 @@ test {
     }
 }
 
-tasks.withType(JavaCompile) {
-    options.encoding = "UTF-8"
-    options.incremental = true
-    options.fork = true
-}
-
-java {
-    withJavadocJar()
-    withSourcesJar()
-}
-
 publishing {
     publications {
         mavenJava(MavenPublication) {
             from components.java
 
             pom {
-                name = "Name"
+                name = "SLF4J Simple Logger"
                 url = "https://github.com/GoodforGod/$artifactId"
-                description = "Description."
+                description = "description."
 
                 license {
                     name = "Apache License 2.0"
@@ -102,19 +94,22 @@ publishing {
     }
 }
 
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding("UTF-8")
+    options.incremental(true)
+    options.fork = true
+}
 
 check.dependsOn jacocoTestReport
 jacocoTestReport {
     reports {
-        xml.enabled(true)
+        xml.enabled true
         html.destination file("${buildDir}/jacocoHtml")
-    }
-}
-
-if (project.hasProperty("signing.keyId")) {
-    apply plugin: "signing"
-    signing {
-        sign publishing.publications.mavenJava
     }
 }
 
@@ -122,5 +117,12 @@ javadoc {
     options.encoding = "UTF-8"
     if (JavaVersion.current().isJava9Compatible()) {
         options.addBooleanOption("html5", true)
+    }
+}
+
+if (project.hasProperty("signing.keyId")) {
+    apply plugin: "signing"
+    signing {
+        sign publishing.publications.mavenJava
     }
 }
