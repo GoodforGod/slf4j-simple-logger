@@ -1,4 +1,3 @@
-module org.slf4j.simple { 
+module io.goodforgod.slf4j.simplelogger {
   requires org.slf4j;
-  provides org.slf4j.spi.SLF4JServiceProvider with org.slf4j.simple.SimpleServiceProvider;
 }

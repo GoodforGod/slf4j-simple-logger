@@ -9,6 +9,7 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.Properties;
 
 /**
@@ -41,26 +42,25 @@ public class SimpleLoggerConfiguration {
     private static final boolean LEVEL_IN_BRACKETS_DEFAULT = false;
     private static final String LOG_FILE_DEFAULT = SYSTEM_ERR;
     private static final boolean CACHE_OUTPUT_STREAM_DEFAULT = false;
-    private static final String WARN_LEVELS_STRING_DEFAULT = "WARN";
 
     private String logFile = LOG_FILE_DEFAULT;
 
     int defaultLogLevel = DEFAULT_LOG_LEVEL_DEFAULT;
     boolean showDateTime = SHOW_DATE_TIME_DEFAULT;
-    DateFormat dateFormatter = null;
     boolean showThreadName = SHOW_THREAD_NAME_DEFAULT;
     boolean showLogName = SHOW_LOG_NAME_DEFAULT;
     boolean showShortLogName = SHOW_SHORT_LOG_NAME_DEFAULT;
     boolean levelInBrackets = LEVEL_IN_BRACKETS_DEFAULT;
+    DateTimeFormatter dateFormatter = null;
     OutputChoice outputChoice = null;
-    String warnLevelString = WARN_LEVELS_STRING_DEFAULT;
+    String warnLevelString = Level.WARN.name();
 
     private final Properties properties = new Properties();
 
     void init() {
         loadProperties();
 
-        String defaultLogLevelString = getStringProperty(SimpleLogger.DEFAULT_LOG_LEVEL_KEY, null);
+        final String defaultLogLevelString = getStringProperty(SimpleLogger.DEFAULT_LOG_LEVEL_KEY, null);
         if (defaultLogLevelString != null)
             defaultLogLevel = stringToLevel(defaultLogLevelString);
 
@@ -68,18 +68,17 @@ public class SimpleLoggerConfiguration {
         showShortLogName = getBooleanProperty(SimpleLogger.SHOW_SHORT_LOG_NAME_KEY, SHOW_SHORT_LOG_NAME_DEFAULT);
         showDateTime = getBooleanProperty(SimpleLogger.SHOW_DATE_TIME_KEY, SHOW_DATE_TIME_DEFAULT);
         showThreadName = getBooleanProperty(SimpleLogger.SHOW_THREAD_NAME_KEY, SHOW_THREAD_NAME_DEFAULT);
-        String dateTimeFormatStr = getStringProperty(SimpleLogger.DATE_TIME_FORMAT_KEY, DATE_TIME_FORMAT_STR_DEFAULT);
         levelInBrackets = getBooleanProperty(SimpleLogger.LEVEL_IN_BRACKETS_KEY, LEVEL_IN_BRACKETS_DEFAULT);
-        warnLevelString = getStringProperty(SimpleLogger.WARN_LEVEL_STRING_KEY, WARN_LEVELS_STRING_DEFAULT);
-
+        warnLevelString = getStringProperty(SimpleLogger.WARN_LEVEL_STRING_KEY, Level.WARN.name());
         logFile = getStringProperty(SimpleLogger.LOG_FILE_KEY, logFile);
 
-        boolean cacheOutputStream = getBooleanProperty(SimpleLogger.CACHE_OUTPUT_STREAM_STRING_KEY, CACHE_OUTPUT_STREAM_DEFAULT);
+        final boolean cacheOutputStream = getBooleanProperty(SimpleLogger.CACHE_OUTPUT_STREAM_STRING_KEY, CACHE_OUTPUT_STREAM_DEFAULT);
         outputChoice = computeOutputChoice(logFile, cacheOutputStream);
 
+        final String dateTimeFormatStr = getStringProperty(SimpleLogger.DATE_TIME_FORMAT_KEY, DATE_TIME_FORMAT_STR_DEFAULT);
         if (dateTimeFormatStr != null) {
             try {
-                dateFormatter = new SimpleDateFormat(dateTimeFormatStr);
+                dateFormatter = DateTimeFormatter.ofPattern(dateTimeFormatStr);
             } catch (IllegalArgumentException e) {
                 Util.report("Bad date format in " + CONFIGURATION_FILE + "; will output relative time", e);
             }
@@ -168,5 +167,4 @@ public class SimpleLoggerConfiguration {
             }
         }
     }
-
 }

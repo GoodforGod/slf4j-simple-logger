@@ -50,7 +50,5 @@ class OutputChoice {
         default:
             throw new IllegalArgumentException();
         }
-
     }
-
 }

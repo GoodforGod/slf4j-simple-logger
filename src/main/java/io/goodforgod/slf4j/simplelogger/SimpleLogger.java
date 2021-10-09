@@ -25,6 +25,7 @@
 package io.goodforgod.slf4j.simplelogger;
 
 import org.slf4j.Logger;
+import org.slf4j.event.Level;
 import org.slf4j.event.LoggingEvent;
 import org.slf4j.helpers.FormattingTuple;
 import org.slf4j.helpers.MarkerIgnoringBase;
@@ -32,6 +33,7 @@ import org.slf4j.helpers.MessageFormatter;
 import org.slf4j.spi.LocationAwareLogger;
 
 import java.io.PrintStream;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -176,7 +178,7 @@ public class SimpleLogger extends MarkerIgnoringBase {
     }
 
     /** The current log level */
-    protected int currentLogLevel = LOG_LEVEL_INFO;
+    protected final int currentLogLevel;
     /** The short name of this simple log instance */
     private transient String shortLogName = null;
 
@@ -185,27 +187,16 @@ public class SimpleLogger extends MarkerIgnoringBase {
      * prefix
      */
     public static final String SYSTEM_PREFIX = "org.slf4j.simpleLogger.";
-
     public static final String LOG_KEY_PREFIX = SimpleLogger.SYSTEM_PREFIX + "log.";
-
     public static final String CACHE_OUTPUT_STREAM_STRING_KEY = SimpleLogger.SYSTEM_PREFIX + "cacheOutputStream";
-
     public static final String WARN_LEVEL_STRING_KEY = SimpleLogger.SYSTEM_PREFIX + "warnLevelString";
-
     public static final String LEVEL_IN_BRACKETS_KEY = SimpleLogger.SYSTEM_PREFIX + "levelInBrackets";
-
     public static final String LOG_FILE_KEY = SimpleLogger.SYSTEM_PREFIX + "logFile";
-
     public static final String SHOW_SHORT_LOG_NAME_KEY = SimpleLogger.SYSTEM_PREFIX + "showShortLogName";
-
     public static final String SHOW_LOG_NAME_KEY = SimpleLogger.SYSTEM_PREFIX + "showLogName";
-
     public static final String SHOW_THREAD_NAME_KEY = SimpleLogger.SYSTEM_PREFIX + "showThreadName";
-
     public static final String DATE_TIME_FORMAT_KEY = SimpleLogger.SYSTEM_PREFIX + "dateTimeFormat";
-
     public static final String SHOW_DATE_TIME_KEY = SimpleLogger.SYSTEM_PREFIX + "showDateTime";
-
     public static final String DEFAULT_LOG_LEVEL_KEY = SimpleLogger.SYSTEM_PREFIX + "defaultLogLevel";
 
     /**
@@ -230,7 +221,7 @@ public class SimpleLogger extends MarkerIgnoringBase {
         while ((levelString == null) && (indexOfLastDot > -1)) {
             tempName = tempName.substring(0, indexOfLastDot);
             levelString = CONFIG_PARAMS.getStringProperty(SimpleLogger.LOG_KEY_PREFIX + tempName, null);
-            indexOfLastDot = String.valueOf(tempName).lastIndexOf(".");
+            indexOfLastDot = tempName.lastIndexOf(".");
         }
         return levelString;
     }
@@ -251,84 +242,83 @@ public class SimpleLogger extends MarkerIgnoringBase {
             return;
         }
 
-        StringBuilder buf = new StringBuilder(32);
+        final StringBuilder builder = new StringBuilder(32);
 
         // Append date-time if so configured
         if (CONFIG_PARAMS.showDateTime) {
             if (CONFIG_PARAMS.dateFormatter != null) {
-                buf.append(getFormattedDate());
-                buf.append(' ');
+                builder.append(getFormattedDate());
             } else {
-                buf.append(System.currentTimeMillis() - START_TIME);
-                buf.append(' ');
+                builder.append(System.currentTimeMillis() - START_TIME);
             }
+            builder.append(' ');
         }
 
         // Append current thread name if so configured
         if (CONFIG_PARAMS.showThreadName) {
-            buf.append('[');
-            buf.append(Thread.currentThread().getName());
-            buf.append("] ");
+            builder.append('[');
+            builder.append(Thread.currentThread().getName());
+            builder.append("] ");
         }
 
-        if (CONFIG_PARAMS.levelInBrackets)
-            buf.append('[');
+        if (CONFIG_PARAMS.levelInBrackets) {
+            builder.append('[');
+        }
 
         // Append a readable representation of the log level
-        String levelStr = renderLevel(level);
-        buf.append(levelStr);
-        if (CONFIG_PARAMS.levelInBrackets)
-            buf.append(']');
-        buf.append(' ');
+        final String levelStr = renderLevel(level);
+        builder.append(levelStr);
+        if (CONFIG_PARAMS.levelInBrackets) {
+            builder.append(']');
+        }
+        builder.append(' ');
 
         // Append the name of the log instance if so configured
         if (CONFIG_PARAMS.showShortLogName) {
-            if (shortLogName == null)
+            if (shortLogName == null) {
                 shortLogName = computeShortName();
-            buf.append(String.valueOf(shortLogName)).append(" - ");
+            }
+            builder.append(shortLogName).append(" - ");
         } else if (CONFIG_PARAMS.showLogName) {
-            buf.append(String.valueOf(name)).append(" - ");
+            builder.append(name).append(" - ");
         }
 
         // Append the message
-        buf.append(message);
-
-        write(buf, t);
-
+        builder.append(message);
+        write(builder, t);
     }
 
     protected String renderLevel(int level) {
         switch (level) {
-        case LOG_LEVEL_TRACE:
-            return "TRACE";
-        case LOG_LEVEL_DEBUG:
-            return ("DEBUG");
-        case LOG_LEVEL_INFO:
-            return "INFO";
-        case LOG_LEVEL_WARN:
-            return CONFIG_PARAMS.warnLevelString;
-        case LOG_LEVEL_ERROR:
-            return "ERROR";
+            case LOG_LEVEL_TRACE:
+                return Level.TRACE.name();
+            case LOG_LEVEL_DEBUG:
+                return Level.DEBUG.name();
+            case LOG_LEVEL_INFO:
+                return Level.INFO.name();
+            case LOG_LEVEL_WARN:
+                return Level.WARN.name();
+            case LOG_LEVEL_ERROR:
+                return Level.ERROR.name();
+            default:
+                throw new IllegalStateException("Unrecognized level [" + level + "]");
         }
-        throw new IllegalStateException("Unrecognized level [" + level + "]");
     }
 
     /**
      * To avoid intermingling of log messages and associated stack traces, the two
      * operations are done in a synchronized block.
      * 
-     * @param buf
+     * @param builder
      * @param t
      */
-    void write(StringBuilder buf, Throwable t) {
-        PrintStream targetStream = CONFIG_PARAMS.outputChoice.getTargetPrintStream();
-
+    void write(StringBuilder builder, Throwable t) {
+        final PrintStream targetStream = CONFIG_PARAMS.outputChoice.getTargetPrintStream();
         synchronized (CONFIG_PARAMS) {
-            targetStream.println(buf.toString());
+            targetStream.println(builder.toString());
             writeThrowable(t, targetStream);
             targetStream.flush();
         }
-
     }
 
     protected void writeThrowable(Throwable t, PrintStream targetStream) {
@@ -338,12 +328,7 @@ public class SimpleLogger extends MarkerIgnoringBase {
     }
 
     private String getFormattedDate() {
-        Date now = new Date();
-        String dateText;
-        synchronized (CONFIG_PARAMS.dateFormatter) {
-            dateText = CONFIG_PARAMS.dateFormatter.format(now);
-        }
-        return dateText;
+        return CONFIG_PARAMS.dateFormatter.format(LocalDateTime.now());
     }
 
     private String computeShortName() {
@@ -353,31 +338,32 @@ public class SimpleLogger extends MarkerIgnoringBase {
     /**
      * For formatted messages, first substitute arguments and then log.
      *
-     * @param level
-     * @param format
-     * @param arg1
-     * @param arg2
+     * @param level to log
+     * @param format to parse message
+     * @param arg1 to format
+     * @param arg2 to format
      */
     private void formatAndLog(int level, String format, Object arg1, Object arg2) {
         if (!isLevelEnabled(level)) {
             return;
         }
-        FormattingTuple tp = MessageFormatter.format(format, arg1, arg2);
+
+        final FormattingTuple tp = MessageFormatter.format(format, arg1, arg2);
         log(level, tp.getMessage(), tp.getThrowable());
     }
 
     /**
      * For formatted messages, first substitute arguments and then log.
      *
-     * @param level
-     * @param format
-     * @param arguments
-     *            a list of 3 ore more arguments
+     * @param level to log
+     * @param format to parse message
+     * @param arguments a list of 3 ore more arguments
      */
     private void formatAndLog(int level, String format, Object... arguments) {
         if (!isLevelEnabled(level)) {
             return;
         }
+
         FormattingTuple tp = MessageFormatter.arrayFormat(format, arguments);
         log(level, tp.getMessage(), tp.getThrowable());
     }
@@ -606,10 +592,10 @@ public class SimpleLogger extends MarkerIgnoringBase {
 
     public void log(LoggingEvent event) {
         int levelInt = event.getLevel().toInt();
-
         if (!isLevelEnabled(levelInt)) {
             return;
         }
+
         FormattingTuple tp = MessageFormatter.arrayFormat(event.getMessage(), event.getArgumentArray(), event.getThrowable());
         log(levelInt, tp.getMessage(), event.getThrowable());
     }
