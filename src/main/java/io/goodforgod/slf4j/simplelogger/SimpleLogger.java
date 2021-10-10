@@ -358,13 +358,16 @@ public class SimpleLogger extends MarkerIgnoringBase {
      * Is the given log level currently enabled?
      *
      * @param logLevel is this level enabled?
+     * @return true if enabled
      */
     protected boolean isLevelEnabled(int logLevel) {
         // log level are numerically ordered so can use simple numeric comparison
         return (logLevel >= currentLogLevel);
     }
 
-    /** Are {@code trace} messages currently enabled? */
+    /**
+     * Are {@code trace} messages currently enabled?
+     */
     public boolean isTraceEnabled() {
         return isLevelEnabled(LOG_LEVEL_TRACE);
     }

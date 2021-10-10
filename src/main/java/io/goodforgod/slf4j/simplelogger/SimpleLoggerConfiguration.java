@@ -61,24 +61,24 @@ public class SimpleLoggerConfiguration {
 
         final String defaultLogLevelString = getStringProperty(DEFAULT_LOG_LEVEL_KEY, null);
         if (defaultLogLevelString != null) {
-            defaultLogLevel = stringToLevel(defaultLogLevelString);
+            this.defaultLogLevel = stringToLevel(defaultLogLevelString);
         }
 
-        showLogName = getBooleanProperty(SHOW_LOG_NAME_KEY, SimpleLoggerConfiguration.SHOW_LOG_NAME_DEFAULT);
-        showShortLogName = getBooleanProperty(SHOW_SHORT_LOG_NAME_KEY, SHOW_SHORT_LOG_NAME_DEFAULT);
-        showDateTime = getBooleanProperty(SHOW_DATE_TIME_KEY, SHOW_DATE_TIME_DEFAULT);
-        showThreadName = getBooleanProperty(SHOW_THREAD_NAME_KEY, SHOW_THREAD_NAME_DEFAULT);
-        levelInBrackets = getBooleanProperty(LEVEL_IN_BRACKETS_KEY, LEVEL_IN_BRACKETS_DEFAULT);
-        warnLevelString = getStringProperty(WARN_LEVEL_STRING_KEY, Level.WARN.name());
-        logFile = getStringProperty(LOG_FILE_KEY, logFile);
+        this.showLogName = getBooleanProperty(SHOW_LOG_NAME_KEY, SimpleLoggerConfiguration.SHOW_LOG_NAME_DEFAULT);
+        this.showShortLogName = getBooleanProperty(SHOW_SHORT_LOG_NAME_KEY, SHOW_SHORT_LOG_NAME_DEFAULT);
+        this.showDateTime = getBooleanProperty(SHOW_DATE_TIME_KEY, SHOW_DATE_TIME_DEFAULT);
+        this.showThreadName = getBooleanProperty(SHOW_THREAD_NAME_KEY, SHOW_THREAD_NAME_DEFAULT);
+        this.levelInBrackets = getBooleanProperty(LEVEL_IN_BRACKETS_KEY, LEVEL_IN_BRACKETS_DEFAULT);
+        this.warnLevelString = getStringProperty(WARN_LEVEL_STRING_KEY, Level.WARN.name());
+        this.logFile = getStringProperty(LOG_FILE_KEY, logFile);
 
         final boolean cacheOutputStream = getBooleanProperty(CACHE_OUTPUT_STREAM_STRING_KEY, CACHE_OUTPUT_STREAM_DEFAULT);
-        outputChoice = computeOutputChoice(logFile, cacheOutputStream);
+        this.outputChoice = computeOutputChoice(logFile, cacheOutputStream);
 
         final String dateTimeFormatStr = getStringProperty(DATE_TIME_FORMAT_KEY, DATE_TIME_FORMAT_STR_DEFAULT);
         if (dateTimeFormatStr != null) {
             try {
-                dateFormatter = DateTimeFormatter.ofPattern(dateTimeFormatStr);
+                this.dateFormatter = DateTimeFormatter.ofPattern(dateTimeFormatStr);
             } catch (IllegalArgumentException e) {
                 Util.report("Bad date format in " + CONFIGURATION_FILE + "; will output relative time", e);
             }

@@ -20,7 +20,7 @@
  * SOFTWARE.
  *
  */
-package io.goodforgod.slf4j.simplelogger;
+package org.slf4j.impl;
 
 import org.slf4j.helpers.NOPMDCAdapter;
 import org.slf4j.spi.MDCAdapter;
@@ -52,7 +52,8 @@ public class StaticMDCBinder {
     }
 
     /**
-     * Currently this method always returns an instance of {@link StaticMDCBinder}.
+     * @return Currently this method always returns an instance of
+     *         {@link StaticMDCBinder}.
      */
     public MDCAdapter getMDCA() {
         return new NOPMDCAdapter();
