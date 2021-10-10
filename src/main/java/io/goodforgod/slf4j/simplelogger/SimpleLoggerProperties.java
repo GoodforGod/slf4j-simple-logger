@@ -9,7 +9,7 @@ package io.goodforgod.slf4j.simplelogger;
  */
 public interface SimpleLoggerProperties {
 
-    String SYSTEM_PREFIX = "io.goodforgod.simpleLogger.";
+    String SYSTEM_PREFIX = "org.slf4j.simpleLogger.";
 
     String LOG_KEY_PREFIX = SYSTEM_PREFIX + "log.";
 
