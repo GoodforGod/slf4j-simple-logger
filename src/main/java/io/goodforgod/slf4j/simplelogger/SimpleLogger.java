@@ -26,12 +26,12 @@ import static io.goodforgod.slf4j.simplelogger.SimpleLoggerProperties.LOG_KEY_PR
 
 import java.io.PrintStream;
 import java.time.LocalDateTime;
+import java.util.List;
 import org.slf4j.Logger;
+import org.slf4j.Marker;
 import org.slf4j.event.Level;
 import org.slf4j.event.LoggingEvent;
-import org.slf4j.helpers.FormattingTuple;
-import org.slf4j.helpers.MarkerIgnoringBase;
-import org.slf4j.helpers.MessageFormatter;
+import org.slf4j.helpers.*;
 import org.slf4j.spi.LocationAwareLogger;
 
 /**
@@ -141,11 +141,12 @@ import org.slf4j.spi.LocationAwareLogger;
  * @author Anton Kurako (GoodforGod)
  * @since 09.10.2021
  */
-public class SimpleLogger extends MarkerIgnoringBase {
+public class SimpleLogger extends LegacyAbstractLogger {
 
     private static final long serialVersionUID = -632788891211436180L;
 
     private static final long START_TIME = System.currentTimeMillis();
+    private static final char SP = ' ';
 
     protected static final int LOG_LEVEL_TRACE = LocationAwareLogger.TRACE_INT;
     protected static final int LOG_LEVEL_DEBUG = LocationAwareLogger.DEBUG_INT;
@@ -153,8 +154,7 @@ public class SimpleLogger extends MarkerIgnoringBase {
     protected static final int LOG_LEVEL_WARN = LocationAwareLogger.WARN_INT;
     protected static final int LOG_LEVEL_ERROR = LocationAwareLogger.ERROR_INT;
     // The OFF level can only be used in configuration files to disable logging.
-    // It has
-    // no printing method associated with it in o.s.Logger interface.
+    // It has no printing method associated with it in o.s.Logger interface.
     protected static final int LOG_LEVEL_OFF = LOG_LEVEL_ERROR + 10;
     private static final SimpleLoggerConfiguration CONFIG_PARAMS = new SimpleLoggerConfiguration();
 
@@ -216,92 +216,16 @@ public class SimpleLogger extends MarkerIgnoringBase {
     }
 
     /**
-     * This is our internal implementation for logging regular (non-parameterized)
-     * log messages.
-     *
-     * @param level   One of the LOG_LEVEL_XXX constants defining the log level
-     * @param message The message itself
-     * @param t       The exception whose stack trace should be logged
-     */
-    private void log(int level, String message, Throwable t) {
-        if (!isLevelEnabled(level)) {
-            return;
-        }
-
-        final StringBuilder builder = new StringBuilder(32);
-
-        // Append date-time if so configured
-        if (CONFIG_PARAMS.showDateTime) {
-            if (CONFIG_PARAMS.dateFormatter != null) {
-                builder.append(getFormattedDate());
-            } else {
-                builder.append(System.currentTimeMillis() - START_TIME);
-            }
-            builder.append(' ');
-        }
-
-        // Append current thread name if so configured
-        if (CONFIG_PARAMS.showThreadName) {
-            builder.append('[');
-            builder.append(Thread.currentThread().getName());
-            builder.append("] ");
-        }
-
-        if (CONFIG_PARAMS.levelInBrackets) {
-            builder.append('[');
-        }
-
-        // Append a readable representation of the log level
-        final String levelStr = renderLevel(level);
-        builder.append(levelStr);
-        if (CONFIG_PARAMS.levelInBrackets) {
-            builder.append(']');
-        }
-        builder.append(' ');
-
-        // Append the name of the log instance if so configured
-        if (CONFIG_PARAMS.showShortLogName) {
-            if (shortLogName == null) {
-                shortLogName = computeShortName();
-            }
-            builder.append(shortLogName).append(" - ");
-        } else if (CONFIG_PARAMS.showLogName) {
-            builder.append(name).append(" - ");
-        }
-
-        // Append the message
-        builder.append(message);
-        write(builder, t);
-    }
-
-    protected String renderLevel(int level) {
-        switch (level) {
-            case LOG_LEVEL_TRACE:
-                return Level.TRACE.name();
-            case LOG_LEVEL_DEBUG:
-                return Level.DEBUG.name();
-            case LOG_LEVEL_INFO:
-                return Level.INFO.name();
-            case LOG_LEVEL_WARN:
-                return Level.WARN.name();
-            case LOG_LEVEL_ERROR:
-                return Level.ERROR.name();
-            default:
-                throw new IllegalStateException("Unrecognized level [" + level + "]");
-        }
-    }
-
-    /**
      * To avoid intermingling of log messages and associated stack traces, the two
      * operations are done in a synchronized block.
-     * 
-     * @param builder
+     *
+     * @param buf
      * @param t
      */
-    void write(StringBuilder builder, Throwable t) {
+    void write(StringBuilder buf, Throwable t) {
         final PrintStream targetStream = CONFIG_PARAMS.outputChoice.getTargetPrintStream();
         synchronized (CONFIG_PARAMS) {
-            targetStream.println(builder.toString());
+            targetStream.println(buf.toString());
             writeThrowable(t, targetStream);
             targetStream.flush();
         }
@@ -322,91 +246,18 @@ public class SimpleLogger extends MarkerIgnoringBase {
     }
 
     /**
-     * For formatted messages, first substitute arguments and then log.
-     *
-     * @param level  to log
-     * @param format to parse message
-     * @param arg1   to format
-     * @param arg2   to format
-     */
-    private void formatAndLog(int level, String format, Object arg1, Object arg2) {
-        if (!isLevelEnabled(level)) {
-            return;
-        }
-
-        final FormattingTuple tp = MessageFormatter.format(format, arg1, arg2);
-        log(level, tp.getMessage(), tp.getThrowable());
-    }
-
-    /**
-     * For formatted messages, first substitute arguments and then log.
-     *
-     * @param level     to log
-     * @param format    to parse message
-     * @param arguments a list of 3 ore more arguments
-     */
-    private void formatAndLog(int level, String format, Object... arguments) {
-        if (!isLevelEnabled(level)) {
-            return;
-        }
-
-        FormattingTuple tp = MessageFormatter.arrayFormat(format, arguments);
-        log(level, tp.getMessage(), tp.getThrowable());
-    }
-
-    /**
      * Is the given log level currently enabled?
      *
      * @param logLevel is this level enabled?
-     * @return true if enabled
+     * @return whether the logger is enabled for the given level
      */
     protected boolean isLevelEnabled(int logLevel) {
-        // log level are numerically ordered so can use simple numeric comparison
         return (logLevel >= currentLogLevel);
     }
 
-    /**
-     * Are {@code trace} messages currently enabled?
-     */
+    /** Are {@code trace} messages currently enabled? */
     public boolean isTraceEnabled() {
         return isLevelEnabled(LOG_LEVEL_TRACE);
-    }
-
-    /**
-     * A simple implementation which logs messages of level TRACE according to the
-     * format outlined above.
-     */
-    public void trace(String msg) {
-        log(LOG_LEVEL_TRACE, msg, null);
-    }
-
-    /**
-     * Perform single parameter substitution before logging the message of level
-     * TRACE according to the format outlined above.
-     */
-    public void trace(String format, Object param1) {
-        formatAndLog(LOG_LEVEL_TRACE, format, param1, null);
-    }
-
-    /**
-     * Perform double parameter substitution before logging the message of level
-     * TRACE according to the format outlined above.
-     */
-    public void trace(String format, Object param1, Object param2) {
-        formatAndLog(LOG_LEVEL_TRACE, format, param1, param2);
-    }
-
-    /**
-     * Perform double parameter substitution before logging the message of level
-     * TRACE according to the format outlined above.
-     */
-    public void trace(String format, Object... argArray) {
-        formatAndLog(LOG_LEVEL_TRACE, format, argArray);
-    }
-
-    /** Log a message of level TRACE, including an exception. */
-    public void trace(String msg, Throwable t) {
-        log(LOG_LEVEL_TRACE, msg, t);
     }
 
     /** Are {@code debug} messages currently enabled? */
@@ -414,125 +265,14 @@ public class SimpleLogger extends MarkerIgnoringBase {
         return isLevelEnabled(LOG_LEVEL_DEBUG);
     }
 
-    /**
-     * A simple implementation which logs messages of level DEBUG according to the
-     * format outlined above.
-     */
-    public void debug(String msg) {
-        log(LOG_LEVEL_DEBUG, msg, null);
-    }
-
-    /**
-     * Perform single parameter substitution before logging the message of level
-     * DEBUG according to the format outlined above.
-     */
-    public void debug(String format, Object param1) {
-        formatAndLog(LOG_LEVEL_DEBUG, format, param1, null);
-    }
-
-    /**
-     * Perform double parameter substitution before logging the message of level
-     * DEBUG according to the format outlined above.
-     */
-    public void debug(String format, Object param1, Object param2) {
-        formatAndLog(LOG_LEVEL_DEBUG, format, param1, param2);
-    }
-
-    /**
-     * Perform double parameter substitution before logging the message of level
-     * DEBUG according to the format outlined above.
-     */
-    public void debug(String format, Object... argArray) {
-        formatAndLog(LOG_LEVEL_DEBUG, format, argArray);
-    }
-
-    /** Log a message of level DEBUG, including an exception. */
-    public void debug(String msg, Throwable t) {
-        log(LOG_LEVEL_DEBUG, msg, t);
-    }
-
     /** Are {@code info} messages currently enabled? */
     public boolean isInfoEnabled() {
         return isLevelEnabled(LOG_LEVEL_INFO);
     }
 
-    /**
-     * A simple implementation which logs messages of level INFO according to the
-     * format outlined above.
-     */
-    public void info(String msg) {
-        log(LOG_LEVEL_INFO, msg, null);
-    }
-
-    /**
-     * Perform single parameter substitution before logging the message of level
-     * INFO according to the format outlined above.
-     */
-    public void info(String format, Object arg) {
-        formatAndLog(LOG_LEVEL_INFO, format, arg, null);
-    }
-
-    /**
-     * Perform double parameter substitution before logging the message of level
-     * INFO according to the format outlined above.
-     */
-    public void info(String format, Object arg1, Object arg2) {
-        formatAndLog(LOG_LEVEL_INFO, format, arg1, arg2);
-    }
-
-    /**
-     * Perform double parameter substitution before logging the message of level
-     * INFO according to the format outlined above.
-     */
-    public void info(String format, Object... argArray) {
-        formatAndLog(LOG_LEVEL_INFO, format, argArray);
-    }
-
-    /** Log a message of level INFO, including an exception. */
-    public void info(String msg, Throwable t) {
-        log(LOG_LEVEL_INFO, msg, t);
-    }
-
     /** Are {@code warn} messages currently enabled? */
     public boolean isWarnEnabled() {
         return isLevelEnabled(LOG_LEVEL_WARN);
-    }
-
-    /**
-     * A simple implementation which always logs messages of level WARN according to
-     * the format outlined above.
-     */
-    public void warn(String msg) {
-        log(LOG_LEVEL_WARN, msg, null);
-    }
-
-    /**
-     * Perform single parameter substitution before logging the message of level
-     * WARN according to the format outlined above.
-     */
-    public void warn(String format, Object arg) {
-        formatAndLog(LOG_LEVEL_WARN, format, arg, null);
-    }
-
-    /**
-     * Perform double parameter substitution before logging the message of level
-     * WARN according to the format outlined above.
-     */
-    public void warn(String format, Object arg1, Object arg2) {
-        formatAndLog(LOG_LEVEL_WARN, format, arg1, arg2);
-    }
-
-    /**
-     * Perform double parameter substitution before logging the message of level
-     * WARN according to the format outlined above.
-     */
-    public void warn(String format, Object... argArray) {
-        formatAndLog(LOG_LEVEL_WARN, format, argArray);
-    }
-
-    /** Log a message of level WARN, including an exception. */
-    public void warn(String msg, Throwable t) {
-        log(LOG_LEVEL_WARN, msg, t);
     }
 
     /** Are {@code error} messages currently enabled? */
@@ -541,49 +281,91 @@ public class SimpleLogger extends MarkerIgnoringBase {
     }
 
     /**
-     * A simple implementation which always logs messages of level ERROR according
-     * to the format outlined above.
+     * This is our internal implementation for logging regular (non-parameterized)
+     * log messages.
+     *
+     * @param level          One of the LOG_LEVEL_XXX constants defining the log
+     *                       level
+     * @param messagePattern The message itself
+     * @param t              The exception whose stack trace should be logged
      */
-    public void error(String msg) {
-        log(LOG_LEVEL_ERROR, msg, null);
+    @Override
+    protected void handleNormalizedLoggingCall(Level level, Marker marker, String messagePattern, Object[] arguments, Throwable t) {
+        final List<Marker> markers = (marker == null)
+                ? null
+                : List.of(marker);
+
+        innerHandleNormalizedLoggingCall(level, markers, messagePattern, arguments, t);
     }
 
-    /**
-     * Perform single parameter substitution before logging the message of level
-     * ERROR according to the format outlined above.
-     */
-    public void error(String format, Object arg) {
-        formatAndLog(LOG_LEVEL_ERROR, format, arg, null);
-    }
+    private void innerHandleNormalizedLoggingCall(Level level, List<Marker> markers, String messagePattern, Object[] arguments,
+                                                  Throwable t) {
+        final StringBuilder buf = new StringBuilder(32);
 
-    /**
-     * Perform double parameter substitution before logging the message of level
-     * ERROR according to the format outlined above.
-     */
-    public void error(String format, Object arg1, Object arg2) {
-        formatAndLog(LOG_LEVEL_ERROR, format, arg1, arg2);
-    }
+        // Append date-time if so configured
+        if (CONFIG_PARAMS.showDateTime) {
+            if (CONFIG_PARAMS.dateFormatter != null) {
+                buf.append(getFormattedDate());
+            } else {
+                buf.append(System.currentTimeMillis() - START_TIME);
+            }
+            buf.append(SP);
+        }
 
-    /**
-     * Perform double parameter substitution before logging the message of level
-     * ERROR according to the format outlined above.
-     */
-    public void error(String format, Object... argArray) {
-        formatAndLog(LOG_LEVEL_ERROR, format, argArray);
-    }
+        // Append current thread name if so configured
+        if (CONFIG_PARAMS.showThreadName) {
+            buf.append('[');
+            buf.append(Thread.currentThread().getName());
+            buf.append("] ");
+        }
 
-    /** Log a message of level ERROR, including an exception. */
-    public void error(String msg, Throwable t) {
-        log(LOG_LEVEL_ERROR, msg, t);
+        if (CONFIG_PARAMS.levelInBrackets) {
+            buf.append('[');
+        }
+
+        // Append a readable representation of the log level
+        buf.append(level.name());
+        if (CONFIG_PARAMS.levelInBrackets) {
+            buf.append(']');
+        }
+
+        buf.append(SP);
+
+        // Append the name of the log instance if so configured
+        if (CONFIG_PARAMS.showShortLogName) {
+            if (shortLogName == null) {
+                shortLogName = computeShortName();
+            }
+            buf.append(shortLogName).append(" - ");
+        } else if (CONFIG_PARAMS.showLogName) {
+            buf.append(name).append(" - ");
+        }
+
+        if (markers != null) {
+            buf.append(SP);
+            for (Marker marker : markers) {
+                buf.append(marker.getName()).append(SP);
+            }
+        }
+
+        final String formattedMessage = MessageFormatter.basicArrayFormat(messagePattern, arguments);
+        // Append the message
+        buf.append(formattedMessage);
+        write(buf, t);
     }
 
     public void log(LoggingEvent event) {
-        int levelInt = event.getLevel().toInt();
+        final int levelInt = event.getLevel().toInt();
         if (!isLevelEnabled(levelInt)) {
             return;
         }
 
-        FormattingTuple tp = MessageFormatter.arrayFormat(event.getMessage(), event.getArgumentArray(), event.getThrowable());
-        log(levelInt, tp.getMessage(), event.getThrowable());
+        final NormalizedParameters np = NormalizedParameters.normalize(event);
+        innerHandleNormalizedLoggingCall(event.getLevel(), event.getMarkers(), np.getMessage(), np.getArguments(), event.getThrowable());
+    }
+
+    @Override
+    protected String getFullyQualifiedCallerName() {
+        return null;
     }
 }
