@@ -169,8 +169,8 @@ public class SimpleLogger extends MarkerIgnoringBase {
         init();
     }
 
-    // external software might be invoking this method directly. Do not rename
-    // or change its semantics.
+    // external software might be invoking this method directly. Do not rename or
+    // change its semantics.
     static void init() {
         CONFIG_PARAMS.init();
     }
