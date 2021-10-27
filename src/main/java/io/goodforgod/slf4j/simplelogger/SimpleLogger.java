@@ -280,14 +280,14 @@ public class SimpleLogger extends MarkerIgnoringBase {
      * To avoid intermingling of log messages and associated stack traces, the two operations are done
      * in a synchronized block.
      * 
-     * @param builder
-     * @param t
+     * @param builder   of logging message
+     * @param throwable to log
      */
-    void write(StringBuilder builder, Throwable t) {
+    void write(StringBuilder builder, Throwable throwable) {
         final PrintStream targetStream = CONFIG_PARAMS.outputChoice.getTargetPrintStream();
         synchronized (CONFIG_PARAMS) {
             targetStream.println(builder.toString());
-            writeThrowable(t, targetStream);
+            writeThrowable(throwable, targetStream);
             targetStream.flush();
         }
     }
