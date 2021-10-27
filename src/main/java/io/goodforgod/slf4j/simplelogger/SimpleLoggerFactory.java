@@ -8,8 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.event.Level;
 
 /**
- * An implementation of {@link ILoggerFactory} which always returns
- * {@link SimpleLogger} instances.
+ * An implementation of {@link ILoggerFactory} which always returns {@link SimpleLogger} instances.
  * 
  * @author Ceki G&uuml;lc&uuml;
  * @author Anton Kurako (GoodforGod)
@@ -46,9 +45,8 @@ public class SimpleLoggerFactory implements ILoggerFactory {
     /**
      * Clear the internal logger cache.
      *
-     * This method is intended to be called by classes (in the same package) for
-     * testing purposes. This method is internal. It can be modified, renamed or
-     * removed at any time without notice.
+     * This method is intended to be called by classes (in the same package) for testing purposes. This
+     * method is internal. It can be modified, renamed or removed at any time without notice.
      *
      * You are strongly discouraged from calling this method in production code.
      */

@@ -58,7 +58,7 @@ publishing {
             pom {
                 name = "SLF4J Simple Logger"
                 url = "https://github.com/GoodforGod/$artifactId"
-                description = "description."
+                description = "Slf4j simple logger implementation."
 
                 license {
                     name = "Apache License 2.0"

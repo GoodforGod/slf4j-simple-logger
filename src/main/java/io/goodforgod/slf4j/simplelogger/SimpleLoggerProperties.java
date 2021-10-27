@@ -1,8 +1,7 @@
 package io.goodforgod.slf4j.simplelogger;
 
 /**
- * All system properties used by <code>SimpleLogger</code> start with this
- * prefix
+ * All system properties used by <code>SimpleLogger</code> start with this prefix
  *
  * @author Anton Kurako (GoodforGod)
  * @since 10.10.2021

@@ -9,7 +9,7 @@ SLF4J library simple logger implementation.
 [**Gradle**](https://mvnrepository.com/artifact/io.goodforgod/slf4j-simple-logger)
 ```groovy
 dependencies {
-    implementation "io.goodforgod:slf4j-simple-logger:1.0.0"
+    implementation "io.goodforgod:slf4j-simple-logger:0.10.0"
 }
 ```
 
@@ -18,9 +18,18 @@ dependencies {
 <dependency>
     <groupId>io.goodforgod</groupId>
     <artifactId>slf4j-simple-logger</artifactId>
-    <version>1.0.0</version>
+    <version>0.10.0</version>
 </dependency>
 ```
+
+## Features
+
+Library have same features as default SLF4J simple logger implementation except:
+- Library adds set default log level capability for *SimpleLoggerFactory*
+
+## Compatability
+
+Library is compatible with SLF4J version *1.7.32*.
 
 ## License
 
