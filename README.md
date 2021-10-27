@@ -31,6 +31,8 @@ Library have same features as default SLF4J simple logger implementation except:
 
 Library is compatible with SLF4J version *1.7.32*.
 
+Java 11+ compatible.
+
 ## License
 
 This project licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details
