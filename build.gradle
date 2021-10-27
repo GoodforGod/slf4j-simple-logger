@@ -28,6 +28,14 @@ spotless {
     }
 }
 
+sonarqube {
+    properties {
+        property "sonar.host.url", "https://sonarcloud.io"
+        property "sonar.organization", "goodforgod"
+        property "sonar.projectKey", "GoodforGod_slf4j-simple-logger"
+    }
+}
+
 dependencies {
     api "org.slf4j:slf4j-api:1.7.32"
 
@@ -58,7 +66,7 @@ publishing {
             pom {
                 name = "SLF4J Simple Logger"
                 url = "https://github.com/GoodforGod/$artifactId"
-                description = "description."
+                description = "Slf4j simple logger implementation."
 
                 license {
                     name = "Apache License 2.0"

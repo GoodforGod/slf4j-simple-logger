@@ -17,45 +17,22 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-package org.slf4j.impl;
+package io.goodforgod.slf4j.simplelogger;
 
-import org.slf4j.helpers.NOPMDCAdapter;
-import org.slf4j.spi.MDCAdapter;
+import java.io.PrintStream;
 
-/**
- * This implementation is bound to {@link NOPMDCAdapter}.
- *
- * @author Ceki G&uuml;lc&uuml;
- * @author Anton Kurako (GoodforGod)
- * @since 09.10.2021
- */
-public class StaticMDCBinder {
+public class SilentPrintStream extends PrintStream {
 
-    /**
-     * The unique instance of this class.
-     */
-    public static final StaticMDCBinder SINGLETON = new StaticMDCBinder();
+    PrintStream other;
 
-    private StaticMDCBinder() {}
-
-    /**
-     * Return the singleton of this class.
-     * 
-     * @return the StaticMDCBinder singleton
-     * @since 1.7.14
-     */
-    public static StaticMDCBinder getSingleton() {
-        return SINGLETON;
+    public SilentPrintStream(PrintStream ps) {
+        super(ps);
+        other = ps;
     }
 
-    /**
-     * @return Currently this method always returns an instance of {@link StaticMDCBinder}.
-     */
-    public MDCAdapter getMDCA() {
-        return new NOPMDCAdapter();
-    }
+    public void print(String s) {}
 
-    public String getMDCAdapterClassStr() {
-        return NOPMDCAdapter.class.getName();
-    }
+    public void println(String s) {}
+
+    public void println(Object x) {}
 }

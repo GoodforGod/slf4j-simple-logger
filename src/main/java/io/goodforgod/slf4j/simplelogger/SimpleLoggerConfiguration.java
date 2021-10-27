@@ -12,9 +12,8 @@ import org.slf4j.event.Level;
 import org.slf4j.helpers.Util;
 
 /**
- * This class holds configuration values for {@link SimpleLogger}. The values
- * are computed at runtime. See {@link SimpleLogger} documentation for more
- * information.
+ * This class holds configuration values for {@link SimpleLogger}. The values are computed at
+ * runtime. See {@link SimpleLogger} documentation for more information.
  *
  * @author Ceki G&uuml;lc&uuml;
  * @author Scott Sanders
