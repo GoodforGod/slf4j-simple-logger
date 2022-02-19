@@ -47,14 +47,14 @@ public class SimpleLoggerMultithreadedInitializationTest extends MultithreadedIn
     public void setup() {
         System.out.println("THREAD_COUNT=" + THREAD_COUNT);
         System.setErr(sps);
-        System.setProperty(SimpleLoggerProperties.LOG_FILE_KEY, "System.err");
+        System.setProperty(SimpleLoggerProperties.LOG_FILE, "System.err");
         LoggerFactoryFriend.reset();
     }
 
     @AfterEach
     public void tearDown() throws Exception {
         LoggerFactoryFriend.reset();
-        System.clearProperty(SimpleLoggerProperties.LOG_FILE_KEY);
+        System.clearProperty(SimpleLoggerProperties.LOG_FILE);
         System.setErr(oldErr);
     }
 

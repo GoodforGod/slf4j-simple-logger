@@ -9,7 +9,7 @@ import java.io.PrintStream;
  * @author Anton Kurako (GoodforGod)
  * @since 09.10.2021
  */
-class OutputChoice {
+final class OutputChoice {
 
     enum OutputChoiceType {
         SYS_OUT,
@@ -52,7 +52,7 @@ class OutputChoice {
             case FILE:
                 return targetPrintStream;
             default:
-                throw new IllegalArgumentException();
+                throw new IllegalArgumentException("Unknown target print stream");
         }
     }
 }

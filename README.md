@@ -12,9 +12,7 @@ SLF4J library simple logger implementation.
 
 [**Gradle**](https://mvnrepository.com/artifact/io.goodforgod/slf4j-simple-logger)
 ```groovy
-dependencies {
-    implementation "io.goodforgod:slf4j-simple-logger:0.10.0"
-}
+implementation "io.goodforgod:slf4j-simple-logger:0.10.0"
 ```
 
 [**Maven**](https://mvnrepository.com/artifact/io.goodforgod/slf4j-simple-logger)
@@ -49,7 +47,7 @@ org.slf4j.simpleLogger.defaultLogLevel=info
 org.slf4j.simpleLogger.showDateTime=true
 
 # The date and time format to be used in the output messages. The pattern describing the date and time format is the same that is used in java.text.SimpleDateFormat. If the format is not specified or is invalid, will output the number of milliseconds elapsed since startup.
-org.slf4j.simpleLogger.dateTimeFormat=yyyy-MM-dd'T'HH:mm:ss.SSS
+org.slf4j.simpleLogger.dateTimeFormat=uuuu-MM-dd'T'HH:mm:ss.SSS
 
 # Set to true if you want to output the current thread name.
 org.slf4j.simpleLogger.showThreadName=false

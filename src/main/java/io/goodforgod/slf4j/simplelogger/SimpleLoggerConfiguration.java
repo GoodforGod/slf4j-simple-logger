@@ -31,7 +31,8 @@ public class SimpleLoggerConfiguration {
     private static final String SYSTEM_OUT = "System.out";
     private static final String BOOLEAN_TRUE = "true";
 
-    private static final String DATE_TIME_FORMAT_STR_DEFAULT = null;
+    private static final String DATETIME_FORMAT_DEFAULT = "uuuu-MM-dd'T'HH:mm:ss.SSS";
+    private static final DateTimeFormatter FORMATTER_DEFAULT = DateTimeFormatter.ofPattern(DATETIME_FORMAT_DEFAULT);
     private static final int DEFAULT_LOG_LEVEL_DEFAULT = SimpleLogger.LOG_LEVEL_INFO;
     private static final boolean SHOW_DATE_TIME_DEFAULT = false;
     private static final boolean SHOW_THREAD_NAME_DEFAULT = true;
@@ -49,7 +50,7 @@ public class SimpleLoggerConfiguration {
     boolean showLogName = SHOW_LOG_NAME_DEFAULT;
     boolean showShortLogName = SHOW_SHORT_LOG_NAME_DEFAULT;
     boolean levelInBrackets = LEVEL_IN_BRACKETS_DEFAULT;
-    DateTimeFormatter dateFormatter = null;
+    DateTimeFormatter dateFormatter = FORMATTER_DEFAULT;
     OutputChoice outputChoice = null;
     String warnLevelString = Level.WARN.name();
 
@@ -58,23 +59,23 @@ public class SimpleLoggerConfiguration {
     void init() {
         loadProperties();
 
-        final String defaultLogLevelString = getStringProperty(DEFAULT_LOG_LEVEL_KEY, null);
+        final String defaultLogLevelString = getStringProperty(DEFAULT_LOG_LEVEL, null);
         if (defaultLogLevelString != null) {
             this.defaultLogLevel = stringToLevel(defaultLogLevelString);
         }
 
-        this.showLogName = getBooleanProperty(SHOW_LOG_NAME_KEY, SimpleLoggerConfiguration.SHOW_LOG_NAME_DEFAULT);
-        this.showShortLogName = getBooleanProperty(SHOW_SHORT_LOG_NAME_KEY, SHOW_SHORT_LOG_NAME_DEFAULT);
-        this.showDateTime = getBooleanProperty(SHOW_DATE_TIME_KEY, SHOW_DATE_TIME_DEFAULT);
-        this.showThreadName = getBooleanProperty(SHOW_THREAD_NAME_KEY, SHOW_THREAD_NAME_DEFAULT);
-        this.levelInBrackets = getBooleanProperty(LEVEL_IN_BRACKETS_KEY, LEVEL_IN_BRACKETS_DEFAULT);
-        this.warnLevelString = getStringProperty(WARN_LEVEL_STRING_KEY, Level.WARN.name());
-        this.logFile = getStringProperty(LOG_FILE_KEY, logFile);
+        this.showLogName = getBooleanProperty(SHOW_LOG_NAME, SimpleLoggerConfiguration.SHOW_LOG_NAME_DEFAULT);
+        this.showShortLogName = getBooleanProperty(SHOW_SHORT_LOG_NAME, SHOW_SHORT_LOG_NAME_DEFAULT);
+        this.showDateTime = getBooleanProperty(SHOW_DATE_TIME, SHOW_DATE_TIME_DEFAULT);
+        this.showThreadName = getBooleanProperty(SHOW_THREAD_NAME, SHOW_THREAD_NAME_DEFAULT);
+        this.levelInBrackets = getBooleanProperty(LEVEL_IN_BRACKETS, LEVEL_IN_BRACKETS_DEFAULT);
+        this.warnLevelString = getStringProperty(WARN_LEVEL_STRING, Level.WARN.name());
+        this.logFile = getStringProperty(LOG_FILE, logFile);
 
-        final boolean cacheOutputStream = getBooleanProperty(CACHE_OUTPUT_STREAM_STRING_KEY, CACHE_OUTPUT_STREAM_DEFAULT);
+        final boolean cacheOutputStream = getBooleanProperty(CACHE_OUTPUT_STREAM_STRING, CACHE_OUTPUT_STREAM_DEFAULT);
         this.outputChoice = computeOutputChoice(logFile, cacheOutputStream);
 
-        final String dateTimeFormatStr = getStringProperty(DATE_TIME_FORMAT_KEY, DATE_TIME_FORMAT_STR_DEFAULT);
+        final String dateTimeFormatStr = getStringProperty(DATETIME_FORMAT);
         if (dateTimeFormatStr != null) {
             try {
                 this.dateFormatter = DateTimeFormatter.ofPattern(dateTimeFormatStr);
@@ -110,7 +111,7 @@ public class SimpleLoggerConfiguration {
     }
 
     boolean getBooleanProperty(String name, boolean defaultValue) {
-        String prop = getStringProperty(name);
+        final String prop = getStringProperty(name);
         return (prop == null)
                 ? defaultValue
                 : BOOLEAN_TRUE.equalsIgnoreCase(prop);
@@ -127,6 +128,11 @@ public class SimpleLoggerConfiguration {
     }
 
     static int stringToLevel(String levelStr) {
+        final int lvl = stringToLevelOptimized(levelStr);
+        if(lvl != -1) {
+            return lvl;
+        }
+
         if (Level.TRACE.name().equalsIgnoreCase(levelStr)) {
             return SimpleLogger.LOG_LEVEL_TRACE;
         } else if (Level.DEBUG.name().equalsIgnoreCase(levelStr)) {
@@ -142,6 +148,25 @@ public class SimpleLoggerConfiguration {
         }
         // assume INFO by default
         return SimpleLogger.LOG_LEVEL_INFO;
+    }
+
+    private static int stringToLevelOptimized(String level) {
+        switch (level) {
+            case "TRACE":
+                return SimpleLogger.LOG_LEVEL_TRACE;
+            case "DEBUG":
+                return SimpleLogger.LOG_LEVEL_DEBUG;
+            case "INFO":
+                return SimpleLogger.LOG_LEVEL_INFO;
+            case "WARN":
+                return SimpleLogger.LOG_LEVEL_WARN;
+            case "ERROR":
+                return SimpleLogger.LOG_LEVEL_ERROR;
+            case "OFF":
+                return SimpleLogger.LOG_LEVEL_OFF;
+            default:
+                return -1;
+        }
     }
 
     private static OutputChoice computeOutputChoice(String logFile, boolean cacheOutputStream) {

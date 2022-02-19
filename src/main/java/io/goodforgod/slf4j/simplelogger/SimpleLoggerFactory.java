@@ -36,9 +36,11 @@ public class SimpleLoggerFactory implements ILoggerFactory {
 
     public void setLogLevel(Level logLevel, Predicate<Logger> loggerPredicate) {
         if (logLevel != null && loggerPredicate != null) {
-            loggerMap.values().stream()
-                    .filter(loggerPredicate)
-                    .forEach(l -> l.setCurrentLogLevel(logLevel));
+            for (SimpleLogger logger : loggerMap.values()) {
+                if(loggerPredicate.test(logger)) {
+                    logger.setCurrentLogLevel(logLevel);
+                }
+            }
         }
     }
 

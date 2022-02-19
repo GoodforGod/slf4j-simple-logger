@@ -27,7 +27,7 @@ import org.junit.jupiter.api.Test;
 
 class SimpleLoggerTest extends Assertions {
 
-    String A_KEY = SimpleLoggerProperties.LOG_KEY_PREFIX + "a";
+    String A_KEY = SimpleLoggerProperties.PREFIX_LOG + "a";
     PrintStream original = System.out;
     ByteArrayOutputStream bout = new ByteArrayOutputStream();
     PrintStream replacement = new PrintStream(bout);
@@ -40,7 +40,7 @@ class SimpleLoggerTest extends Assertions {
     @AfterEach
     public void after() {
         System.clearProperty(A_KEY);
-        System.clearProperty(SimpleLoggerProperties.CACHE_OUTPUT_STREAM_STRING_KEY);
+        System.clearProperty(SimpleLoggerProperties.CACHE_OUTPUT_STREAM_STRING);
         System.setErr(original);
     }
 
@@ -100,7 +100,7 @@ class SimpleLoggerTest extends Assertions {
     @Test
     void checkUseOfCachedOutputStream() {
         System.setErr(replacement);
-        System.setProperty(SimpleLoggerProperties.CACHE_OUTPUT_STREAM_STRING_KEY, "true");
+        System.setProperty(SimpleLoggerProperties.CACHE_OUTPUT_STREAM_STRING, "true");
         SimpleLogger.init();
         SimpleLogger simpleLogger = new SimpleLogger(this.getClass().getName());
         // change reference to original before logging

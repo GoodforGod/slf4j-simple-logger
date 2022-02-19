@@ -19,9 +19,10 @@
  */
 package io.goodforgod.slf4j.simplelogger;
 
-import static io.goodforgod.slf4j.simplelogger.SimpleLoggerProperties.LOG_KEY_PREFIX;
+import static io.goodforgod.slf4j.simplelogger.SimpleLoggerProperties.PREFIX_LOG;
 
-import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.time.LocalDateTime;
 import org.slf4j.Logger;
 import org.slf4j.event.Level;
@@ -166,13 +167,16 @@ public class SimpleLogger extends MarkerIgnoringBase {
     protected int currentLogLevel;
     protected final int originalLogLevel;
     /** The short name of this simple log instance */
-    private transient String shortLogName = null;
+    private final transient String logName;
+    private final transient String logNameShort;
 
     /**
      * Package access allows only {@link SimpleLoggerFactory} to instantiate SimpleLogger instances.
      */
     SimpleLogger(String name) {
         this.name = name;
+        this.logName = name + " - ";
+        this.logNameShort = computeShortName() + " - ";
         final String levelString = recursivelyComputeLevelString();
         this.currentLogLevel = (levelString != null)
                 ? SimpleLoggerConfiguration.stringToLevel(levelString)
@@ -182,11 +186,7 @@ public class SimpleLogger extends MarkerIgnoringBase {
 
     void setCurrentLogLevel(Level logLevel) {
         final int nextLogLevel = SimpleLoggerConfiguration.stringToLevel(logLevel.name());
-        if (nextLogLevel < originalLogLevel) {
-            this.currentLogLevel = nextLogLevel;
-        } else {
-            this.currentLogLevel = originalLogLevel;
-        }
+        this.currentLogLevel = Math.min(nextLogLevel, originalLogLevel);
     }
 
     String recursivelyComputeLevelString() {
@@ -195,8 +195,8 @@ public class SimpleLogger extends MarkerIgnoringBase {
         int indexOfLastDot = tempName.length();
         while ((levelString == null) && (indexOfLastDot > -1)) {
             tempName = tempName.substring(0, indexOfLastDot);
-            levelString = CONFIG_PARAMS.getStringProperty(LOG_KEY_PREFIX + tempName, null);
-            indexOfLastDot = tempName.lastIndexOf(".");
+            levelString = CONFIG_PARAMS.getStringProperty(PREFIX_LOG + tempName, null);
+            indexOfLastDot = tempName.lastIndexOf('.');
         }
         return levelString;
     }
@@ -213,7 +213,12 @@ public class SimpleLogger extends MarkerIgnoringBase {
             return;
         }
 
-        final StringBuilder builder = new StringBuilder(32);
+        final String threadName = (CONFIG_PARAMS.showThreadName)
+                ? Thread.currentThread().getName()
+                : "";
+
+        final int length = predictBuilderLength(message, threadName);
+        final StringBuilder builder = new StringBuilder(length);
 
         // Append date-time if so configured
         if (CONFIG_PARAMS.showDateTime) {
@@ -232,26 +237,15 @@ public class SimpleLogger extends MarkerIgnoringBase {
             builder.append("] ");
         }
 
-        if (CONFIG_PARAMS.levelInBrackets) {
-            builder.append('[');
-        }
-
         // Append a readable representation of the log level
         final String levelStr = renderLevel(level);
         builder.append(levelStr);
-        if (CONFIG_PARAMS.levelInBrackets) {
-            builder.append(']');
-        }
-        builder.append(' ');
 
         // Append the name of the log instance if so configured
         if (CONFIG_PARAMS.showShortLogName) {
-            if (shortLogName == null) {
-                shortLogName = computeShortName();
-            }
-            builder.append(shortLogName).append(" - ");
+            builder.append(logNameShort);
         } else if (CONFIG_PARAMS.showLogName) {
-            builder.append(name).append(" - ");
+            builder.append(logName);
         }
 
         // Append the message
@@ -259,18 +253,43 @@ public class SimpleLogger extends MarkerIgnoringBase {
         write(builder, t);
     }
 
+    private int predictBuilderLength(String message, String threadName) {
+        int length = message.length() + threadName.length() + 3 + 7;
+
+        if(CONFIG_PARAMS.showDateTime)
+            length += 24;
+
+        if(CONFIG_PARAMS.showShortLogName) {
+            length += logNameShort.length();
+        } else if(CONFIG_PARAMS.showLogName) {
+            length += logName.length();
+        }
+
+        return length;
+    }
+
     protected String renderLevel(int level) {
         switch (level) {
             case LOG_LEVEL_TRACE:
-                return Level.TRACE.name();
+                return (CONFIG_PARAMS.levelInBrackets)
+                        ? "[TRACE] "
+                        : "TRACE ";
             case LOG_LEVEL_DEBUG:
-                return Level.DEBUG.name();
+                return (CONFIG_PARAMS.levelInBrackets)
+                        ? "[DEBUG] "
+                        : "DEBUG ";
             case LOG_LEVEL_INFO:
-                return Level.INFO.name();
+            return (CONFIG_PARAMS.levelInBrackets)
+                    ? "[INFO] "
+                    : "INFO ";
             case LOG_LEVEL_WARN:
-                return Level.WARN.name();
+                return (CONFIG_PARAMS.levelInBrackets)
+                        ? "[WARN] "
+                        : "WARN ";
             case LOG_LEVEL_ERROR:
-                return Level.ERROR.name();
+                return (CONFIG_PARAMS.levelInBrackets)
+                        ? "[ERROR] "
+                        : "ERROR ";
             default:
                 throw new IllegalStateException("Unrecognized level [" + level + "]");
         }
@@ -284,18 +303,14 @@ public class SimpleLogger extends MarkerIgnoringBase {
      * @param throwable to log
      */
     void write(StringBuilder builder, Throwable throwable) {
-        final PrintStream targetStream = CONFIG_PARAMS.outputChoice.getTargetPrintStream();
-        synchronized (CONFIG_PARAMS) {
-            targetStream.println(builder.toString());
-            writeThrowable(throwable, targetStream);
-            targetStream.flush();
+        builder.append(System.lineSeparator());
+        if (throwable != null) {
+            final StringWriter stringWriter = new StringWriter();
+            throwable.printStackTrace(new PrintWriter(stringWriter));
+            builder.append(stringWriter);
         }
-    }
 
-    protected void writeThrowable(Throwable t, PrintStream targetStream) {
-        if (t != null) {
-            t.printStackTrace(targetStream);
-        }
+        CONFIG_PARAMS.outputChoice.getTargetPrintStream().print(builder);
     }
 
     private String getFormattedDate() {
@@ -303,7 +318,7 @@ public class SimpleLogger extends MarkerIgnoringBase {
     }
 
     private String computeShortName() {
-        return name.substring(name.lastIndexOf(".") + 1);
+        return name.substring(name.lastIndexOf('.') + 1);
     }
 
     /**
