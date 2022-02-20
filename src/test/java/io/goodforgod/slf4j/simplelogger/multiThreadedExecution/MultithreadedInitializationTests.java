@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.event.EventRecodingLogger;
 import org.slf4j.helpers.SubstituteLogger;
 
-abstract public class MultithreadedInitializationTest extends Assertions {
+abstract public class MultithreadedInitializationTests extends Assertions {
 
     final protected static int THREAD_COUNT = 4 + Runtime.getRuntime().availableProcessors() * 2;
 

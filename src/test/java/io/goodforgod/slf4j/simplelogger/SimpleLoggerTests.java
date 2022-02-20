@@ -25,7 +25,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class SimpleLoggerTest extends Assertions {
+class SimpleLoggerTests extends Assertions {
 
     String A_KEY = SimpleLoggerProperties.PREFIX_LOG + "a";
     PrintStream original = System.out;
