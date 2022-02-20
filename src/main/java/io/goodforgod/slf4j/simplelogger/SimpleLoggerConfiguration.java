@@ -3,7 +3,10 @@ package io.goodforgod.slf4j.simplelogger;
 import static io.goodforgod.slf4j.simplelogger.SimpleLoggerProperties.*;
 
 import io.goodforgod.slf4j.simplelogger.OutputChoice.OutputChoiceType;
-import java.io.*;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.time.format.DateTimeFormatter;
@@ -107,7 +110,9 @@ public class SimpleLoggerConfiguration {
 
     String getStringProperty(String name, String defaultValue) {
         String prop = getStringProperty(name);
-        return (prop == null) ? defaultValue : prop;
+        return (prop == null)
+                ? defaultValue
+                : prop;
     }
 
     boolean getBooleanProperty(String name, boolean defaultValue) {
@@ -124,12 +129,14 @@ public class SimpleLoggerConfiguration {
         } catch (SecurityException e) {
             // Ignore
         }
-        return (prop == null) ? properties.getProperty(name) : prop;
+        return (prop == null)
+                ? properties.getProperty(name)
+                : prop;
     }
 
     static int stringToLevel(String levelStr) {
         final int lvl = stringToLevelOptimized(levelStr);
-        if(lvl != -1) {
+        if (lvl != -1) {
             return lvl;
         }
 

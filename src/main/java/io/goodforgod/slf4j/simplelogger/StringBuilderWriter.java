@@ -26,9 +26,9 @@ final class StringBuilderWriter extends Writer {
     /**
      * Write a portion of an array of characters.
      *
-     * @param  cbuf  Array of characters
-     * @param  off   Offset from which to start writing characters
-     * @param  len   Number of characters to write
+     * @param cbuf Array of characters
+     * @param off  Offset from which to start writing characters
+     * @param len  Number of characters to write
      */
     @Override
     public void write(char cbuf[], int off, int len) {
@@ -55,20 +55,21 @@ final class StringBuilderWriter extends Writer {
     /**
      * Write a portion of a string.
      *
-     * @param  str  String to be written
-     * @param  off  Offset from which to start writing characters
-     * @param  len  Number of characters to write
+     * @param str String to be written
+     * @param off Offset from which to start writing characters
+     * @param len Number of characters to write
      */
     @Override
-    public void write(String str, int off, int len)  {
+    public void write(String str, int off, int len) {
         builder.append(str, off, off + len);
     }
 
     /**
      * Appends the specified character sequence to this writer.
      *
-     * @param  csq The character sequence to append.  If {@code csq} is {@code null}, then the four characters {@code "null"} are appended to this writer.
-     * @return  self
+     * @param csq The character sequence to append. If {@code csq} is {@code null}, then the four
+     *            characters {@code "null"} are appended to this writer.
+     * @return self
      */
     @Override
     public StringBuilderWriter append(CharSequence csq) {
@@ -79,11 +80,12 @@ final class StringBuilderWriter extends Writer {
     /**
      * Appends a subsequence of the specified character sequence to this writer.
      *
-     * @param  csq The character sequence from which a subsequence will be appended.  If {@code csq} is {@code null}, then characters
-     *         will be appended as if {@code csq} contained the four characters {@code "null"}.
-     * @param  start The index of the first character in the subsequence
-     * @param  end The index of the character following the last character in the subsequence
-     * @return  self
+     * @param csq   The character sequence from which a subsequence will be appended. If {@code csq} is
+     *              {@code null}, then characters
+     *              will be appended as if {@code csq} contained the four characters {@code "null"}.
+     * @param start The index of the first character in the subsequence
+     * @param end   The index of the character following the last character in the subsequence
+     * @return self
      */
     @Override
     public StringBuilderWriter append(CharSequence csq, int start, int end) {

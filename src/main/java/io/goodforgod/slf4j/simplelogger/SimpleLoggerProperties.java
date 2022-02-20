@@ -8,7 +8,7 @@ package io.goodforgod.slf4j.simplelogger;
  */
 public final class SimpleLoggerProperties {
 
-    private SimpleLoggerProperties() { }
+    private SimpleLoggerProperties() {}
 
     public static final String PREFIX = "org.slf4j.simpleLogger.";
 

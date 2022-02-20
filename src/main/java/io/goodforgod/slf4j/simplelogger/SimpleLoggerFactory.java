@@ -37,7 +37,7 @@ public class SimpleLoggerFactory implements ILoggerFactory {
     public void setLogLevel(Level logLevel, Predicate<Logger> loggerPredicate) {
         if (logLevel != null && loggerPredicate != null) {
             for (SimpleLogger logger : loggerMap.values()) {
-                if(loggerPredicate.test(logger)) {
+                if (loggerPredicate.test(logger)) {
                     logger.setCurrentLogLevel(logLevel);
                 }
             }
@@ -46,10 +46,8 @@ public class SimpleLoggerFactory implements ILoggerFactory {
 
     /**
      * Clear the internal logger cache.
-     *
      * This method is intended to be called by classes (in the same package) for testing purposes. This
      * method is internal. It can be modified, renamed or removed at any time without notice.
-     *
      * You are strongly discouraged from calling this method in production code.
      */
     void reset() {

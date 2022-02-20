@@ -21,9 +21,7 @@ package io.goodforgod.slf4j.simplelogger;
 import static io.goodforgod.slf4j.simplelogger.SimpleLoggerProperties.PREFIX_LOG;
 
 import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.time.LocalDateTime;
-
 import org.slf4j.Logger;
 import org.slf4j.event.Level;
 import org.slf4j.event.LoggingEvent;
@@ -38,62 +36,48 @@ import org.slf4j.spi.LocationAwareLogger;
  * loggers, to the console ({@code System.err}). The following system properties are supported to
  * configure the behavior of this logger:
  * </p>
- *
  * <ul>
  * <li><code>org.slf4j.simpleLogger.logFile</code> - The output target which can be the
  * <em>path</em> to a file, or the special values "System.out" and "System.err". Default is
  * "System.err".</li>
- *
  * <li><code>org.slf4j.simpleLogger.cacheOutputStream</code> - If the output target is set to
  * "System.out" or "System.err" (see preceding entry), by default, logs will be output to the latest
  * value referenced by <code>System.out/err</code> variables. By setting this parameter to true, the
  * output stream will be cached, i.e. assigned once at initialization time and re-used independently
  * of the current value referenced by <code>System.out/err</code>.</li>
- *
  * <li><code>org.slf4j.simpleLogger.defaultLogLevel</code> - Default log level for all instances of
  * SimpleLogger. Must be one of ("trace", "debug", "info", "warn", "error" or "off"). If not
  * specified, defaults to "info".</li>
- *
  * <li><code>org.slf4j.simpleLogger.log.<em>a.b.c</em></code> - Logging detail level for a
  * SimpleLogger instance named "a.b.c". Right-side value must be one of "trace", "debug", "info",
  * "warn", "error" or "off". When a SimpleLogger named "a.b.c" is initialized, its level is assigned
  * from this property. If unspecified, the level of nearest parent logger will be used, and if none
  * is set, then the value specified by <code>org.slf4j.simpleLogger.defaultLogLevel</code> will be
  * used.</li>
- *
  * <li><code>org.slf4j.simpleLogger.showDateTime</code> - Set to <code>true</code> if you want the
  * current date and time to be included in output messages. Default is <code>false</code></li>
- *
  * <li><code>org.slf4j.simpleLogger.dateTimeFormat</code> - The date and time format to be used in
  * the output messages. The pattern describing the date and time format is defined by
  * <a href= "http://docs.oracle.com/javase/1.5.0/docs/api/java/text/SimpleDateFormat.html">
  * <code>SimpleDateFormat</code></a>. If the format is not specified or is invalid, the number of
  * milliseconds since start up will be output.</li>
- *
  * <li><code>org.slf4j.simpleLogger.showThreadName</code> -Set to <code>true</code> if you want to
  * output the current thread name. Defaults to <code>true</code>.</li>
- *
  * <li><code>org.slf4j.simpleLogger.showLogName</code> - Set to <code>true</code> if you want the
  * Logger instance name to be included in output messages. Defaults to <code>true</code>.</li>
- *
  * <li><code>org.slf4j.simpleLogger.showShortLogName</code> - Set to <code>true</code> if you want
  * the last component of the name to be included in output messages. Defaults to
  * <code>false</code>.</li>
- *
  * <li><code>org.slf4j.simpleLogger.levelInBrackets</code> - Should the level string be output in
  * brackets? Defaults to <code>false</code>.</li>
- *
  * <li><code>org.slf4j.simpleLogger.warnLevelString</code> - The string value output for the warn
  * level. Defaults to <code>WARN</code>.</li>
- *
  * </ul>
- *
  * <p>
  * In addition to looking for system properties with the names specified above, this implementation
  * also checks for a class loader resource named <code>"simplelogger.properties"</code>, and
  * includes any matching definitions from this resource (if it exists).
  * </p>
- *
  * <p>
  * With no configuration, the default output includes the relative time in milliseconds, thread
  * name, the level, logger name, and the message followed by the line separator for the host. In
@@ -115,7 +99,6 @@ import org.slf4j.spi.LocationAwareLogger;
  *   at org.log4j.examples.Sort.main(Sort.java:64)
  * 467 [main] INFO  examples.Sort - Exiting main method.
  * </pre>
- *
  * <p>
  * This implementation is heavily inspired by <a href="http://commons.apache.org/logging/">Apache
  * Commons Logging</a>'s SimpleLog.
@@ -140,9 +123,8 @@ public class SimpleLogger extends MarkerIgnoringBase {
     protected static final int LOG_LEVEL_INFO = LocationAwareLogger.INFO_INT;
     protected static final int LOG_LEVEL_WARN = LocationAwareLogger.WARN_INT;
     protected static final int LOG_LEVEL_ERROR = LocationAwareLogger.ERROR_INT;
-    // The OFF level can only be used in configuration files to disable logging.
-    // It has no printing method associated with it in o.s.Logger interface.
     protected static final int LOG_LEVEL_OFF = LOG_LEVEL_ERROR + 10;
+
     private static final SimpleLoggerConfiguration CONFIG = new SimpleLoggerConfiguration();
 
     private static boolean isInitialized = false;
@@ -156,8 +138,9 @@ public class SimpleLogger extends MarkerIgnoringBase {
         init();
     }
 
-    // external software might be invoking this method directly. Do not rename or
-    // change its semantics.
+    /**
+     * external software might be invoking this method directly. Do not rename or change its semantics.
+     */
     static void init() {
         CONFIG.init();
     }
@@ -265,9 +248,9 @@ public class SimpleLogger extends MarkerIgnoringBase {
     private int predictBuilderLength(String message, String threadName) {
         int length = 12;
 
-        if(message != null)
+        if (message != null)
             length += message.length();
-        if(threadName != null)
+        if (threadName != null)
             length += threadName.length();
         if (CONFIG.showDateTime)
             length += 24;
@@ -319,7 +302,7 @@ public class SimpleLogger extends MarkerIgnoringBase {
      * To avoid intermingling of log messages and associated stack traces, the two operations are done
      * in a synchronized block.
      *
-     * @param builder   of logging message
+     * @param builder of logging message
      */
     void write(StringBuilder builder) {
         CONFIG.outputChoice.getTargetPrintStream().print(builder);
@@ -369,12 +352,12 @@ public class SimpleLogger extends MarkerIgnoringBase {
 
     /**
      * Is the given log level currently enabled?
+     * log level are numerically ordered so can use simple numeric comparison
      *
      * @param logLevel is this level enabled?
      * @return true if enabled
      */
     protected boolean isLevelEnabled(int logLevel) {
-        // log level are numerically ordered so can use simple numeric comparison
         return (logLevel >= currentLogLevel);
     }
 
