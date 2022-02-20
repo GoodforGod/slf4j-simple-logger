@@ -11,7 +11,7 @@ import org.slf4j.helpers.Util;
  * @author Anton Kurako (GoodforGod)
  * @since 20.02.2022
  */
-public final class MessageFormatter {
+final class MessageFormatter {
 
     private static class FormatBuilder {
 
