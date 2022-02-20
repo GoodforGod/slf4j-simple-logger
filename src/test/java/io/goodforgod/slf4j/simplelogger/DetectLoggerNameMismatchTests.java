@@ -70,7 +70,7 @@ class DetectLoggerNameMismatchTests extends Assertions {
         final String res = byteArrayOutputStream.toString().strip();
         final String[] lines = res.split("\n");
         assertEquals(
-                "SLF4J: Detected logger name mismatch. Given name: \"java.lang.String\"; computed name: \"io.goodforgod.slf4j.simplelogger.DetectLoggerNameMismatchTest\".",
+                "SLF4J: Detected logger name mismatch. Given name: \"java.lang.String\"; computed name: \"io.goodforgod.slf4j.simplelogger.DetectLoggerNameMismatchTests\".",
                 lines[0].strip());
         assertEquals("SLF4J: See http://www.slf4j.org/codes.html#loggerNameMismatch for an explanation", lines[1].strip());
     }

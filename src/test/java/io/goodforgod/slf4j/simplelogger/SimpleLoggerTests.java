@@ -94,7 +94,7 @@ class SimpleLoggerTests extends Assertions {
         simpleLogger.info("hello");
         replacement.flush();
         final String res = bout.toString().strip();
-        assertEquals("[Test worker] INFO io.goodforgod.slf4j.simplelogger.SimpleLoggerTest - hello", res);
+        assertEquals("[Test worker] INFO io.goodforgod.slf4j.simplelogger.SimpleLoggerTests - hello", res);
     }
 
     @Test
@@ -109,6 +109,6 @@ class SimpleLoggerTests extends Assertions {
         simpleLogger.info("hello");
         replacement.flush();
         final String res = bout.toString().strip();
-        assertEquals("[Test worker] INFO io.goodforgod.slf4j.simplelogger.SimpleLoggerTest - hello", res);
+        assertEquals("[Test worker] INFO io.goodforgod.slf4j.simplelogger.SimpleLoggerTests - hello", res);
     }
 }
