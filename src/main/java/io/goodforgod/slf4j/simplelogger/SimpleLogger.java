@@ -27,7 +27,6 @@ import org.slf4j.event.Level;
 import org.slf4j.event.LoggingEvent;
 import org.slf4j.helpers.FormattingTuple;
 import org.slf4j.helpers.MarkerIgnoringBase;
-import org.slf4j.helpers.MessageFormatter;
 import org.slf4j.spi.LocationAwareLogger;
 
 /**
@@ -346,7 +345,7 @@ public class SimpleLogger extends MarkerIgnoringBase {
             return;
         }
 
-        FormattingTuple tp = MessageFormatter.arrayFormat(format, arguments);
+        FormattingTuple tp = MessageFormatter.formatArray(format, arguments);
         log(level, tp.getMessage(), tp.getThrowable());
     }
 
@@ -578,7 +577,7 @@ public class SimpleLogger extends MarkerIgnoringBase {
             return;
         }
 
-        FormattingTuple tp = MessageFormatter.arrayFormat(event.getMessage(), event.getArgumentArray(), event.getThrowable());
+        FormattingTuple tp = MessageFormatter.format(event.getMessage(), event.getArgumentArray());
         log(levelInt, tp.getMessage(), event.getThrowable());
     }
 }
