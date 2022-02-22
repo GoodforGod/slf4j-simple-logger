@@ -10,6 +10,7 @@ import java.io.PrintStream;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.time.format.DateTimeFormatter;
+import java.util.Optional;
 import java.util.Properties;
 import org.slf4j.event.Level;
 import org.slf4j.helpers.Util;
@@ -36,26 +37,34 @@ public class SimpleLoggerConfiguration {
 
     private static final String DATETIME_FORMAT_DEFAULT = "uuuu-MM-dd'T'HH:mm:ss.SSS";
     private static final DateTimeFormatter FORMATTER_DEFAULT = DateTimeFormatter.ofPattern(DATETIME_FORMAT_DEFAULT);
-    private static final int DEFAULT_LOG_LEVEL_DEFAULT = SimpleLogger.LOG_LEVEL_INFO;
-    private static final boolean SHOW_DATE_TIME_DEFAULT = false;
-    private static final boolean SHOW_THREAD_NAME_DEFAULT = true;
-    private static final boolean SHOW_LOG_NAME_DEFAULT = true;
-    private static final boolean SHOW_SHORT_LOG_NAME_DEFAULT = false;
-    private static final boolean LEVEL_IN_BRACKETS_DEFAULT = false;
     private static final String LOG_FILE_DEFAULT = SYSTEM_ERR;
     private static final boolean CACHE_OUTPUT_STREAM_DEFAULT = false;
 
+    private static final boolean LEVEL_IN_BRACKETS_DEFAULT = true;
+    private static final boolean SHOW_THREAD_NAME_DEFAULT = false;
+    private static final boolean SHOW_LOG_NAME_DEFAULT = true;
+    private static final boolean SHOW_IMPLEMENTATION_VERSION_DEFAULT = false;
+    private static final boolean SHOW_SHORT_LOG_NAME_DEFAULT = false;
+
+    private static final boolean SHOW_DATE_TIME_DEFAULT = true;
+
+    final long initializeTime = System.currentTimeMillis();
+
     private String logFile = LOG_FILE_DEFAULT;
 
-    int defaultLogLevel = DEFAULT_LOG_LEVEL_DEFAULT;
-    boolean showDateTime = SHOW_DATE_TIME_DEFAULT;
+    OutputChoice outputChoice = null;
+    int defaultLogLevel = SimpleLogger.LOG_LEVEL_INFO;
+
+    boolean levelInBrackets = LEVEL_IN_BRACKETS_DEFAULT;
     boolean showThreadName = SHOW_THREAD_NAME_DEFAULT;
     boolean showLogName = SHOW_LOG_NAME_DEFAULT;
+    boolean showImplementationVersion = SHOW_IMPLEMENTATION_VERSION_DEFAULT;
+    Integer logNameLength = null;
     boolean showShortLogName = SHOW_SHORT_LOG_NAME_DEFAULT;
-    boolean levelInBrackets = LEVEL_IN_BRACKETS_DEFAULT;
+    boolean showDateTime = SHOW_DATE_TIME_DEFAULT;
     DateTimeFormatter dateFormatter = FORMATTER_DEFAULT;
-    OutputChoice outputChoice = null;
-    String warnLevelString = Level.WARN.name();
+    DateTimeOutputType dateTimeOutputType = DateTimeOutputType.DATE_TIME;
+    String implementationVersion = SimpleLoggerConfiguration.class.getPackage().getImplementationVersion();
 
     private final Properties properties = new Properties();
 
@@ -64,26 +73,43 @@ public class SimpleLoggerConfiguration {
 
         final String defaultLogLevelString = getStringProperty(DEFAULT_LOG_LEVEL, null);
         if (defaultLogLevelString != null) {
-            this.defaultLogLevel = stringToLevel(defaultLogLevelString);
+            this.defaultLogLevel = tryStringToLevel(defaultLogLevelString).orElse(SimpleLogger.LOG_LEVEL_INFO);
         }
 
+        this.showImplementationVersion = getBooleanProperty(SHOW_IMPLEMENTATION_VERSION, SHOW_IMPLEMENTATION_VERSION_DEFAULT)
+                && implementationVersion != null
+                && !"null".equalsIgnoreCase(implementationVersion);
+        this.levelInBrackets = getBooleanProperty(LEVEL_IN_BRACKETS, LEVEL_IN_BRACKETS_DEFAULT);
         this.showLogName = getBooleanProperty(SHOW_LOG_NAME, SimpleLoggerConfiguration.SHOW_LOG_NAME_DEFAULT);
         this.showShortLogName = getBooleanProperty(SHOW_SHORT_LOG_NAME, SHOW_SHORT_LOG_NAME_DEFAULT);
-        this.showDateTime = getBooleanProperty(SHOW_DATE_TIME, SHOW_DATE_TIME_DEFAULT);
         this.showThreadName = getBooleanProperty(SHOW_THREAD_NAME, SHOW_THREAD_NAME_DEFAULT);
-        this.levelInBrackets = getBooleanProperty(LEVEL_IN_BRACKETS, LEVEL_IN_BRACKETS_DEFAULT);
-        this.warnLevelString = getStringProperty(WARN_LEVEL_STRING, Level.WARN.name());
-        this.logFile = getStringProperty(LOG_FILE, logFile);
+        this.logNameLength = getIntProperty(SHOW_LOG_NAME_LENGTH)
+                .filter(i -> i > 0)
+                .orElse(null);
 
+        this.logFile = getStringProperty(LOG_FILE, logFile);
         final boolean cacheOutputStream = getBooleanProperty(CACHE_OUTPUT_STREAM_STRING, CACHE_OUTPUT_STREAM_DEFAULT);
         this.outputChoice = computeOutputChoice(logFile, cacheOutputStream);
 
-        final String dateTimeFormatStr = getStringProperty(DATETIME_FORMAT);
-        if (dateTimeFormatStr != null) {
-            try {
-                this.dateFormatter = DateTimeFormatter.ofPattern(dateTimeFormatStr);
-            } catch (IllegalArgumentException e) {
-                Util.report("Bad date format in " + CONFIGURATION_FILE + "; will output relative time", e);
+        this.showDateTime = getBooleanProperty(SHOW_DATE_TIME, SHOW_DATE_TIME_DEFAULT);
+        this.dateTimeOutputType = Optional.ofNullable(getStringProperty(DATE_TIME_OUTPUT_TYPE))
+                .map(s -> {
+                    try {
+                        return DateTimeOutputType.valueOf(s);
+                    } catch (IllegalArgumentException e) {
+                        return DateTimeOutputType.DATE_TIME;
+                    }
+                })
+                .orElse(DateTimeOutputType.DATE_TIME);
+
+        if (DateTimeOutputType.DATE_TIME.equals(this.dateTimeOutputType)) {
+            final String dateTimeFormatStr = getStringProperty(DATE_TIME_FORMAT);
+            if (dateTimeFormatStr != null) {
+                try {
+                    this.dateFormatter = DateTimeFormatter.ofPattern(dateTimeFormatStr);
+                } catch (IllegalArgumentException e) {
+                    Util.report("Bad date format in " + CONFIGURATION_FILE + "; will output relative time", e);
+                }
             }
         }
     }
@@ -122,6 +148,18 @@ public class SimpleLoggerConfiguration {
                 : BOOLEAN_TRUE.equalsIgnoreCase(prop);
     }
 
+    Optional<Integer> getIntProperty(String name) {
+        final String prop = getStringProperty(name);
+        if (prop == null)
+            return Optional.empty();
+
+        try {
+            return Optional.of(Integer.parseInt(prop));
+        } catch (NumberFormatException e) {
+            return Optional.empty();
+        }
+    }
+
     String getStringProperty(String name) {
         String prop = null;
         try {
@@ -134,7 +172,11 @@ public class SimpleLoggerConfiguration {
                 : prop;
     }
 
-    static int stringToLevel(String levelStr) {
+    static Optional<Integer> tryStringToLevel(String levelStr) {
+        return Optional.ofNullable(stringToLevel(levelStr));
+    }
+
+    static Integer stringToLevel(String levelStr) {
         final int lvl = stringToLevelOptimized(levelStr);
         if (lvl != -1) {
             return lvl;
@@ -153,8 +195,8 @@ public class SimpleLoggerConfiguration {
         } else if ("off".equalsIgnoreCase(levelStr)) {
             return SimpleLogger.LOG_LEVEL_OFF;
         }
-        // assume INFO by default
-        return SimpleLogger.LOG_LEVEL_INFO;
+
+        return null;
     }
 
     private static int stringToLevelOptimized(String level) {

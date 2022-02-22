@@ -18,12 +18,12 @@
  */
 package io.goodforgod.slf4j.simplelogger;
 
+import static io.goodforgod.slf4j.simplelogger.SimpleLoggerProperties.DateTimeOutputType.*;
 import static io.goodforgod.slf4j.simplelogger.SimpleLoggerProperties.PREFIX_LOG;
 
 import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import org.slf4j.Logger;
-import org.slf4j.event.Level;
 import org.slf4j.event.LoggingEvent;
 import org.slf4j.helpers.FormattingTuple;
 import org.slf4j.helpers.MarkerIgnoringBase;
@@ -115,8 +115,6 @@ public class SimpleLogger extends MarkerIgnoringBase {
 
     private static final long serialVersionUID = -632788891211436180L;
 
-    private static final long START_TIME = System.currentTimeMillis();
-
     protected static final int LOG_LEVEL_TRACE = LocationAwareLogger.TRACE_INT;
     protected static final int LOG_LEVEL_DEBUG = LocationAwareLogger.DEBUG_INT;
     protected static final int LOG_LEVEL_INFO = LocationAwareLogger.INFO_INT;
@@ -144,10 +142,14 @@ public class SimpleLogger extends MarkerIgnoringBase {
         CONFIG.init();
     }
 
-    /** The current log level */
+    /**
+     * The current log level
+     */
     protected int currentLogLevel;
     protected final int originalLogLevel;
-    /** The short name of this simple log instance */
+    /**
+     * The short name of this simple log instance
+     */
     private final transient String logName;
     private final transient String logNameShort;
 
@@ -156,18 +158,20 @@ public class SimpleLogger extends MarkerIgnoringBase {
      */
     SimpleLogger(String name) {
         this.name = name;
-        this.logName = name + " - ";
         this.logNameShort = computeShortName() + " - ";
+        this.logName = (CONFIG.logNameLength == null)
+                ? name + " - "
+                : ClassNameAbbreviator.abbreviate(name, CONFIG.logNameLength) + " - ";
         final String levelString = recursivelyComputeLevelString();
         this.currentLogLevel = (levelString != null)
-                ? SimpleLoggerConfiguration.stringToLevel(levelString)
+                ? SimpleLoggerConfiguration.tryStringToLevel(levelString).orElse(LOG_LEVEL_INFO)
                 : CONFIG.defaultLogLevel;
         this.originalLogLevel = this.currentLogLevel;
     }
 
-    void setCurrentLogLevel(Level logLevel) {
-        final int nextLogLevel = SimpleLoggerConfiguration.stringToLevel(logLevel.name());
-        this.currentLogLevel = Math.min(nextLogLevel, originalLogLevel);
+    void setCurrentLogLevel(String logLevel) {
+        this.currentLogLevel = SimpleLoggerConfiguration.tryStringToLevel(logLevel)
+                .orElse(this.currentLogLevel);
     }
 
     String recursivelyComputeLevelString() {
@@ -203,12 +207,21 @@ public class SimpleLogger extends MarkerIgnoringBase {
 
         // Append date-time if so configured
         if (CONFIG.showDateTime) {
-            if (CONFIG.dateFormatter != null) {
+            if (DATE_TIME.equals(CONFIG.dateTimeOutputType)) {
                 builder.append(getFormattedDate());
-            } else {
-                builder.append(System.currentTimeMillis() - START_TIME);
+            } else if (UNIX_TIME.equals(CONFIG.dateTimeOutputType)) {
+                builder.append(System.currentTimeMillis());
+            } else if (MILLIS_FROM_START.equals(CONFIG.dateTimeOutputType)) {
+                builder.append(System.currentTimeMillis() - CONFIG.initializeTime);
             }
+
             builder.append(' ');
+        }
+
+        if (CONFIG.showImplementationVersion) {
+            builder.append('[');
+            builder.append(CONFIG.implementationVersion);
+            builder.append("] ");
         }
 
         // Append current thread name if so configured
@@ -399,12 +412,16 @@ public class SimpleLogger extends MarkerIgnoringBase {
         formatAndLog(LOG_LEVEL_TRACE, format, argArray);
     }
 
-    /** Log a message of level TRACE, including an exception. */
+    /**
+     * Log a message of level TRACE, including an exception.
+     */
     public void trace(String msg, Throwable t) {
         log(LOG_LEVEL_TRACE, msg, t);
     }
 
-    /** Are {@code debug} messages currently enabled? */
+    /**
+     * Are {@code debug} messages currently enabled?
+     */
     public boolean isDebugEnabled() {
         return isLevelEnabled(LOG_LEVEL_DEBUG);
     }
@@ -441,12 +458,16 @@ public class SimpleLogger extends MarkerIgnoringBase {
         formatAndLog(LOG_LEVEL_DEBUG, format, argArray);
     }
 
-    /** Log a message of level DEBUG, including an exception. */
+    /**
+     * Log a message of level DEBUG, including an exception.
+     */
     public void debug(String msg, Throwable t) {
         log(LOG_LEVEL_DEBUG, msg, t);
     }
 
-    /** Are {@code info} messages currently enabled? */
+    /**
+     * Are {@code info} messages currently enabled?
+     */
     public boolean isInfoEnabled() {
         return isLevelEnabled(LOG_LEVEL_INFO);
     }
@@ -482,12 +503,16 @@ public class SimpleLogger extends MarkerIgnoringBase {
         formatAndLog(LOG_LEVEL_INFO, format, argArray);
     }
 
-    /** Log a message of level INFO, including an exception. */
+    /**
+     * Log a message of level INFO, including an exception.
+     */
     public void info(String msg, Throwable t) {
         log(LOG_LEVEL_INFO, msg, t);
     }
 
-    /** Are {@code warn} messages currently enabled? */
+    /**
+     * Are {@code warn} messages currently enabled?
+     */
     public boolean isWarnEnabled() {
         return isLevelEnabled(LOG_LEVEL_WARN);
     }
@@ -524,12 +549,16 @@ public class SimpleLogger extends MarkerIgnoringBase {
         formatAndLog(LOG_LEVEL_WARN, format, argArray);
     }
 
-    /** Log a message of level WARN, including an exception. */
+    /**
+     * Log a message of level WARN, including an exception.
+     */
     public void warn(String msg, Throwable t) {
         log(LOG_LEVEL_WARN, msg, t);
     }
 
-    /** Are {@code error} messages currently enabled? */
+    /**
+     * Are {@code error} messages currently enabled?
+     */
     public boolean isErrorEnabled() {
         return isLevelEnabled(LOG_LEVEL_ERROR);
     }
@@ -566,7 +595,9 @@ public class SimpleLogger extends MarkerIgnoringBase {
         formatAndLog(LOG_LEVEL_ERROR, format, argArray);
     }
 
-    /** Log a message of level ERROR, including an exception. */
+    /**
+     * Log a message of level ERROR, including an exception.
+     */
     public void error(String msg, Throwable t) {
         log(LOG_LEVEL_ERROR, msg, t);
     }

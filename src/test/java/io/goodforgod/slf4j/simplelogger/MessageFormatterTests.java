@@ -22,6 +22,25 @@ class MessageFormatterTests extends Assertions {
     void nullMessageResultNull() {
         String result = MessageFormatter.format(null, i1).getMessage();
         assertNull(result);
+
+        result = MessageFormatter.format(null, i1, i2).getMessage();
+        assertNull(result);
+
+        result = MessageFormatter.formatArray(null, a0).getMessage();
+        assertNull(result);
+    }
+
+    @Test
+    void messageEqualFormatterCauseNoPlaceholders() {
+        final String msg = "no placeholder";
+        String result = MessageFormatter.format(msg, i1).getMessage();
+        assertEquals(msg, result);
+
+        result = MessageFormatter.format(msg, i1, i2).getMessage();
+        assertEquals(msg, result);
+
+        result = MessageFormatter.formatArray(msg, a0).getMessage();
+        assertEquals(msg, result);
     }
 
     @Test
@@ -214,6 +233,22 @@ class MessageFormatterTests extends Assertions {
         // double[]
         result = MessageFormatter.formatArray("{}{}", new Object[] { "a", new double[] { 1, 2 } }).getMessage();
         assertEquals("a[1.0, 2.0]", result);
+
+        // long[]
+        result = MessageFormatter.formatArray("{}{}", new Object[] { "a", new long[] { 1L, 2L } }).getMessage();
+        assertEquals("a[1, 2]", result);
+
+        // char[]
+        result = MessageFormatter.formatArray("{}{}", new Object[] { "a", new char[] { 'a', 'b' } }).getMessage();
+        assertEquals("a[a, b]", result);
+
+        // short[]
+        result = MessageFormatter.formatArray("{}{}", new Object[] { "a", new short[] { 1, 2 } }).getMessage();
+        assertEquals("a[1, 2]", result);
+
+        // boolean[]
+        result = MessageFormatter.formatArray("{}{}", new Object[] { "a", new boolean[] { true, false } }).getMessage();
+        assertEquals("a[true, false]", result);
     }
 
     @Test

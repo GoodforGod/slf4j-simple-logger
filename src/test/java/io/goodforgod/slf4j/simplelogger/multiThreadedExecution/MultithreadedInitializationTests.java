@@ -22,8 +22,6 @@ abstract public class MultithreadedInitializationTests extends Assertions {
     protected final AtomicLong eventCount = new AtomicLong(0);
     final private CyclicBarrier barrier = new CyclicBarrier(THREAD_COUNT + 1);
 
-    int diff = new Random().nextInt(10000);
-
     @Test
     public void multiThreadedInitialization() throws InterruptedException, BrokenBarrierException {
         @SuppressWarnings("unused")

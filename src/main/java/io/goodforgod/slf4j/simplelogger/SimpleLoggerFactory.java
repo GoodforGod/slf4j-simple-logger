@@ -26,15 +26,16 @@ public class SimpleLoggerFactory implements ILoggerFactory {
     /**
      * Return an appropriate {@link SimpleLogger} instance by name.
      */
+    @Override
     public Logger getLogger(String name) {
         return loggerMap.computeIfAbsent(name, k -> new SimpleLogger(name));
     }
 
-    public void setLogLevel(Level logLevel) {
+    public void setLogLevel(String logLevel) {
         setLogLevel(logLevel, l -> true);
     }
 
-    public void setLogLevel(Level logLevel, Predicate<Logger> loggerPredicate) {
+    public void setLogLevel(String logLevel, Predicate<Logger> loggerPredicate) {
         if (logLevel != null && loggerPredicate != null) {
             for (SimpleLogger logger : loggerMap.values()) {
                 if (loggerPredicate.test(logger)) {
@@ -42,6 +43,14 @@ public class SimpleLoggerFactory implements ILoggerFactory {
                 }
             }
         }
+    }
+
+    public void setLogLevel(Level logLevel) {
+        setLogLevel(logLevel, l -> true);
+    }
+
+    public void setLogLevel(Level logLevel, Predicate<Logger> loggerPredicate) {
+        setLogLevel(logLevel.name(), loggerPredicate);
     }
 
     /**
