@@ -224,19 +224,19 @@ public class SimpleLogger extends MarkerIgnoringBase {
             builder.append("] ");
         }
 
-        // Append current thread name if so configured
-        if (CONFIG.showThreadName) {
-            builder.append('[');
-            builder.append(threadName);
-            builder.append("] ");
-        }
-
         // Append a readable representation of the log level
         final String levelStr = (CONFIG.levelInBrackets)
                 ? renderLevelInBrackets(level)
                 : renderLevel(level);
 
         builder.append(levelStr);
+
+        // Append current thread name if so configured
+        if (CONFIG.showThreadName) {
+            builder.append('[');
+            builder.append(threadName);
+            builder.append("] ");
+        }
 
         // Append the name of the log instance if so configured
         if (CONFIG.showShortLogName) {
@@ -258,7 +258,7 @@ public class SimpleLogger extends MarkerIgnoringBase {
     }
 
     private int predictBuilderLength(String message, String threadName) {
-        int length = 12;
+        int length = 14;
 
         if (message != null)
             length += message.length();
@@ -267,6 +267,8 @@ public class SimpleLogger extends MarkerIgnoringBase {
         if (CONFIG.showDateTime)
             length += 24;
 
+        if (CONFIG.showImplementationVersion)
+            length += CONFIG.implementationVersion.length() + 4;
         if (CONFIG.showShortLogName) {
             length += logNameShort.length();
         } else if (CONFIG.showLogName) {
@@ -318,7 +320,6 @@ public class SimpleLogger extends MarkerIgnoringBase {
      */
     void write(StringBuilder builder) {
         CONFIG.outputChoice.getTargetPrintStream().print(builder);
-        CONFIG.outputChoice.getTargetPrintStream().flush();
     }
 
     private String getFormattedDate() {

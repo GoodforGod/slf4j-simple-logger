@@ -3,10 +3,7 @@ package io.goodforgod.slf4j.simplelogger;
 import static io.goodforgod.slf4j.simplelogger.SimpleLoggerProperties.*;
 
 import io.goodforgod.slf4j.simplelogger.OutputChoice.OutputChoiceType;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintStream;
+import java.io.*;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.time.format.DateTimeFormatter;
@@ -232,7 +229,7 @@ public class SimpleLoggerConfiguration {
                 return new OutputChoice(OutputChoiceType.SYS_OUT);
             }
         } else {
-            try (PrintStream printStream = new PrintStream(new FileOutputStream(logFile))) {
+            try (PrintStream printStream = new PrintStream(new FileOutputStream(logFile), true)) {
                 return new OutputChoice(printStream);
             } catch (IOException e) {
                 Util.report("Could not open [" + logFile + "]. Defaulting to System.err", e);
