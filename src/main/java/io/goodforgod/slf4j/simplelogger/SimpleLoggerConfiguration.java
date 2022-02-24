@@ -7,8 +7,8 @@ import java.io.*;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.time.format.DateTimeFormatter;
-import java.util.Optional;
-import java.util.Properties;
+import java.util.*;
+import java.util.stream.Collectors;
 import org.slf4j.event.Level;
 import org.slf4j.helpers.Util;
 
@@ -62,6 +62,10 @@ public class SimpleLoggerConfiguration {
     DateTimeFormatter dateFormatter = FORMATTER_DEFAULT;
     DateTimeOutputType dateTimeOutputType = DateTimeOutputType.DATE_TIME;
     String implementationVersion = SimpleLoggerConfiguration.class.getPackage().getImplementationVersion();
+    List<String> environments;
+    boolean environmentShowNullable = false;
+    boolean environmentShowName = true;
+    String environmentsOnStart = null;
 
     private final Properties properties = new Properties();
 
@@ -87,6 +91,42 @@ public class SimpleLoggerConfiguration {
         this.logFile = getStringProperty(LOG_FILE, logFile);
         final boolean cacheOutputStream = getBooleanProperty(CACHE_OUTPUT_STREAM_STRING, CACHE_OUTPUT_STREAM_DEFAULT);
         this.outputChoice = computeOutputChoice(logFile, cacheOutputStream);
+
+        this.environments = Optional.ofNullable(getStringProperty(ENVIRONMENTS))
+                .filter(envs -> !envs.isBlank())
+                .map(envs -> {
+                    final List<String> envsToOutput = Arrays.stream(envs.split(","))
+                            .map(String::strip)
+                            .filter(env -> !env.isEmpty())
+                            .collect(Collectors.toList());
+
+                    return List.copyOf(envsToOutput);
+                })
+                .orElse(Collections.emptyList());
+
+        this.environmentShowNullable = getBooleanProperty(ENVIRONMENT_SHOW_NULLABLE, false);
+        this.environmentShowName = getBooleanProperty(ENVIRONMENT_SHOW_NAME, false);
+
+        final boolean rememberEnvsOnStart = getBooleanProperty(ENVIRONMENT_REMEMBER_ON_START, false);
+        if (rememberEnvsOnStart) {
+            final String envsOnStart = this.environments.stream()
+                    .map(env -> {
+                        final String envValue = System.getenv(env);
+                        if (envValue == null && !this.environmentShowNullable) {
+                            return null;
+                        }
+
+                        return this.environmentShowName
+                                ? env + "=" + envValue
+                                : envValue;
+                    })
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.joining(", "));
+
+            if (!envsOnStart.isEmpty()) {
+                this.environmentsOnStart = "[" + envsOnStart + "] ";
+            }
+        }
 
         this.showDateTime = getBooleanProperty(SHOW_DATE_TIME, SHOW_DATE_TIME_DEFAULT);
         this.dateTimeOutputType = Optional.ofNullable(getStringProperty(DATE_TIME_OUTPUT_TYPE))

@@ -5,8 +5,6 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.helpers.FormattingTuple;
 
 /**
- * Description.
- *
  * @author Anton Kurako (GoodforGod)
  * @since 20.02.2022
  */

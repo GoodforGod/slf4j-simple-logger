@@ -30,6 +30,11 @@ public final class SimpleLoggerProperties {
     public static final String SHOW_THREAD_NAME = PREFIX + "showThreadName";
     public static final String SHOW_IMPLEMENTATION_VERSION = PREFIX + "showImplementationVersion";
 
+    public static final String ENVIRONMENTS = PREFIX + "environments";
+    public static final String ENVIRONMENT_SHOW_NULLABLE = PREFIX + "environmentShowNullable";
+    public static final String ENVIRONMENT_SHOW_NAME = PREFIX + "environmentShowName";
+    public static final String ENVIRONMENT_REMEMBER_ON_START = PREFIX + "environmentRememberOnStart";
+
     public static final String SHOW_DATE_TIME = PREFIX + "showDateTime";
     public static final String DATE_TIME_FORMAT = PREFIX + "dateTimeFormat";
     public static final String DATE_TIME_OUTPUT_TYPE = PREFIX + "dateTimeOutputType";
