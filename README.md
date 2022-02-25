@@ -61,6 +61,11 @@ Some cases are 100% faster others are even 800% faster, you can read more about 
 
 ### DateTime output
 
+There are three options to output date & time:
+1) DateTime - in format *uuuu-MM-dd'T'HH:mm:ss.SSS*, example is - *2022-02-23T15:43:40.331* (read more about [Date & Time formats here](https://goodforgod.dev/posts/2/))
+2) Unix Time - time [since epoch](https://en.wikipedia.org/wiki/Unix_time).
+3) Millis From Start - Millis from SimpleLoggerConfiguration initialization (may not properly work in GraalVM setups)
+
 ### Logger name abbreviation
 
 ### Environment logging
