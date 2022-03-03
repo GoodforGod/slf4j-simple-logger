@@ -1,21 +1,3 @@
-/**
- * Copyright (c) 2004-2012 QOS.ch All rights reserved.
- * <p>
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
- * associated documentation files (the "Software"), to deal in the Software without restriction,
- * including without limitation the rights to use, copy, modify, merge, publish, distribute,
- * sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * <p>
- * The above copyright notice and this permission notice shall be included in all copies or
- * substantial portions of the Software.
- * <p>
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
- * NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
- * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
 package io.goodforgod.slf4j.simplelogger;
 
 import java.io.ByteArrayOutputStream;
@@ -167,6 +149,27 @@ class SimpleLoggerTests extends Assertions {
         final String allExceptTime = res.substring(dateTimeAfter + 1);
         final String unixTime = res.substring(0, dateTimeAfter);
         assertNotEquals(0L, Long.parseLong(unixTime));
+        assertEquals("[INFO] io.goodforgod.slf4j.simplelogger.SimpleLoggerTests - hello", allExceptTime);
+    }
+
+    @Test
+    void checkUseShowTimeFormat() {
+        System.setErr(replacement);
+        System.setProperty(SimpleLoggerProperties.SHOW_DATE_TIME, "true");
+        System.setProperty(SimpleLoggerProperties.DATE_TIME_OUTPUT_TYPE, "TIME");
+        System.setProperty(SimpleLoggerProperties.DATE_TIME_FORMAT, "HH:mm:ss");
+        System.setProperty(SimpleLoggerProperties.LEVEL_IN_BRACKETS, "true");
+
+        SimpleLogger.init();
+        SimpleLogger simpleLogger = new SimpleLogger(this.getClass().getName());
+
+        simpleLogger.info("hello");
+        replacement.flush();
+        final String res = bout.toString().strip();
+        final int dateTimeAfter = res.indexOf(' ');
+        final String allExceptTime = res.substring(dateTimeAfter + 1);
+        final String time = res.substring(0, dateTimeAfter);
+        assertTrue(time.matches("\\d\\d:\\d\\d:\\d\\d"));
         assertEquals("[INFO] io.goodforgod.slf4j.simplelogger.SimpleLoggerTests - hello", allExceptTime);
     }
 

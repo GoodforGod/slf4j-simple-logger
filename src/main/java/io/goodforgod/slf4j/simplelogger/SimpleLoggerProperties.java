@@ -11,6 +11,7 @@ public final class SimpleLoggerProperties {
     private SimpleLoggerProperties() {}
 
     public enum DateTimeOutputType {
+        TIME,
         DATE_TIME,
         UNIX_TIME,
         MILLIS_FROM_START

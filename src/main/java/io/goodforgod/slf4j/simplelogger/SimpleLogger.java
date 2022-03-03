@@ -5,6 +5,7 @@ import static io.goodforgod.slf4j.simplelogger.SimpleLoggerProperties.PREFIX_LOG
 
 import java.io.PrintWriter;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import org.slf4j.Logger;
 import org.slf4j.event.LoggingEvent;
 import org.slf4j.helpers.FormattingTuple;
@@ -94,8 +95,6 @@ import org.slf4j.spi.LocationAwareLogger;
  * @since 09.10.2021
  */
 public class SimpleLogger extends MarkerIgnoringBase {
-
-    private static final long serialVersionUID = -632788891211436180L;
 
     protected static final int LOG_LEVEL_TRACE = LocationAwareLogger.TRACE_INT;
     protected static final int LOG_LEVEL_DEBUG = LocationAwareLogger.DEBUG_INT;
@@ -190,7 +189,9 @@ public class SimpleLogger extends MarkerIgnoringBase {
         // Append date-time if so configured
         if (CONFIG.showDateTime) {
             if (DATE_TIME.equals(CONFIG.dateTimeOutputType)) {
-                builder.append(getFormattedDate());
+                builder.append(getFormattedDateTime());
+            } else if (TIME.equals(CONFIG.dateTimeOutputType)) {
+                builder.append(getFormattedTime());
             } else if (UNIX_TIME.equals(CONFIG.dateTimeOutputType)) {
                 builder.append(System.currentTimeMillis());
             } else if (MILLIS_FROM_START.equals(CONFIG.dateTimeOutputType)) {
@@ -346,8 +347,12 @@ public class SimpleLogger extends MarkerIgnoringBase {
         CONFIG.outputChoice.getTargetPrintStream().print(builder);
     }
 
-    private String getFormattedDate() {
-        return CONFIG.dateFormatter.format(LocalDateTime.now());
+    private String getFormattedDateTime() {
+        return CONFIG.dateTimeFormatter.format(LocalDateTime.now());
+    }
+
+    private String getFormattedTime() {
+        return CONFIG.dateTimeFormatter.format(LocalTime.now());
     }
 
     private String computeShortName() {

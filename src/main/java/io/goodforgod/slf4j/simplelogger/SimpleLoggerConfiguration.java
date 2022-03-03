@@ -6,6 +6,8 @@ import io.goodforgod.slf4j.simplelogger.OutputChoice.OutputChoiceType;
 import java.io.*;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -32,8 +34,10 @@ public class SimpleLoggerConfiguration {
     private static final String SYSTEM_OUT = "System.out";
     private static final String BOOLEAN_TRUE = "true";
 
-    private static final String DATETIME_FORMAT_DEFAULT = "uuuu-MM-dd'T'HH:mm:ss.SSS";
-    private static final DateTimeFormatter FORMATTER_DEFAULT = DateTimeFormatter.ofPattern(DATETIME_FORMAT_DEFAULT);
+    private static final String DATE_TIME_FORMAT_DEFAULT = "uuuu-MM-dd'T'HH:mm:ss.SSS";
+    private static final String TIME_FORMAT_DEFAULT = "HH:mm:ss.SSS";
+    private static final DateTimeFormatter DATE_TIME_FORMATTER_DEFAULT = DateTimeFormatter.ofPattern(DATE_TIME_FORMAT_DEFAULT);
+    private static final DateTimeFormatter TIME_FORMATTER_DEFAULT = DateTimeFormatter.ofPattern(TIME_FORMAT_DEFAULT);
     private static final String LOG_FILE_DEFAULT = SYSTEM_ERR;
     private static final boolean CACHE_OUTPUT_STREAM_DEFAULT = false;
 
@@ -58,9 +62,11 @@ public class SimpleLoggerConfiguration {
     boolean showImplementationVersion = SHOW_IMPLEMENTATION_VERSION_DEFAULT;
     Integer logNameLength = null;
     boolean showShortLogName = SHOW_SHORT_LOG_NAME_DEFAULT;
+
     boolean showDateTime = SHOW_DATE_TIME_DEFAULT;
-    DateTimeFormatter dateFormatter = FORMATTER_DEFAULT;
     DateTimeOutputType dateTimeOutputType = DateTimeOutputType.DATE_TIME;
+    DateTimeFormatter dateTimeFormatter;
+
     String implementationVersion = SimpleLoggerConfiguration.class.getPackage().getImplementationVersion();
     List<String> environments;
     boolean environmentShowNullable = false;
@@ -140,10 +146,24 @@ public class SimpleLoggerConfiguration {
                 .orElse(DateTimeOutputType.DATE_TIME);
 
         if (DateTimeOutputType.DATE_TIME.equals(this.dateTimeOutputType)) {
+            this.dateTimeFormatter = DATE_TIME_FORMATTER_DEFAULT;
+        } else if (DateTimeOutputType.TIME.equals(this.dateTimeOutputType)) {
+            this.dateTimeFormatter = TIME_FORMATTER_DEFAULT;
+        }
+
+        if (DateTimeOutputType.DATE_TIME.equals(this.dateTimeOutputType)
+                || DateTimeOutputType.TIME.equals(this.dateTimeOutputType)) {
             final String dateTimeFormatStr = getStringProperty(DATE_TIME_FORMAT);
             if (dateTimeFormatStr != null) {
                 try {
-                    this.dateFormatter = DateTimeFormatter.ofPattern(dateTimeFormatStr);
+                    this.dateTimeFormatter = DateTimeFormatter.ofPattern(dateTimeFormatStr);
+
+                    // check formatting in initialization
+                    if (DateTimeOutputType.DATE_TIME.equals(this.dateTimeOutputType)) {
+                        this.dateTimeFormatter.format(LocalDateTime.now());
+                    } else if (DateTimeOutputType.TIME.equals(this.dateTimeOutputType)) {
+                        this.dateTimeFormatter.format(LocalTime.now());
+                    }
                 } catch (IllegalArgumentException e) {
                     Util.report("Bad date format in " + CONFIGURATION_FILE + "; will output relative time", e);
                 }
