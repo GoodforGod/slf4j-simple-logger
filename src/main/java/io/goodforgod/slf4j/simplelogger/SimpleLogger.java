@@ -170,11 +170,11 @@ public class SimpleLogger extends MarkerIgnoringBase {
     /**
      * This is our internal implementation for logging regular (non-parameterized) log messages.
      *
-     * @param level   One of the LOG_LEVEL_XXX constants defining the log level
-     * @param message The message itself
-     * @param t       The exception whose stack trace should be logged
+     * @param level     One of the LOG_LEVEL_XXX constants defining the log level
+     * @param message   The message itself
+     * @param throwable The exception whose stack trace should be logged
      */
-    private void log(int level, String message, Throwable t) {
+    private void log(int level, String message, Throwable throwable) {
         if (!isLevelEnabled(level)) {
             return;
         }
@@ -201,6 +201,7 @@ public class SimpleLogger extends MarkerIgnoringBase {
             builder.append(' ');
         }
 
+        // Append package implementation version
         if (CONFIG.showImplementationVersion) {
             builder.append('[');
             builder.append(CONFIG.implementationVersion);
@@ -233,9 +234,11 @@ public class SimpleLogger extends MarkerIgnoringBase {
         builder.append(message);
         builder.append(System.lineSeparator());
 
-        if (t != null) {
+        // Append throwable if present
+        if (throwable != null) {
             final StringBuilderWriter stringWriter = new StringBuilderWriter(builder);
-            t.printStackTrace(new PrintWriter(stringWriter));
+            final PrintWriter printWriter = new PrintWriter(stringWriter);
+            throwable.printStackTrace(printWriter);
         }
 
         write(builder);
@@ -445,8 +448,8 @@ public class SimpleLogger extends MarkerIgnoringBase {
     /**
      * Log a message of level TRACE, including an exception.
      */
-    public void trace(String msg, Throwable t) {
-        log(LOG_LEVEL_TRACE, msg, t);
+    public void trace(String msg, Throwable throwable) {
+        log(LOG_LEVEL_TRACE, msg, throwable);
     }
 
     /**
@@ -491,8 +494,8 @@ public class SimpleLogger extends MarkerIgnoringBase {
     /**
      * Log a message of level DEBUG, including an exception.
      */
-    public void debug(String msg, Throwable t) {
-        log(LOG_LEVEL_DEBUG, msg, t);
+    public void debug(String msg, Throwable throwable) {
+        log(LOG_LEVEL_DEBUG, msg, throwable);
     }
 
     /**
@@ -536,8 +539,8 @@ public class SimpleLogger extends MarkerIgnoringBase {
     /**
      * Log a message of level INFO, including an exception.
      */
-    public void info(String msg, Throwable t) {
-        log(LOG_LEVEL_INFO, msg, t);
+    public void info(String msg, Throwable throwable) {
+        log(LOG_LEVEL_INFO, msg, throwable);
     }
 
     /**
@@ -582,8 +585,8 @@ public class SimpleLogger extends MarkerIgnoringBase {
     /**
      * Log a message of level WARN, including an exception.
      */
-    public void warn(String msg, Throwable t) {
-        log(LOG_LEVEL_WARN, msg, t);
+    public void warn(String msg, Throwable throwable) {
+        log(LOG_LEVEL_WARN, msg, throwable);
     }
 
     /**
@@ -628,8 +631,8 @@ public class SimpleLogger extends MarkerIgnoringBase {
     /**
      * Log a message of level ERROR, including an exception.
      */
-    public void error(String msg, Throwable t) {
-        log(LOG_LEVEL_ERROR, msg, t);
+    public void error(String msg, Throwable throwable) {
+        log(LOG_LEVEL_ERROR, msg, throwable);
     }
 
     public void log(LoggingEvent event) {

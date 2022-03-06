@@ -1,6 +1,5 @@
 package io.goodforgod.slf4j.simplelogger;
 
-import java.io.IOException;
 import java.io.Writer;
 
 /**
@@ -108,18 +107,11 @@ final class StringBuilderWriter extends Writer {
         return builder.toString();
     }
 
-    /**
-     * @return the current string builder.
-     */
-    public StringBuilder getBuilder() {
-        return builder;
-    }
-
     public void flush() {
         // do nothing
     }
 
-    public void close() throws IOException {
+    public void close() {
         // do nothing
     }
 }
