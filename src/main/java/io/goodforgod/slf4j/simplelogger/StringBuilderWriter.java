@@ -6,6 +6,7 @@ import java.io.Writer;
  * @author Anton Kurako (GoodforGod)
  * @since 19.02.2022
  */
+@Deprecated
 final class StringBuilderWriter extends Writer {
 
     private final StringBuilder builder;
