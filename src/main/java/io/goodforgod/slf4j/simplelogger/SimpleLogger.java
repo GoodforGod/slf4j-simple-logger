@@ -4,7 +4,6 @@ import static io.goodforgod.slf4j.simplelogger.SimpleLoggerProperties.DateTimeOu
 import static io.goodforgod.slf4j.simplelogger.SimpleLoggerProperties.PREFIX_LOG;
 
 import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import org.slf4j.Logger;
@@ -237,11 +236,9 @@ public class SimpleLogger extends MarkerIgnoringBase {
 
         // Append throwable if present
         if (throwable != null) {
-            final StringWriter stringWriter = new StringWriter();
+            final StringBuilderWriter stringWriter = new StringBuilderWriter(builder);
             final PrintWriter printWriter = new PrintWriter(stringWriter);
             throwable.printStackTrace(printWriter);
-
-            builder.append(stringWriter);
         }
 
         write(builder);
