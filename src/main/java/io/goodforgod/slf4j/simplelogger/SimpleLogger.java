@@ -188,14 +188,19 @@ public class SimpleLogger extends MarkerIgnoringBase {
 
         // Append date-time if so configured
         if (CONFIG.showDateTime) {
-            if (DATE_TIME.equals(CONFIG.dateTimeOutputType)) {
-                builder.append(getFormattedDateTime());
-            } else if (TIME.equals(CONFIG.dateTimeOutputType)) {
-                builder.append(getFormattedTime());
-            } else if (UNIX_TIME.equals(CONFIG.dateTimeOutputType)) {
-                builder.append(System.currentTimeMillis());
-            } else if (MILLIS_FROM_START.equals(CONFIG.dateTimeOutputType)) {
-                builder.append(System.currentTimeMillis() - CONFIG.initializeTime);
+            switch (CONFIG.dateTimeOutputType) {
+                case DATE_TIME:
+                    builder.append(getFormattedDateTime());
+                    break;
+                case TIME:
+                    builder.append(getFormattedTime());
+                    break;
+                case UNIX_TIME:
+                    builder.append(System.currentTimeMillis());
+                    break;
+                case MILLIS_FROM_START:
+                    builder.append(System.currentTimeMillis() - CONFIG.initializeTime);
+                    break;
             }
 
             builder.append(' ');
@@ -347,7 +352,17 @@ public class SimpleLogger extends MarkerIgnoringBase {
      * @param builder of logging message
      */
     void write(StringBuilder builder) {
-        CONFIG.outputChoice.getTargetPrintStream().print(builder);
+        switch (currentLogLevel) {
+            case LOG_LEVEL_WARN:
+                CONFIG.outputChoiceWarn.getTargetPrintStream().print(builder);
+                break;
+            case LOG_LEVEL_ERROR:
+                CONFIG.outputChoiceError.getTargetPrintStream().print(builder);
+                break;
+            default:
+                CONFIG.outputChoice.getTargetPrintStream().print(builder);
+                break;
+        }
     }
 
     private String getFormattedDateTime() {

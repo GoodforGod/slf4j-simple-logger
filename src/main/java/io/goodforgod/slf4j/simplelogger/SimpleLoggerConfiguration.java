@@ -38,7 +38,7 @@ public class SimpleLoggerConfiguration {
     private static final String TIME_FORMAT_DEFAULT = "HH:mm:ss.SSS";
     private static final DateTimeFormatter DATE_TIME_FORMATTER_DEFAULT = DateTimeFormatter.ofPattern(DATE_TIME_FORMAT_DEFAULT);
     private static final DateTimeFormatter TIME_FORMATTER_DEFAULT = DateTimeFormatter.ofPattern(TIME_FORMAT_DEFAULT);
-    private static final String LOG_FILE_DEFAULT = SYSTEM_ERR;
+    private static final String LOG_FILE_DEFAULT = SYSTEM_OUT;
     private static final boolean CACHE_OUTPUT_STREAM_DEFAULT = false;
 
     private static final boolean LEVEL_IN_BRACKETS_DEFAULT = true;
@@ -51,9 +51,9 @@ public class SimpleLoggerConfiguration {
 
     final long initializeTime = System.currentTimeMillis();
 
-    private String logFile = LOG_FILE_DEFAULT;
-
     OutputChoice outputChoice = null;
+    OutputChoice outputChoiceWarn = null;
+    OutputChoice outputChoiceError = null;
     int defaultLogLevel = SimpleLogger.LOG_LEVEL_INFO;
 
     boolean levelInBrackets = LEVEL_IN_BRACKETS_DEFAULT;
@@ -94,9 +94,22 @@ public class SimpleLoggerConfiguration {
                 .filter(i -> i > 0)
                 .orElse(null);
 
-        this.logFile = getStringProperty(LOG_FILE, logFile);
+        final String logFile = getStringProperty(LOG_FILE, LOG_FILE_DEFAULT);
+        final String logFileWarn = getStringProperty(LOG_FILE_WARN, LOG_FILE_DEFAULT);
+        final String logFileError = getStringProperty(LOG_FILE_ERROR, LOG_FILE_DEFAULT);
         final boolean cacheOutputStream = getBooleanProperty(CACHE_OUTPUT_STREAM_STRING, CACHE_OUTPUT_STREAM_DEFAULT);
         this.outputChoice = computeOutputChoice(logFile, cacheOutputStream);
+        this.outputChoiceWarn = (logFile.equals(logFileWarn))
+                ? outputChoice
+                : computeOutputChoice(logFileWarn, cacheOutputStream);
+
+        if (logFile.equals(logFileError)) {
+            this.outputChoiceError = outputChoice;
+        } else if (logFileWarn.equals(logFileError)) {
+            this.outputChoiceError = outputChoiceWarn;
+        } else {
+            this.outputChoiceError = computeOutputChoice(logFileError, cacheOutputStream);
+        }
 
         this.environments = Optional.ofNullable(getStringProperty(ENVIRONMENTS))
                 .filter(envs -> !envs.isBlank())
