@@ -9,10 +9,12 @@
 [SLF4J](https://github.com/qos-ch/slf4j) based, simple, efficient logger.
 
 Features:
-- Performance optimizations (105-800% performance improvements).
+- Performance optimizations.
 - Logger name abbreviation (logback analog).
 - Environment variables logging.
 - Global logger level change.
+
+And more.
 
 ## Dependency :rocket:
 
@@ -62,17 +64,86 @@ Some cases are 100% faster others are even 800% faster, you can read more about 
 ### DateTime output
 
 There are three options to output date & time:
-1) DateTime - in format *uuuu-MM-dd'T'HH:mm:ss.SSS*, example is - *2022-02-23T15:43:40.331* (read more about [Date & Time formats here](https://goodforgod.dev/posts/2/))
-2) Unix Time - time [since epoch](https://en.wikipedia.org/wiki/Unix_time).
-3) Millis From Start - Millis from SimpleLoggerConfiguration initialization (may not properly work in GraalVM setups)
+1) DATE_TIME - in format *uuuu-MM-dd'T'HH:mm:ss.SSS*, example is - *2022-02-23T15:43:40.331* (read more about Java [Date & Time formats here](https://goodforgod.dev/posts/2/))
+2) TIME - in format *HH:mm:ss.SSS*, example is - *15:43:40.331* (read more about Java [Date & Time formats here](https://goodforgod.dev/posts/2/))
+3) UNIX_TIME - time [since epoch](https://en.wikipedia.org/wiki/Unix_time).
+4) MILLIS_FROM_START - Millis from SimpleLoggerConfiguration initialization (may not properly work in GraalVM setups)
+
+You can also change formatter for DATE_TIME and TIME via configuration:
+```properties
+org.slf4j.simpleLogger.dateTimeFormat=uuuu-MM-dd'T'HH:mm:ss.SSS
+```
 
 ### Logger name abbreviation
 
+There is configuration to abbreviate logger name, like in logback.
+
+If configuration is:
+```properties
+org.slf4j.simpleLogger.showShortLogName=false
+org.slf4j.simpleLogger.showLogName=true
+org.slf4j.simpleLogger.logNameLength=36
+```
+
+And logger is:
+```java
+package io.goodforgod.internal.logger.example;
+
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
+
+public class Application {
+
+    public static void main(String[] args) {
+        Logger logger = LoggerFactory.getLogger(Application.class);
+        logger.info("Message is printed for this logger");
+    }
+}
+```
+
+Then logger name will be outputted like:
+```text
+2022-02-23T15:43:40.331 [DEBUG] i.g.i.logger.example.Application - Message is printed for this logger
+```
+
+Abbreviation happened to full logger name:
+*io.goodforgod.internal.logger.example.Application* -> *i.g.i.logger.example.Application*
+
 ### Environment logging
+
+### Output split
+
+There is possibility to split *WARN* and *ERROR* logs to different output.
+
+If configuration is:
+```properties
+# Set default logger output file or System.out or System.error
+org.slf4j.simpleLogger.logFile=System.out
+# Set logger WARN logs output file or System.out or System.error
+org.slf4j.simpleLogger.logFileWarn=System.out
+# Set logger ERROR logs output file or System.out or System.error
+org.slf4j.simpleLogger.logFileError=System.out
+```
+
+Then all logs of TRACE, DEBUG, INFO will be forwarded to *System.out* and all WARN & ERROR logs will be forwarded to *System.error*.
 
 ### Logger level change
 
+You can change loggers level using *io.goodforgod.slf4j.simplelogger.SimpleLoggerFactory*:
+```java
+SimpleLoggerFactory factory = (SimpleLoggerFactory) LoggerFactory.getILoggerFactory();
+factory.setLogLevel(Level.DEBUG);
+```
+
+Or you can use predicate to filter out loggers:
+```java
+SimpleLoggerFactory factory = (SimpleLoggerFactory) LoggerFactory.getILoggerFactory();
+factory.setLogLevel(Level.DEBUG, logger -> logger.getName().startsWith("io.goodforgod.internal.logger.example"));
+```
+
 ## Configuration
+
+Library support all options of *slf4j-simple-logger*, you can check them [here](https://www.slf4j.org/api/org/slf4j/impl/SimpleLogger.html).
 
 Example of full *simplelogger.properties* file:
 ```properties
@@ -80,7 +151,7 @@ Example of full *simplelogger.properties* file:
 org.slf4j.simpleLogger.defaultLogLevel=INFO
 # Set to true to show current datetime in output.
 org.slf4j.simpleLogger.showDateTime=true
-# Set datetime output type. Must be one of ("DATE_TIME", "UNIX_TIME", "MILLIS_FROM_START").
+# Set datetime output type. Must be one of ("TIME", "DATE_TIME", "UNIX_TIME", "MILLIS_FROM_START").
 org.slf4j.simpleLogger.dateTimeOutputType=DATE_TIME
 # The date and time formatter pattern to be used in the output.
 org.slf4j.simpleLogger.dateTimeFormat=uuuu-MM-dd'T'HH:mm:ss.SSS
@@ -96,28 +167,22 @@ org.slf4j.simpleLogger.showShortLogName=false
 org.slf4j.simpleLogger.showLogName=true
 # Set maximum logger name to output and abbreviate if it exceeds length.
 org.slf4j.simpleLogger.logNameLength=36
-# Set environment names to show in output.
+# Set environment names to show in output. Envs will be printed out in order they preserve in configuration.
 org.slf4j.simpleLogger.environments=SESSION_ID,ORIGIN,HOST
 # Set to true to show environment with nullable values.
 org.slf4j.simpleLogger.environmentShowNullable=false
 # Set to true to show environment names.
 org.slf4j.simpleLogger.environmentShowName=false
 # Set to true to remember env values on configuration initialization.
-org.slf4j.simpleLogger.environmentRememberOnStart=true
+org.slf4j.simpleLogger.environmentRememberOnStart=false
+# Set default logger output file or System.out or System.error
 org.slf4j.simpleLogger.logFile=System.out
+# Set logger WARN logs output file or System.out or System.error
+org.slf4j.simpleLogger.logFileWarn=System.out
+# Set logger ERROR logs output file or System.out or System.error
+org.slf4j.simpleLogger.logFileError=System.out
 
 org.slf4j.simpleLogger.log.path.to.class=WARN
-```
-
-### Recommended configuration
-
-Below is recommended minimal configuration.
-
-*simplelogger.properties* file:
-```properties
-org.slf4j.simpleLogger.defaultLogLevel=INFO
-org.slf4j.simpleLogger.logNameLength=36
-org.slf4j.simpleLogger.logFile=System.out
 ```
 
 ## License
