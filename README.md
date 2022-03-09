@@ -45,21 +45,21 @@ logger.debug("Message is printed for this logger");
 
 And the detailed result:
 ```text
-       Date Time        Implementation  Log Level         Environment variables           Thread         Logger Name                     Log Message
-           |                   |            |                        |                      |                |                               |
-___________|__________   ______|_______   __|__   ___________________|__________________  __|__   ___________|___________    ________________|________________
-|                     | |              | |     | |                                      | |    | |                       |  |                                |
-|                     | |              | |     | |                                      | |    | |                       |  |                                |
-2022-02-23T15:43:40.331 [0.9.0-SNAPSHOT] [DEBUG] [SESSIONNAME=Console, PROCESSOR_LEVEL=6] [main] io.goodforgod.Application - Message is printed for this logger
+       Date Time        Implementation  Log Level         Environment variables       Thread         Logger Name                     Log Message
+           |                   |            |                        |                  |                |                               |
+___________|__________   ______|_______   __|__   ___________________|______________  __|__   ___________|___________    ________________|________________
+|                     | |              | |     | |                                  | |    | |                       |  |                                |
+|                     | |              | |     | |                                  | |    | |                       |  |                                |
+2022-02-23T15:43:40.331 [0.9.0-SNAPSHOT] [DEBUG] [SESSION=Console, PROCESSOR_LEVEL=6] [main] io.goodforgod.Application - Message is printed for this logger
 ```
 
 ## Features
 
 ### Performance optimizations
 
-This implementation is based on default *slf4j-simple-logger*, but there are plenty of performance improvements.
+This implementation is based on default *slf4j-simple-logger*, but there are plenty of performance and feature improvements.
 
-Some cases are 100% faster others are even 800% faster, you can read more about here in my [JVM benchmark]().
+Some cases are 100% faster others are even 800% faster, you can read more about here in my [JVM benchmark](https://github.com/GoodforGod/java-logger-benchmark).
 
 ### DateTime output
 
@@ -110,6 +110,27 @@ Abbreviation happened to full logger name:
 *io.goodforgod.internal.logger.example.Application* -> *i.g.i.logger.example.Application*
 
 ### Environment logging
+
+It is possible to log environment, format how it will be outputted can be seen [here](#log-example).
+
+If the configuration is:
+```properties
+# Set environment names to show in output. Envs will be printed out in order they preserve in configuration.
+org.slf4j.simpleLogger.environments=SESSION,PROCESSOR_LEVEL
+# Set to true to show environment with nullable values.
+org.slf4j.simpleLogger.environmentShowNullable=false
+# Set to true to show environment names.
+org.slf4j.simpleLogger.environmentShowName=true
+# Set to true to caches environment values on configuration initialization and then always uses them when logging.
+org.slf4j.simpleLogger.environmentRememberOnStart=false
+```
+
+Then the output will be:
+```text
+2022-02-23T15:43:40.331 [DEBUG] [SESSION=Console, PROCESSOR_LEVEL=6] [main] io.goodforgod.Application - Message is printed for this logger
+```
+
+Environment variables are printed in order they preserve in configuration (in example above first SESSION, then PROCESSOR_LEVEL).
 
 ### Output split
 
@@ -173,7 +194,7 @@ org.slf4j.simpleLogger.environments=SESSION_ID,ORIGIN,HOST
 org.slf4j.simpleLogger.environmentShowNullable=false
 # Set to true to show environment names.
 org.slf4j.simpleLogger.environmentShowName=false
-# Set to true to remember env values on configuration initialization.
+# Set to true to caches environment values on configuration initialization and then always uses them when logging.
 org.slf4j.simpleLogger.environmentRememberOnStart=false
 # Set default logger output file or System.out or System.error
 org.slf4j.simpleLogger.logFile=System.out
