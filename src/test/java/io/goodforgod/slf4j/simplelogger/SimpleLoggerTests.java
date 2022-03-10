@@ -14,15 +14,14 @@ class SimpleLoggerTests extends Assertions {
 
     @BeforeEach
     public void before() {
-        System.setProperty(A_KEY, "info");
         clearProperties();
+        System.setProperty(A_KEY, "info");
     }
 
     @AfterEach
     public void after() {
         System.clearProperty(A_KEY);
         System.setOut(original);
-        clearProperties();
     }
 
     public static void clearProperties() {
@@ -35,10 +34,15 @@ class SimpleLoggerTests extends Assertions {
         System.clearProperty(SimpleLoggerProperties.DATE_TIME_FORMAT);
         System.clearProperty(SimpleLoggerProperties.DATE_TIME_OUTPUT_TYPE);
         System.clearProperty(SimpleLoggerProperties.DEFAULT_LOG_LEVEL);
+        System.clearProperty(SimpleLoggerProperties.ENVIRONMENT_SHOW_NAME);
+        System.clearProperty(SimpleLoggerProperties.ENVIRONMENT_SHOW_NULLABLE);
+        System.clearProperty(SimpleLoggerProperties.ENVIRONMENT_REMEMBER_ON_START);
+        System.clearProperty(SimpleLoggerProperties.ENVIRONMENTS);
     }
 
     @Test
     void emptyLoggerName() {
+        SimpleLogger.init();
         SimpleLogger simpleLogger = new SimpleLogger("a");
         assertEquals("info", simpleLogger.recursivelyComputeLevelString());
     }
@@ -62,18 +66,21 @@ class SimpleLoggerTests extends Assertions {
 
     @Test
     void loggerNameWithOneDotShouldInheritFromParent() {
+        SimpleLogger.init();
         SimpleLogger simpleLogger = new SimpleLogger("a.b");
         assertEquals("info", simpleLogger.recursivelyComputeLevelString());
     }
 
     @Test
     void loggerNameWithNoDots_WithNoSetLevel() {
+        SimpleLogger.init();
         SimpleLogger simpleLogger = new SimpleLogger("x");
         assertNull(simpleLogger.recursivelyComputeLevelString());
     }
 
     @Test
     void loggerNameWithOneDot_NoSetLevel() {
+        SimpleLogger.init();
         SimpleLogger simpleLogger = new SimpleLogger("x.y");
         assertNull(simpleLogger.recursivelyComputeLevelString());
     }
@@ -82,6 +89,7 @@ class SimpleLoggerTests extends Assertions {
     void loggerFactorySetLevel() {
         final SimpleLoggerFactory factory = new SimpleLoggerFactory();
 
+        SimpleLogger.init();
         SimpleLogger simpleLogger = (SimpleLogger) factory.getLogger("x.y");
         assertEquals(SimpleLogger.LOG_LEVEL_INFO, simpleLogger.currentLogLevel);
 

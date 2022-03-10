@@ -27,16 +27,33 @@ class MultiThreadedExecutionTests {
 
     @BeforeEach
     public void setup() {
+        clearProperties();
         System.setOut(scps);
         System.setProperty(SimpleLoggerProperties.LOG_FILE, "System.out");
         LoggerFactoryFriend.reset();
     }
 
     @AfterEach
-    public void tearDown() throws Exception {
+    public void tearDown() {
         LoggerFactoryFriend.reset();
         System.clearProperty(SimpleLoggerProperties.LOG_FILE);
         System.setOut(oldOut);
+    }
+
+    public static void clearProperties() {
+        System.clearProperty(SimpleLoggerProperties.CACHE_OUTPUT_STREAM_STRING);
+        System.clearProperty(SimpleLoggerProperties.SHOW_LOG_NAME_LENGTH);
+        System.clearProperty(SimpleLoggerProperties.SHOW_THREAD_NAME);
+        System.clearProperty(SimpleLoggerProperties.SHOW_DATE_TIME);
+        System.clearProperty(SimpleLoggerProperties.SHOW_SHORT_LOG_NAME);
+        System.clearProperty(SimpleLoggerProperties.SHOW_IMPLEMENTATION_VERSION);
+        System.clearProperty(SimpleLoggerProperties.DATE_TIME_FORMAT);
+        System.clearProperty(SimpleLoggerProperties.DATE_TIME_OUTPUT_TYPE);
+        System.clearProperty(SimpleLoggerProperties.DEFAULT_LOG_LEVEL);
+        System.clearProperty(SimpleLoggerProperties.ENVIRONMENT_SHOW_NAME);
+        System.clearProperty(SimpleLoggerProperties.ENVIRONMENT_SHOW_NULLABLE);
+        System.clearProperty(SimpleLoggerProperties.ENVIRONMENT_REMEMBER_ON_START);
+        System.clearProperty(SimpleLoggerProperties.ENVIRONMENTS);
     }
 
     @Test

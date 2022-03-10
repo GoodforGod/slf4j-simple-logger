@@ -116,7 +116,7 @@ public class SimpleLoggerConfiguration {
                 .map(envs -> {
                     final List<String> envsToOutput = Arrays.stream(envs.split(","))
                             .map(String::strip)
-                            .filter(env -> !env.isEmpty())
+                            .filter(env -> !env.isBlank())
                             .collect(Collectors.toList());
 
                     return List.copyOf(envsToOutput);
@@ -145,6 +145,8 @@ public class SimpleLoggerConfiguration {
             if (!envsOnStart.isEmpty()) {
                 this.environmentsOnStart = "[" + envsOnStart + "] ";
             }
+        } else {
+            this.environmentsOnStart = null;
         }
 
         this.showDateTime = getBooleanProperty(SHOW_DATE_TIME, SHOW_DATE_TIME_DEFAULT);

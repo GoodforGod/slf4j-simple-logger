@@ -16,15 +16,14 @@ class SimpleLoggerEnvironmentTests extends Assertions {
 
     @BeforeEach
     public void before() {
-        System.setProperty(A_KEY, "info");
         clearProperties();
+        System.setProperty(A_KEY, "info");
     }
 
     @AfterEach
     public void after() {
         System.clearProperty(A_KEY);
         System.setOut(original);
-        clearProperties();
     }
 
     public static void clearProperties() {
@@ -37,6 +36,10 @@ class SimpleLoggerEnvironmentTests extends Assertions {
         System.clearProperty(SimpleLoggerProperties.DATE_TIME_FORMAT);
         System.clearProperty(SimpleLoggerProperties.DATE_TIME_OUTPUT_TYPE);
         System.clearProperty(SimpleLoggerProperties.DEFAULT_LOG_LEVEL);
+        System.clearProperty(SimpleLoggerProperties.ENVIRONMENT_SHOW_NAME);
+        System.clearProperty(SimpleLoggerProperties.ENVIRONMENT_SHOW_NULLABLE);
+        System.clearProperty(SimpleLoggerProperties.ENVIRONMENT_REMEMBER_ON_START);
+        System.clearProperty(SimpleLoggerProperties.ENVIRONMENTS);
     }
 
     @Test
@@ -59,7 +62,6 @@ class SimpleLoggerEnvironmentTests extends Assertions {
 
     @Test
     void environmentLoggingWithName() {
-        System.setProperty(SimpleLoggerProperties.SHOW_THREAD_NAME, "false");
         System.setProperty(SimpleLoggerProperties.SHOW_DATE_TIME, "false");
         System.setProperty(SimpleLoggerProperties.SHOW_SHORT_LOG_NAME, "true");
         System.setProperty(SimpleLoggerProperties.ENVIRONMENT_SHOW_NAME, "true");
@@ -78,7 +80,6 @@ class SimpleLoggerEnvironmentTests extends Assertions {
 
     @Test
     void environmentLoggingShowNullable() {
-        System.setProperty(SimpleLoggerProperties.SHOW_THREAD_NAME, "false");
         System.setProperty(SimpleLoggerProperties.SHOW_DATE_TIME, "false");
         System.setProperty(SimpleLoggerProperties.SHOW_SHORT_LOG_NAME, "true");
         System.setProperty(SimpleLoggerProperties.ENVIRONMENT_SHOW_NAME, "true");

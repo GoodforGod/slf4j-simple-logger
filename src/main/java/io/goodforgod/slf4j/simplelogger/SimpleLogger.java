@@ -278,8 +278,13 @@ public class SimpleLogger extends MarkerIgnoringBase {
             builder.append(CONFIG.environmentsOnStart);
         } else {
             boolean bracketUsed = false;
-            for (String env : CONFIG.environments) {
-                final String envValue = System.getenv(env);
+            for (int i = 0; i < CONFIG.environments.size(); i++) {
+                if (i != 0) {
+                    builder.append(", ");
+                }
+
+                final String envName = CONFIG.environments.get(i);
+                final String envValue = System.getenv(envName);
                 if (envValue == null && !CONFIG.environmentShowNullable) {
                     continue;
                 }
@@ -290,12 +295,11 @@ public class SimpleLogger extends MarkerIgnoringBase {
                 }
 
                 if (CONFIG.environmentShowName) {
-                    builder.append(env);
+                    builder.append(envName);
                     builder.append('=');
                 }
 
                 builder.append(envValue);
-                builder.append(", ");
             }
 
             if (bracketUsed) {
