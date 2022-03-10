@@ -95,23 +95,6 @@ class SimpleLoggerTests extends Assertions {
     }
 
     @Test
-    void checkUseOfLastSystemStreamReference() {
-        System.setProperty(SimpleLoggerProperties.SHOW_THREAD_NAME, "true");
-        System.setProperty(SimpleLoggerProperties.SHOW_DATE_TIME, "false");
-        System.setProperty(SimpleLoggerProperties.SHOW_SHORT_LOG_NAME, "true");
-        System.setProperty(SimpleLoggerProperties.LEVEL_IN_BRACKETS, "false");
-
-        SimpleLogger.init();
-        SimpleLogger simpleLogger = new SimpleLogger(this.getClass().getName());
-
-        System.setOut(replacement);
-        simpleLogger.info("hello");
-        replacement.flush();
-        final String res = bout.toString().strip();
-        assertEquals("INFO [Test worker] SimpleLoggerTests - hello", res);
-    }
-
-    @Test
     void checkUseShowDateTimeFormat() {
         System.setOut(replacement);
         System.setProperty(SimpleLoggerProperties.SHOW_DATE_TIME, "true");
