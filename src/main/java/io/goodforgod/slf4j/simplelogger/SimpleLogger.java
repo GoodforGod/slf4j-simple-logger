@@ -1,6 +1,5 @@
 package io.goodforgod.slf4j.simplelogger;
 
-import static io.goodforgod.slf4j.simplelogger.SimpleLoggerProperties.DateTimeOutputType.*;
 import static io.goodforgod.slf4j.simplelogger.SimpleLoggerProperties.PREFIX_LOG;
 
 import java.io.PrintWriter;
@@ -15,13 +14,19 @@ import org.slf4j.spi.LocationAwareLogger;
 /**
  * <p>
  * Simple implementation of {@link Logger} that sends all enabled log messages, for all defined
- * loggers, to the console ({@code System.err}). The following system properties are supported to
- * configure the behavior of this logger:
+ * loggers, to the console ({@code System.out}) or other configured destination.
+ * The following system properties are supported to configure the behavior of this logger:
  * </p>
  * <ul>
  * <li><code>org.slf4j.simpleLogger.logFile</code> - The output target which can be the
  * <em>path</em> to a file, or the special values "System.out" and "System.err". Default is
- * "System.err".</li>
+ * "System.out".</li>
+ * <li><code>org.slf4j.simpleLogger.logFileWarn</code> - The output target which can be the
+ * <em>path</em> to a file, or the special values "System.out" and "System.err" and is used for
+ * logger WARN logs. Default is "System.out".</li>
+ * <li><code>org.slf4j.simpleLogger.logFileError</code> - The output target which can be the
+ * <em>path</em> to a file, or the special values "System.out" and "System.err" and is used for
+ * logger ERROR logs. Default is "System.out".</li>
  * <li><code>org.slf4j.simpleLogger.cacheOutputStream</code> - If the output target is set to
  * "System.out" or "System.err" (see preceding entry), by default, logs will be output to the latest
  * value referenced by <code>System.out/err</code> variables. By setting this parameter to true, the
@@ -36,13 +41,32 @@ import org.slf4j.spi.LocationAwareLogger;
  * from this property. If unspecified, the level of nearest parent logger will be used, and if none
  * is set, then the value specified by <code>org.slf4j.simpleLogger.defaultLogLevel</code> will be
  * used.</li>
+ * <li><code>org.slf4j.simpleLogger.dateTimeOutputType</code> - Set datetime output type. Must be
+ * one of ("TIME", "DATE_TIME", "UNIX_TIME", "MILLIS_FROM_START"). (default DATE_TIME)</li>
+ * <li><code>org.slf4j.simpleLogger.showImplementationVersion</code> - Set to true if to show
+ * application implementation version from MANIFEST.MF (default false)</li>
+ * <li><code>org.slf4j.simpleLogger.environments</code> - Set environment names to show in output.
+ * Envs will be printed out in order they preserve in configuration. (default null)</li>
+ * <li><code>org.slf4j.simpleLogger.environmentShowNullable</code> - Set to true to show environment
+ * with nullable values. (default false)</li>
+ * <li><code>org.slf4j.simpleLogger.environmentShowName</code> - Set to true to show environment
+ * names. (default false)</li>
+ * <li><code>org.slf4j.simpleLogger.environmentRememberOnStart</code> - Set to true to caches
+ * environment values on configuration initialization and then always uses them when logging.
+ * (default false)</li>
+ * <li><code>org.slf4j.simpleLogger.logNameLength</code> - Set maximum logger name to output and
+ * abbreviate if it exceeds length. Abbreviation happened to full logger name:
+ * io.goodforgod.internal.logger.example.Application -> i.g.i.logger.example.Application (default
+ * null)</li>
  * <li><code>org.slf4j.simpleLogger.showDateTime</code> - Set to <code>true</code> if you want the
  * current date and time to be included in output messages. Default is <code>false</code></li>
  * <li><code>org.slf4j.simpleLogger.dateTimeFormat</code> - The date and time format to be used in
  * the output messages. The pattern describing the date and time format is defined by
- * <a href= "http://docs.oracle.com/javase/1.5.0/docs/api/java/text/SimpleDateFormat.html">
- * <code>SimpleDateFormat</code></a>. If the format is not specified or is invalid, the number of
- * milliseconds since start up will be output.</li>
+ * <a href=
+ * "https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/time/format/DateTimeFormatter.html">
+ * (default is uuuu-MM-dd'T'HH:mm:ss.SSS)
+ * <code>DateTimeFormatter</code></a>. If the format is not specified or is invalid, the default
+ * pattern is used uuuu-MM-dd'T'HH:mm:ss.SSS.</li>
  * <li><code>org.slf4j.simpleLogger.showThreadName</code> -Set to <code>true</code> if you want to
  * output the current thread name. Defaults to <code>true</code>.</li>
  * <li><code>org.slf4j.simpleLogger.showLogName</code> - Set to <code>true</code> if you want the
@@ -70,20 +94,20 @@ import org.slf4j.spi.LocationAwareLogger;
  * </p>
  *
  * <pre>
- * 176 [main] INFO examples.Sort - Populating an array of 2 elements in reverse order.
- * 225 [main] INFO examples.SortAlgo - Entered the sort method.
- * 304 [main] INFO examples.SortAlgo - Dump of integer array:
- * 317 [main] INFO examples.SortAlgo - Element [0] = 0
- * 331 [main] INFO examples.SortAlgo - Element [1] = 1
- * 343 [main] INFO examples.Sort - The next log statement should be an error message.
- * 346 [main] ERROR examples.SortAlgo - Tried to dump an uninitialized array.
+ * 2022-02-23T15:43:40.331 [INFO] [main] examples.Sort - Populating an array of 2 elements in reverse order.
+ * 2022-02-23T15:43:40.332 [INFO] [main] examples.SortAlgo - Entered the sort method.
+ * 2022-02-23T15:43:40.333 [INFO] [main] examples.SortAlgo - Dump of integer array:
+ * 2022-02-23T15:43:40.334 [INFO] [main] examples.SortAlgo - Element [0] = 0
+ * 2022-02-23T15:43:40.335 [INFO] [main] examples.SortAlgo - Element [1] = 1
+ * 2022-02-23T15:43:40.336 [INFO] [main] examples.Sort - The next log statement should be an error message.
+ * 2022-02-23T15:43:40.337 [ERROR] [main] examples.SortAlgo - Tried to dump an uninitialized array.
  *   at org.log4j.examples.SortAlgo.dump(SortAlgo.java:58)
  *   at org.log4j.examples.Sort.main(Sort.java:64)
- * 467 [main] INFO  examples.Sort - Exiting main method.
+ * 2022-02-23T15:43:40.338 [INFO] [main]  examples.Sort - Exiting main method.
  * </pre>
  * <p>
- * This implementation is heavily inspired by <a href="http://commons.apache.org/logging/">Apache
- * Commons Logging</a>'s SimpleLog.
+ * This implementation is heavily inspired by
+ * <a href="https://www.slf4j.org/api/org/slf4j/impl/SimpleLogger.html">SLF4J simple logger</a>.
  * </p>
  *
  * @author Ceki G&uuml;lc&uuml;
