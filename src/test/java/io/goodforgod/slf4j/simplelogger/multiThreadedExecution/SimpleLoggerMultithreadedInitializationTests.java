@@ -12,14 +12,14 @@ import org.junit.jupiter.api.BeforeEach;
 public class SimpleLoggerMultithreadedInitializationTests extends MultithreadedInitializationTests {
 
     static int NUM_LINES_IN_SLF4J_REPLAY_WARNING = 3;
-    private final PrintStream oldErr = System.err;
-    StringPrintStream sps = new StringPrintStream(oldErr, true);
+    private final PrintStream oldOut = System.out;
+    StringPrintStream sps = new StringPrintStream(oldOut, true);
 
     @BeforeEach
     public void setup() {
         System.out.println("THREAD_COUNT=" + THREAD_COUNT);
-        System.setErr(sps);
-        System.setProperty(SimpleLoggerProperties.LOG_FILE, "System.err");
+        System.setOut(sps);
+        System.setProperty(SimpleLoggerProperties.LOG_FILE, "System.out");
         LoggerFactoryFriend.reset();
     }
 
@@ -27,7 +27,7 @@ public class SimpleLoggerMultithreadedInitializationTests extends MultithreadedI
     public void tearDown() {
         LoggerFactoryFriend.reset();
         System.clearProperty(SimpleLoggerProperties.LOG_FILE);
-        System.setErr(oldErr);
+        System.setOut(oldOut);
     }
 
     @Override

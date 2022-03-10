@@ -27,8 +27,8 @@ class MultiThreadedExecutionTests {
 
     @BeforeEach
     public void setup() {
-        System.setErr(scps);
-        System.setProperty(SimpleLoggerProperties.LOG_FILE, "System.err");
+        System.setOut(scps);
+        System.setProperty(SimpleLoggerProperties.LOG_FILE, "System.out");
         LoggerFactoryFriend.reset();
     }
 
@@ -36,7 +36,7 @@ class MultiThreadedExecutionTests {
     public void tearDown() throws Exception {
         LoggerFactoryFriend.reset();
         System.clearProperty(SimpleLoggerProperties.LOG_FILE);
-        System.setErr(oldOut);
+        System.setOut(oldOut);
     }
 
     @Test

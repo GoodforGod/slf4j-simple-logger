@@ -21,7 +21,7 @@ class SimpleLoggerTests extends Assertions {
     @AfterEach
     public void after() {
         System.clearProperty(A_KEY);
-        System.setErr(original);
+        System.setOut(original);
         clearProperties();
     }
 
@@ -104,7 +104,7 @@ class SimpleLoggerTests extends Assertions {
         SimpleLogger.init();
         SimpleLogger simpleLogger = new SimpleLogger(this.getClass().getName());
 
-        System.setErr(replacement);
+        System.setOut(replacement);
         simpleLogger.info("hello");
         replacement.flush();
         final String res = bout.toString().strip();
@@ -113,7 +113,7 @@ class SimpleLoggerTests extends Assertions {
 
     @Test
     void checkUseShowDateTimeFormat() {
-        System.setErr(replacement);
+        System.setOut(replacement);
         System.setProperty(SimpleLoggerProperties.SHOW_DATE_TIME, "true");
         System.setProperty(SimpleLoggerProperties.LEVEL_IN_BRACKETS, "true");
         System.setProperty(SimpleLoggerProperties.DATE_TIME_FORMAT, "uuuu");
@@ -134,7 +134,7 @@ class SimpleLoggerTests extends Assertions {
 
     @Test
     void checkUseShowUnixTimeFormat() {
-        System.setErr(replacement);
+        System.setOut(replacement);
         System.setProperty(SimpleLoggerProperties.SHOW_DATE_TIME, "true");
         System.setProperty(SimpleLoggerProperties.DATE_TIME_OUTPUT_TYPE, "UNIX_TIME");
         System.setProperty(SimpleLoggerProperties.LEVEL_IN_BRACKETS, "true");
@@ -154,7 +154,7 @@ class SimpleLoggerTests extends Assertions {
 
     @Test
     void checkUseShowTimeFormat() {
-        System.setErr(replacement);
+        System.setOut(replacement);
         System.setProperty(SimpleLoggerProperties.SHOW_DATE_TIME, "true");
         System.setProperty(SimpleLoggerProperties.DATE_TIME_OUTPUT_TYPE, "TIME");
         System.setProperty(SimpleLoggerProperties.DATE_TIME_FORMAT, "HH:mm:ss");
@@ -175,7 +175,7 @@ class SimpleLoggerTests extends Assertions {
 
     @Test
     void checkUseShowStartTimeFormat() {
-        System.setErr(replacement);
+        System.setOut(replacement);
         System.setProperty(SimpleLoggerProperties.SHOW_DATE_TIME, "true");
         System.setProperty(SimpleLoggerProperties.DATE_TIME_OUTPUT_TYPE, "MILLIS_FROM_START");
         System.setProperty(SimpleLoggerProperties.LEVEL_IN_BRACKETS, "true");
@@ -197,7 +197,7 @@ class SimpleLoggerTests extends Assertions {
 
     @Test
     void checkUseShowLogNameLength() {
-        System.setErr(replacement);
+        System.setOut(replacement);
         System.setProperty(SimpleLoggerProperties.SHOW_DATE_TIME, "false");
         System.setProperty(SimpleLoggerProperties.LEVEL_IN_BRACKETS, "true");
         System.setProperty(SimpleLoggerProperties.SHOW_LOG_NAME_LENGTH, "36");
@@ -213,7 +213,7 @@ class SimpleLoggerTests extends Assertions {
 
     @Test
     void checkUseOfCachedOutputStream() {
-        System.setErr(replacement);
+        System.setOut(replacement);
         System.setProperty(SimpleLoggerProperties.CACHE_OUTPUT_STREAM_STRING, "true");
         System.setProperty(SimpleLoggerProperties.SHOW_THREAD_NAME, "true");
         System.setProperty(SimpleLoggerProperties.SHOW_DATE_TIME, "false");
@@ -221,7 +221,7 @@ class SimpleLoggerTests extends Assertions {
         SimpleLogger.init();
         SimpleLogger simpleLogger = new SimpleLogger(this.getClass().getName());
         // change reference to original before logging
-        System.setErr(original);
+        System.setOut(original);
 
         simpleLogger.info("hello");
         replacement.flush();
