@@ -111,7 +111,30 @@ public class SimpleLoggerConfiguration {
             this.outputChoiceError = computeOutputChoice(logFileError, cacheOutputStream);
         }
 
-        this.environments = Optional.ofNullable(getStringProperty(ENVIRONMENTS))
+        this.environments = getEnvironments();
+        this.environmentShowNullable = getBooleanProperty(ENVIRONMENT_SHOW_NULLABLE, false);
+        this.environmentShowName = getBooleanProperty(ENVIRONMENT_SHOW_NAME, false);
+        this.environmentsOnStart = getEnvironmentsOnStart();
+
+        this.showDateTime = getBooleanProperty(SHOW_DATE_TIME, SHOW_DATE_TIME_DEFAULT);
+        this.dateTimeOutputType = Optional.ofNullable(getStringProperty(DATE_TIME_OUTPUT_TYPE))
+                .map(s -> {
+                    try {
+                        return DateTimeOutputType.valueOf(s);
+                    } catch (IllegalArgumentException e) {
+                        return DateTimeOutputType.DATE_TIME;
+                    }
+                })
+                .orElse(DateTimeOutputType.DATE_TIME);
+
+        if (DateTimeOutputType.DATE_TIME.equals(this.dateTimeOutputType)
+                || DateTimeOutputType.TIME.equals(this.dateTimeOutputType)) {
+            this.dateTimeFormatter = getDateTimeFormatter(this.dateTimeOutputType);
+        }
+    }
+
+    private List<String> getEnvironments() {
+        return Optional.ofNullable(getStringProperty(ENVIRONMENTS))
                 .filter(envs -> !envs.isBlank())
                 .map(envs -> {
                     final List<String> envsToOutput = Arrays.stream(envs.split(","))
@@ -122,10 +145,9 @@ public class SimpleLoggerConfiguration {
                     return List.copyOf(envsToOutput);
                 })
                 .orElse(Collections.emptyList());
+    }
 
-        this.environmentShowNullable = getBooleanProperty(ENVIRONMENT_SHOW_NULLABLE, false);
-        this.environmentShowName = getBooleanProperty(ENVIRONMENT_SHOW_NAME, false);
-
+    private String getEnvironmentsOnStart() {
         final boolean rememberEnvsOnStart = getBooleanProperty(ENVIRONMENT_REMEMBER_ON_START, false);
         if (rememberEnvsOnStart) {
             final String envsOnStart = this.environments.stream()
@@ -143,46 +165,40 @@ public class SimpleLoggerConfiguration {
                     .collect(Collectors.joining(", "));
 
             if (!envsOnStart.isEmpty()) {
-                this.environmentsOnStart = "[" + envsOnStart + "] ";
+                return "[" + envsOnStart + "] ";
+            } else {
+                return null;
             }
         } else {
-            this.environmentsOnStart = null;
+            return null;
         }
+    }
 
-        this.showDateTime = getBooleanProperty(SHOW_DATE_TIME, SHOW_DATE_TIME_DEFAULT);
-        this.dateTimeOutputType = Optional.ofNullable(getStringProperty(DATE_TIME_OUTPUT_TYPE))
-                .map(s -> {
-                    try {
-                        return DateTimeOutputType.valueOf(s);
-                    } catch (IllegalArgumentException e) {
-                        return DateTimeOutputType.DATE_TIME;
-                    }
-                })
-                .orElse(DateTimeOutputType.DATE_TIME);
+    private DateTimeFormatter getDateTimeFormatter(DateTimeOutputType dateTimeOutputType) {
+        final String dateTimeFormatStr = getStringProperty(DATE_TIME_FORMAT);
+        if (dateTimeFormatStr != null) {
+            try {
+                final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(dateTimeFormatStr);
 
-        if (DateTimeOutputType.DATE_TIME.equals(this.dateTimeOutputType)) {
-            this.dateTimeFormatter = DATE_TIME_FORMATTER_DEFAULT;
-        } else if (DateTimeOutputType.TIME.equals(this.dateTimeOutputType)) {
-            this.dateTimeFormatter = TIME_FORMATTER_DEFAULT;
-        }
-
-        if (DateTimeOutputType.DATE_TIME.equals(this.dateTimeOutputType)
-                || DateTimeOutputType.TIME.equals(this.dateTimeOutputType)) {
-            final String dateTimeFormatStr = getStringProperty(DATE_TIME_FORMAT);
-            if (dateTimeFormatStr != null) {
-                try {
-                    this.dateTimeFormatter = DateTimeFormatter.ofPattern(dateTimeFormatStr);
-
-                    // check formatting in initialization
-                    if (DateTimeOutputType.DATE_TIME.equals(this.dateTimeOutputType)) {
-                        this.dateTimeFormatter.format(LocalDateTime.now());
-                    } else if (DateTimeOutputType.TIME.equals(this.dateTimeOutputType)) {
-                        this.dateTimeFormatter.format(LocalTime.now());
-                    }
-                } catch (IllegalArgumentException e) {
-                    Util.report("Bad date format in " + CONFIGURATION_FILE + "; will output relative time", e);
+                // check formatting in initialization
+                if (DateTimeOutputType.DATE_TIME.equals(dateTimeOutputType)) {
+                    dateTimeFormatter.format(LocalDateTime.now());
+                } else if (DateTimeOutputType.TIME.equals(dateTimeOutputType)) {
+                    dateTimeFormatter.format(LocalTime.now());
                 }
+
+                return dateTimeFormatter;
+            } catch (IllegalArgumentException e) {
+                Util.report("Bad date format in " + CONFIGURATION_FILE + "; will output relative time", e);
             }
+        }
+
+        if (DateTimeOutputType.DATE_TIME.equals(dateTimeOutputType)) {
+            return DATE_TIME_FORMATTER_DEFAULT;
+        } else if (DateTimeOutputType.TIME.equals(dateTimeOutputType)) {
+            return TIME_FORMATTER_DEFAULT;
+        } else {
+            throw new UnsupportedOperationException("Unsupported Date Output Type formatter: " + this.dateTimeOutputType);
         }
     }
 
