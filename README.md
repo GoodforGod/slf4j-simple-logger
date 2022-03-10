@@ -13,6 +13,9 @@ Features:
 - Logger name abbreviation (logback analog).
 - Environment variables logging.
 - Global logger level change.
+- Split output for errors and other.
+- GraalVM friendly.
+- Simple!
 
 And more.
 
