@@ -30,7 +30,7 @@ final class StringBuilderWriter extends Writer {
      * @param len  Number of characters to write
      */
     @Override
-    public void write(char cbuf[], int off, int len) {
+    public void write(char[] cbuf, int off, int len) {
         if ((off < 0) || (off > cbuf.length)
                 || (len < 0)
                 || ((off + len) > cbuf.length)

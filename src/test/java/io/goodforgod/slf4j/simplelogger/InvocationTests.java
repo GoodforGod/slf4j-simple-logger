@@ -1,5 +1,6 @@
 package io.goodforgod.slf4j.simplelogger;
 
+import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -14,31 +15,43 @@ import org.slf4j.*;
  */
 class InvocationTests extends Assertions {
 
-    PrintStream old = System.err;
+    PrintStream original = System.out;
+    ByteArrayOutputStream bout = new ByteArrayOutputStream();
+    PrintStream replacement = new PrintStream(bout);
 
     @BeforeEach
-    public void setUp() throws Exception {
-        System.setErr(new SilentPrintStream(old));
-    }
+    public void setUp() {}
 
     @AfterEach
-    public void tearDown() throws Exception {
-        System.setErr(old);
+    public void tearDown() {
+        System.setOut(original);
     }
 
     @Test
-    void test1() {
+    void testDebugLevelIsNotPrintedCauseOff() {
+        System.setOut(replacement);
+
+        System.setProperty(SimpleLoggerProperties.SHOW_DATE_TIME, "false");
         Logger logger = LoggerFactory.getLogger("test1");
         logger.debug("Hello world.");
+
+        replacement.flush();
+
+        final String res = bout.toString().strip();
+        assertTrue(res.isBlank());
     }
 
     @Test
-    void test2() {
+    void testThrowable() {
         int i1 = 1;
         int i2 = 2;
         int i3 = 3;
         Exception e = new Exception("This is a test exception.");
+
+        System.setProperty(SimpleLoggerProperties.SHOW_DATE_TIME, "false");
         Logger logger = LoggerFactory.getLogger("test2");
+
+        System.setOut(replacement);
 
         logger.debug("Hello world 1.");
         logger.debug("Hello world {}", i1);
@@ -54,20 +67,37 @@ class InvocationTests extends Assertions {
         logger.error("Hello world 4.");
         logger.error("Hello world {}", 3);
         logger.error("Hello world 4.", e);
+
+        replacement.flush();
+
+        final String res = bout.toString().strip();
+        assertTrue(res.startsWith("[INFO] test2 - Hello world 2.\r\n" +
+                "[WARN] test2 - Hello world 3.\r\n" +
+                "[WARN] test2 - Hello world 3"));
     }
 
-    // http://jira.qos.ch/browse/SLF4J-69
-    // formerly http://bugzilla.slf4j.org/show_bug.cgi?id=78
     @Test
     void testNullParameter_BUG78() {
+        System.setProperty(SimpleLoggerProperties.SHOW_DATE_TIME, "false");
         Logger logger = LoggerFactory.getLogger("testNullParameter_BUG78");
         String[] parameters = null;
         String msg = "hello {}";
+
+        System.setOut(replacement);
+
         logger.info(msg, (Object[]) parameters);
+
+        replacement.flush();
+
+        final String res = bout.toString().strip();
+        assertEquals("[INFO] testNullParameter_BUG78 - hello {}", res);
     }
 
     @Test
     void testNull() {
+        System.setOut(replacement);
+
+        System.setProperty(SimpleLoggerProperties.SHOW_DATE_TIME, "false");
         Logger logger = LoggerFactory.getLogger("testNull");
         logger.debug(null);
         logger.info(null);
@@ -79,10 +109,21 @@ class InvocationTests extends Assertions {
         logger.info(null, e);
         logger.warn(null, e);
         logger.error(null, e);
+
+        replacement.flush();
+
+        final String res = bout.toString().strip();
+        assertTrue(res.startsWith("[INFO] testNull - null\r\n" +
+                "[WARN] testNull - null\r\n" +
+                "[ERROR] testNull - null\r\n" +
+                "[INFO] testNull - null"));
     }
 
     @Test
     void testMarker() {
+        System.setOut(replacement);
+
+        System.setProperty(SimpleLoggerProperties.SHOW_DATE_TIME, "false");
         Logger logger = LoggerFactory.getLogger("testMarker");
         Marker blue = MarkerFactory.getMarker("BLUE");
         logger.debug(blue, "hello");
@@ -99,6 +140,19 @@ class InvocationTests extends Assertions {
         logger.info(blue, "hello {} and {} ", "world", "universe");
         logger.warn(blue, "hello {} and {} ", "world", "universe");
         logger.error(blue, "hello {} and {} ", "world", "universe");
+
+        replacement.flush();
+
+        final String res = bout.toString().strip();
+        assertEquals("[INFO] testMarker - hello\r\n" +
+                "[WARN] testMarker - hello\r\n" +
+                "[ERROR] testMarker - hello\r\n" +
+                "[INFO] testMarker - hello world\r\n" +
+                "[WARN] testMarker - hello world\r\n" +
+                "[ERROR] testMarker - hello world\r\n" +
+                "[INFO] testMarker - hello world and universe \r\n" +
+                "[WARN] testMarker - hello world and universe \r\n" +
+                "[ERROR] testMarker - hello world and universe", res);
     }
 
     @Test
