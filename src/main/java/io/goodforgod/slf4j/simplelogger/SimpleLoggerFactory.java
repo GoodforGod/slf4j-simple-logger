@@ -26,8 +26,23 @@ public class SimpleLoggerFactory implements ILoggerFactory {
     /**
      * Return an appropriate {@link SimpleLogger} instance by name.
      */
+    @Override
     public Logger getLogger(String name) {
         return loggerMap.computeIfAbsent(name, k -> new SimpleLogger(name));
+    }
+
+    public void setLogLevel(String logLevel) {
+        setLogLevel(logLevel, l -> true);
+    }
+
+    public void setLogLevel(String logLevel, Predicate<Logger> loggerPredicate) {
+        if (logLevel != null && loggerPredicate != null) {
+            for (SimpleLogger logger : loggerMap.values()) {
+                if (loggerPredicate.test(logger)) {
+                    logger.setCurrentLogLevel(logLevel);
+                }
+            }
+        }
     }
 
     public void setLogLevel(Level logLevel) {
@@ -35,19 +50,13 @@ public class SimpleLoggerFactory implements ILoggerFactory {
     }
 
     public void setLogLevel(Level logLevel, Predicate<Logger> loggerPredicate) {
-        if (logLevel != null && loggerPredicate != null) {
-            loggerMap.values().stream()
-                    .filter(loggerPredicate)
-                    .forEach(l -> l.setCurrentLogLevel(logLevel));
-        }
+        setLogLevel(logLevel.name(), loggerPredicate);
     }
 
     /**
      * Clear the internal logger cache.
-     *
      * This method is intended to be called by classes (in the same package) for testing purposes. This
      * method is internal. It can be modified, renamed or removed at any time without notice.
-     *
      * You are strongly discouraged from calling this method in production code.
      */
     void reset() {

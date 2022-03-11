@@ -1,22 +1,3 @@
-/**
- * Copyright (c) 2004-2011 QOS.ch All rights reserved.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
- * associated documentation files (the "Software"), to deal in the Software without restriction,
- * including without limitation the rights to use, copy, modify, merge, publish, distribute,
- * sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all copies or
- * substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
- * NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
- * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- */
 package io.goodforgod.slf4j.simplelogger;
 
 import java.io.ByteArrayOutputStream;
@@ -39,7 +20,7 @@ import org.slf4j.LoggerFactory;
  * @author Alexander Dorokhine
  * @author Ceki G&uuml;lc&uuml;
  */
-class DetectLoggerNameMismatchTest extends Assertions {
+class DetectLoggerNameMismatchTests extends Assertions {
 
     private static final String MISMATCH_STRING = "Detected logger name mismatch";
 
@@ -89,7 +70,7 @@ class DetectLoggerNameMismatchTest extends Assertions {
         final String res = byteArrayOutputStream.toString().strip();
         final String[] lines = res.split("\n");
         assertEquals(
-                "SLF4J: Detected logger name mismatch. Given name: \"java.lang.String\"; computed name: \"io.goodforgod.slf4j.simplelogger.DetectLoggerNameMismatchTest\".",
+                "SLF4J: Detected logger name mismatch. Given name: \"java.lang.String\"; computed name: \"io.goodforgod.slf4j.simplelogger.DetectLoggerNameMismatchTests\".",
                 lines[0].strip());
         assertEquals("SLF4J: See http://www.slf4j.org/codes.html#loggerNameMismatch for an explanation", lines[1].strip());
     }
@@ -100,8 +81,8 @@ class DetectLoggerNameMismatchTest extends Assertions {
     @Test
     void testPassIfMatch() {
         setTrialEnabled(true);
-        Logger logger = LoggerFactory.getLogger(DetectLoggerNameMismatchTest.class);
-        assertEquals(DetectLoggerNameMismatchTest.class.getName(), logger.getName());
+        Logger logger = LoggerFactory.getLogger(DetectLoggerNameMismatchTests.class);
+        assertEquals(DetectLoggerNameMismatchTests.class.getName(), logger.getName());
         assertMismatchDetected(false);
     }
 
@@ -141,5 +122,4 @@ class ShapeBase {
     public Logger logger = LoggerFactory.getLogger(getClass());
 }
 
-class Square extends ShapeBase {
-}
+class Square extends ShapeBase {}

@@ -1,22 +1,3 @@
-/**
- * Copyright (c) 2004-2021 QOS.ch All rights reserved.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
- * associated documentation files (the "Software"), to deal in the Software without restriction,
- * including without limitation the rights to use, copy, modify, merge, publish, distribute,
- * sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all copies or
- * substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
- * NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
- * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- */
 package io.goodforgod.slf4j.simplelogger.multiThreadedExecution;
 
 import io.goodforgod.slf4j.simplelogger.LoggerFactoryFriend;
@@ -30,10 +11,9 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Tests that output in multi-threaded environments is not mingled.
- * 
  * See also https://jira.qos.ch/browse/SLF4J-515
  */
-class MultiThreadedExecutionTest {
+class MultiThreadedExecutionTests {
 
     static int THREAD_COUNT = 2;
     static long TEST_DURATION_IN_MILLIS = 100;
@@ -47,16 +27,33 @@ class MultiThreadedExecutionTest {
 
     @BeforeEach
     public void setup() {
-        System.setErr(scps);
-        System.setProperty(SimpleLoggerProperties.LOG_FILE_KEY, "System.err");
+        clearProperties();
+        System.setOut(scps);
+        System.setProperty(SimpleLoggerProperties.LOG_FILE, "System.out");
         LoggerFactoryFriend.reset();
     }
 
     @AfterEach
-    public void tearDown() throws Exception {
+    public void tearDown() {
         LoggerFactoryFriend.reset();
-        System.clearProperty(SimpleLoggerProperties.LOG_FILE_KEY);
-        System.setErr(oldOut);
+        System.clearProperty(SimpleLoggerProperties.LOG_FILE);
+        System.setOut(oldOut);
+    }
+
+    public static void clearProperties() {
+        System.clearProperty(SimpleLoggerProperties.CACHE_OUTPUT_STREAM_STRING);
+        System.clearProperty(SimpleLoggerProperties.SHOW_LOG_NAME_LENGTH);
+        System.clearProperty(SimpleLoggerProperties.SHOW_THREAD_NAME);
+        System.clearProperty(SimpleLoggerProperties.SHOW_DATE_TIME);
+        System.clearProperty(SimpleLoggerProperties.SHOW_SHORT_LOG_NAME);
+        System.clearProperty(SimpleLoggerProperties.SHOW_IMPLEMENTATION_VERSION);
+        System.clearProperty(SimpleLoggerProperties.DATE_TIME_FORMAT);
+        System.clearProperty(SimpleLoggerProperties.DATE_TIME_OUTPUT_TYPE);
+        System.clearProperty(SimpleLoggerProperties.DEFAULT_LOG_LEVEL);
+        System.clearProperty(SimpleLoggerProperties.ENVIRONMENT_SHOW_NAME);
+        System.clearProperty(SimpleLoggerProperties.ENVIRONMENT_SHOW_NULLABLE);
+        System.clearProperty(SimpleLoggerProperties.ENVIRONMENT_REMEMBER_ON_START);
+        System.clearProperty(SimpleLoggerProperties.ENVIRONMENTS);
     }
 
     @Test
@@ -95,11 +92,10 @@ class MultiThreadedExecutionTest {
                     i++;
                 } catch (Throwable t) {
                     throwable = t;
-                    MultiThreadedExecutionTest.this.signal = true;
+                    MultiThreadedExecutionTests.this.signal = true;
                     return;
                 }
             }
-
         }
     }
 
@@ -115,7 +111,7 @@ class MultiThreadedExecutionTest {
                     logger.info("Other {}", i++);
                 } catch (Throwable t) {
                     throwable = t;
-                    MultiThreadedExecutionTest.this.signal = true;
+                    MultiThreadedExecutionTests.this.signal = true;
                     return;
                 }
             }

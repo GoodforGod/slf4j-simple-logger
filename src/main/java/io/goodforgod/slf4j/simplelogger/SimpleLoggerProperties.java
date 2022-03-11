@@ -6,20 +6,41 @@ package io.goodforgod.slf4j.simplelogger;
  * @author Anton Kurako (GoodforGod)
  * @since 10.10.2021
  */
-public interface SimpleLoggerProperties {
+public final class SimpleLoggerProperties {
 
-    String SYSTEM_PREFIX = "org.slf4j.simpleLogger.";
+    private SimpleLoggerProperties() {}
 
-    String LOG_KEY_PREFIX = SYSTEM_PREFIX + "log.";
+    public enum DateTimeOutputType {
+        TIME,
+        DATE_TIME,
+        UNIX_TIME,
+        MILLIS_FROM_START
+    }
 
-    String CACHE_OUTPUT_STREAM_STRING_KEY = SYSTEM_PREFIX + "cacheOutputStream";
-    String WARN_LEVEL_STRING_KEY = SYSTEM_PREFIX + "warnLevelString";
-    String LEVEL_IN_BRACKETS_KEY = SYSTEM_PREFIX + "levelInBrackets";
-    String LOG_FILE_KEY = SYSTEM_PREFIX + "logFile";
-    String SHOW_SHORT_LOG_NAME_KEY = SYSTEM_PREFIX + "showShortLogName";
-    String SHOW_LOG_NAME_KEY = SYSTEM_PREFIX + "showLogName";
-    String SHOW_THREAD_NAME_KEY = SYSTEM_PREFIX + "showThreadName";
-    String DATE_TIME_FORMAT_KEY = SYSTEM_PREFIX + "dateTimeFormat";
-    String SHOW_DATE_TIME_KEY = SYSTEM_PREFIX + "showDateTime";
-    String DEFAULT_LOG_LEVEL_KEY = SYSTEM_PREFIX + "defaultLogLevel";
+    private static final String PREFIX = "org.slf4j.simpleLogger.";
+
+    public static final String PREFIX_LOG = PREFIX + "log.";
+
+    public static final String CACHE_OUTPUT_STREAM_STRING = PREFIX + "cacheOutputStream";
+    public static final String LOG_FILE = PREFIX + "logFile";
+    public static final String LOG_FILE_WARN = PREFIX + "logFileWarn";
+    public static final String LOG_FILE_ERROR = PREFIX + "logFileError";
+
+    public static final String LEVEL_IN_BRACKETS = PREFIX + "levelInBrackets";
+    public static final String SHOW_SHORT_LOG_NAME = PREFIX + "showShortLogName";
+    public static final String SHOW_LOG_NAME = PREFIX + "showLogName";
+    public static final String SHOW_LOG_NAME_LENGTH = PREFIX + "logNameLength";
+    public static final String SHOW_THREAD_NAME = PREFIX + "showThreadName";
+    public static final String SHOW_IMPLEMENTATION_VERSION = PREFIX + "showImplementationVersion";
+
+    public static final String ENVIRONMENTS = PREFIX + "environments";
+    public static final String ENVIRONMENT_SHOW_NULLABLE = PREFIX + "environmentShowNullable";
+    public static final String ENVIRONMENT_SHOW_NAME = PREFIX + "environmentShowName";
+    public static final String ENVIRONMENT_REMEMBER_ON_START = PREFIX + "environmentRememberOnStart";
+
+    public static final String SHOW_DATE_TIME = PREFIX + "showDateTime";
+    public static final String DATE_TIME_FORMAT = PREFIX + "dateTimeFormat";
+    public static final String DATE_TIME_OUTPUT_TYPE = PREFIX + "dateTimeOutputType";
+
+    public static final String DEFAULT_LOG_LEVEL = PREFIX + "defaultLogLevel";
 }
