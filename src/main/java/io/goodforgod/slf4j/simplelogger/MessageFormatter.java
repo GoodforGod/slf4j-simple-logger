@@ -13,6 +13,8 @@ import org.slf4j.helpers.Util;
  */
 final class MessageFormatter {
 
+    private static final FormattingTuple EMPTY = new FormattingTuple(null, null, null);
+
     private static class FormatBuilder {
 
         private final StringBuilder builder;
@@ -32,7 +34,7 @@ final class MessageFormatter {
 
     static FormattingTuple format(String messagePattern, Object arg) {
         if (messagePattern == null) {
-            return new FormattingTuple(null, null, null);
+            return EMPTY;
         }
 
         final int j = messagePattern.lastIndexOf(DELIM_STR);
@@ -52,7 +54,7 @@ final class MessageFormatter {
 
     static FormattingTuple format(String messagePattern, Object arg1, Object arg2) {
         if (messagePattern == null) {
-            return new FormattingTuple(null, null, null);
+            return EMPTY;
         }
 
         final int j2 = messagePattern.lastIndexOf(DELIM_STR);
@@ -95,17 +97,17 @@ final class MessageFormatter {
 
     static FormattingTuple formatArray(String messagePattern, Object[] argArray, Throwable throwable) {
         if (messagePattern == null) {
-            return new FormattingTuple(null, argArray, throwable);
+            return new FormattingTuple(null, null, throwable);
         } else if (argArray == null) {
-            return new FormattingTuple(messagePattern);
+            return new FormattingTuple(messagePattern, null, throwable);
         } else {
             int firstArg = messagePattern.indexOf(DELIM_STR);
             if (firstArg == -1) {
-                return new FormattingTuple(messagePattern, argArray, throwable);
+                return new FormattingTuple(messagePattern, null, throwable);
             }
 
             final int limit = argArray.length;
-            final FormatBuilder fb = new FormatBuilder(messagePattern.length() + 50);
+            final FormatBuilder fb = new FormatBuilder(messagePattern.length() + 15);
             fb.j = firstArg;
             while (fb.a < limit) {
                 final Object arg = argArray[fb.a];
@@ -148,7 +150,7 @@ final class MessageFormatter {
         } else if (argument instanceof String) {
             return ((String) argument).length() + 1;
         } else {
-            return 50;
+            return 25;
         }
     }
 

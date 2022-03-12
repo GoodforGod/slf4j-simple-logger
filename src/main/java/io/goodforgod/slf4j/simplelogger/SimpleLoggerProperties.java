@@ -26,6 +26,8 @@ public final class SimpleLoggerProperties {
     public static final String LOG_FILE_WARN = PREFIX + "logFileWarn";
     public static final String LOG_FILE_ERROR = PREFIX + "logFileError";
 
+    public static final String CHARSET = PREFIX + "charset";
+
     public static final String LEVEL_IN_BRACKETS = PREFIX + "levelInBrackets";
     public static final String SHOW_SHORT_LOG_NAME = PREFIX + "showShortLogName";
     public static final String SHOW_LOG_NAME = PREFIX + "showLogName";

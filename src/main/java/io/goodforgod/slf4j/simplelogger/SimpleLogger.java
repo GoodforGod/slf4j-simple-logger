@@ -2,7 +2,7 @@ package io.goodforgod.slf4j.simplelogger;
 
 import static io.goodforgod.slf4j.simplelogger.SimpleLoggerProperties.PREFIX_LOG;
 
-import java.io.PrintWriter;
+import java.io.*;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import org.slf4j.Logger;
@@ -207,7 +207,7 @@ public class SimpleLogger extends MarkerIgnoringBase {
                 ? Thread.currentThread().getName()
                 : null;
 
-        final int length = predictBuilderLength(message, threadName);
+        final int length = predictBuilderLength(message, threadName, throwable);
         final StringBuilder builder = new StringBuilder(length);
 
         // Append date-time if so configured
@@ -274,6 +274,10 @@ public class SimpleLogger extends MarkerIgnoringBase {
     }
 
     private void logEnvironment(StringBuilder builder) {
+        if (CONFIG.environments.isEmpty()) {
+            return;
+        }
+
         if (CONFIG.environmentsOnStart != null) {
             builder.append(CONFIG.environmentsOnStart);
         } else {
@@ -305,11 +309,13 @@ public class SimpleLogger extends MarkerIgnoringBase {
         }
     }
 
-    private int predictBuilderLength(String message, String threadName) {
+    private int predictBuilderLength(String message, String threadName, Throwable throwable) {
         int length = 14;
 
         if (message != null)
             length += message.length();
+        if (throwable != null)
+            length += 2048;
         if (threadName != null)
             length += threadName.length();
         if (CONFIG.showDateTime)
@@ -320,8 +326,8 @@ public class SimpleLogger extends MarkerIgnoringBase {
         } else {
             for (String env : CONFIG.environments) {
                 length += (CONFIG.environmentShowName)
-                        ? env.length() + 12
-                        : 12;
+                        ? env.length() + 6
+                        : 10;
             }
         }
 
@@ -338,16 +344,16 @@ public class SimpleLogger extends MarkerIgnoringBase {
 
     protected String renderLevel(int level) {
         switch (level) {
-            case LOG_LEVEL_TRACE:
-                return "TRACE ";
-            case LOG_LEVEL_DEBUG:
-                return "DEBUG ";
             case LOG_LEVEL_INFO:
                 return "INFO ";
             case LOG_LEVEL_WARN:
                 return "WARN ";
             case LOG_LEVEL_ERROR:
                 return "ERROR ";
+            case LOG_LEVEL_DEBUG:
+                return "DEBUG ";
+            case LOG_LEVEL_TRACE:
+                return "TRACE ";
             default:
                 throw new IllegalStateException("Unrecognized level [" + level + "]");
         }
@@ -355,16 +361,16 @@ public class SimpleLogger extends MarkerIgnoringBase {
 
     protected String renderLevelInBrackets(int level) {
         switch (level) {
-            case LOG_LEVEL_TRACE:
-                return "[TRACE] ";
-            case LOG_LEVEL_DEBUG:
-                return "[DEBUG] ";
             case LOG_LEVEL_INFO:
                 return "[INFO] ";
             case LOG_LEVEL_WARN:
                 return "[WARN] ";
             case LOG_LEVEL_ERROR:
                 return "[ERROR] ";
+            case LOG_LEVEL_DEBUG:
+                return "[DEBUG] ";
+            case LOG_LEVEL_TRACE:
+                return "[TRACE] ";
             default:
                 throw new IllegalStateException("Unrecognized level [" + level + "]");
         }
@@ -377,16 +383,33 @@ public class SimpleLogger extends MarkerIgnoringBase {
      * @param builder of logging message
      */
     void write(StringBuilder builder) {
+        final String message = builder.toString();
+        final byte[] bytes = (CONFIG.charset == null)
+                ? message.getBytes()
+                : message.getBytes(CONFIG.charset);
+
+        final PrintStream printStream = getOutputStream();
+        synchronized (printStream) {
+            try {
+                printStream.write(bytes);
+                printStream.flush();
+            } catch (IOException e) {
+                // do nothing
+            }
+        }
+    }
+
+    private PrintStream getOutputStream() {
+        if (CONFIG.sameOutputChoice)
+            return CONFIG.outputChoice.getTargetPrintStream();
+
         switch (currentLogLevel) {
             case LOG_LEVEL_WARN:
-                CONFIG.outputChoiceWarn.getTargetPrintStream().print(builder);
-                break;
+                return CONFIG.outputChoiceWarn.getTargetPrintStream();
             case LOG_LEVEL_ERROR:
-                CONFIG.outputChoiceError.getTargetPrintStream().print(builder);
-                break;
+                return CONFIG.outputChoiceError.getTargetPrintStream();
             default:
-                CONFIG.outputChoice.getTargetPrintStream().print(builder);
-                break;
+                return CONFIG.outputChoice.getTargetPrintStream();
         }
     }
 
@@ -408,6 +431,22 @@ public class SimpleLogger extends MarkerIgnoringBase {
      * @param level  to log
      * @param format to parse message
      * @param arg1   to format
+     */
+    private void formatAndLog(int level, String format, Object arg1) {
+        if (!isLevelEnabled(level)) {
+            return;
+        }
+
+        final FormattingTuple tp = MessageFormatter.format(format, arg1);
+        log(level, tp.getMessage(), null);
+    }
+
+    /**
+     * For formatted messages, first substitute arguments and then log.
+     *
+     * @param level  to log
+     * @param format to parse message
+     * @param arg1   to format
      * @param arg2   to format
      */
     private void formatAndLog(int level, String format, Object arg1, Object arg2) {
@@ -416,7 +455,7 @@ public class SimpleLogger extends MarkerIgnoringBase {
         }
 
         final FormattingTuple tp = MessageFormatter.format(format, arg1, arg2);
-        log(level, tp.getMessage(), tp.getThrowable());
+        log(level, tp.getMessage(), null);
     }
 
     /**
@@ -466,7 +505,7 @@ public class SimpleLogger extends MarkerIgnoringBase {
      * format outlined above.
      */
     public void trace(String format, Object param1) {
-        formatAndLog(LOG_LEVEL_TRACE, format, param1, null);
+        formatAndLog(LOG_LEVEL_TRACE, format, param1);
     }
 
     /**
@@ -512,7 +551,7 @@ public class SimpleLogger extends MarkerIgnoringBase {
      * format outlined above.
      */
     public void debug(String format, Object param1) {
-        formatAndLog(LOG_LEVEL_DEBUG, format, param1, null);
+        formatAndLog(LOG_LEVEL_DEBUG, format, param1);
     }
 
     /**
@@ -557,7 +596,7 @@ public class SimpleLogger extends MarkerIgnoringBase {
      * format outlined above.
      */
     public void info(String format, Object arg) {
-        formatAndLog(LOG_LEVEL_INFO, format, arg, null);
+        formatAndLog(LOG_LEVEL_INFO, format, arg);
     }
 
     /**
@@ -603,7 +642,7 @@ public class SimpleLogger extends MarkerIgnoringBase {
      * format outlined above.
      */
     public void warn(String format, Object arg) {
-        formatAndLog(LOG_LEVEL_WARN, format, arg, null);
+        formatAndLog(LOG_LEVEL_WARN, format, arg);
     }
 
     /**
@@ -649,7 +688,7 @@ public class SimpleLogger extends MarkerIgnoringBase {
      * format outlined above.
      */
     public void error(String format, Object arg) {
-        formatAndLog(LOG_LEVEL_ERROR, format, arg, null);
+        formatAndLog(LOG_LEVEL_ERROR, format, arg);
     }
 
     /**
