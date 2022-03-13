@@ -191,6 +191,8 @@ org.slf4j.simpleLogger.showShortLogName=false
 org.slf4j.simpleLogger.showLogName=true
 # Set maximum logger name to output and abbreviate if it exceeds length. (default null)
 org.slf4j.simpleLogger.logNameLength=36
+# Set logger output charset to use (default UTF-8)
+org.slf4j.simpleLogger.charset=UTF-8
 # Set environment names to show in output. Envs will be printed out in order they preserve in configuration. (default null)
 org.slf4j.simpleLogger.environments=SESSION_ID,ORIGIN,HOST
 # Set to true to show environment with nullable values. (default false)
