@@ -2,6 +2,7 @@ package io.goodforgod.slf4j.simplelogger.multiThreadedExecution;
 
 import io.goodforgod.slf4j.simplelogger.LoggerFactoryFriend;
 import io.goodforgod.slf4j.simplelogger.SimpleLoggerProperties;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -52,6 +53,12 @@ public class SimpleLoggerMultithreadedInitializationTests extends MultithreadedI
             super(ps);
             other = ps;
             this.duplicate = duplicate;
+        }
+
+        @Override
+        public void write(byte[] b) throws IOException {
+            stringList.add(new String(b));
+            super.write(b);
         }
 
         @Override

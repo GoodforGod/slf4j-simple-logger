@@ -4,6 +4,8 @@ import static io.goodforgod.slf4j.simplelogger.SimpleLoggerProperties.*;
 
 import io.goodforgod.slf4j.simplelogger.OutputChoice.OutputChoiceType;
 import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.time.LocalDateTime;
@@ -49,8 +51,10 @@ public class SimpleLoggerConfiguration {
 
     private static final boolean SHOW_DATE_TIME_DEFAULT = true;
 
+    boolean sameOutputChoice = false;
     final long initializeTime = System.currentTimeMillis();
 
+    Charset charset = StandardCharsets.UTF_8;
     OutputChoice outputChoice = null;
     OutputChoice outputChoiceWarn = null;
     OutputChoice outputChoiceError = null;
@@ -97,6 +101,14 @@ public class SimpleLoggerConfiguration {
         final String logFile = getStringProperty(LOG_FILE, LOG_FILE_DEFAULT);
         final String logFileWarn = getStringProperty(LOG_FILE_WARN, LOG_FILE_DEFAULT);
         final String logFileError = getStringProperty(LOG_FILE_ERROR, LOG_FILE_DEFAULT);
+        this.sameOutputChoice = logFile.equals(logFileWarn) && logFileWarn.equals(logFileError);
+
+        this.charset = Optional.ofNullable(getStringProperty(CHARSET, null))
+                .map(charset -> ("null".equals(charset))
+                        ? null
+                        : Charset.forName(charset))
+                .orElse(StandardCharsets.UTF_8);
+
         final boolean cacheOutputStream = getBooleanProperty(CACHE_OUTPUT_STREAM_STRING, CACHE_OUTPUT_STREAM_DEFAULT);
         this.outputChoice = computeOutputChoice(logFile, cacheOutputStream);
         this.outputChoiceWarn = (logFile.equals(logFileWarn))
@@ -178,16 +190,16 @@ public class SimpleLoggerConfiguration {
         final String dateTimeFormatStr = getStringProperty(DATE_TIME_FORMAT);
         if (dateTimeFormatStr != null) {
             try {
-                final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(dateTimeFormatStr);
+                final DateTimeFormatter formatter = DateTimeFormatter.ofPattern(dateTimeFormatStr);
 
                 // check formatting in initialization
                 if (DateTimeOutputType.DATE_TIME.equals(dateTimeOutputType)) {
-                    dateTimeFormatter.format(LocalDateTime.now());
+                    formatter.format(LocalDateTime.now());
                 } else if (DateTimeOutputType.TIME.equals(dateTimeOutputType)) {
-                    dateTimeFormatter.format(LocalTime.now());
+                    formatter.format(LocalTime.now());
                 }
 
-                return dateTimeFormatter;
+                return formatter;
             } catch (IllegalArgumentException e) {
                 Util.report("Bad date format in " + CONFIGURATION_FILE + "; will output relative time", e);
             }
