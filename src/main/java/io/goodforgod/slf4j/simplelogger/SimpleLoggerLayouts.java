@@ -1,0 +1,336 @@
+package io.goodforgod.slf4j.simplelogger;
+
+import java.time.*;
+
+/**
+ * Default SimpleLogger layout implementations
+ *
+ * @author Anton Kurako (GoodforGod)
+ * @since 14.03.2022
+ */
+final class SimpleLoggerLayouts {
+
+    private static final long NANOS_PER_SECOND = 1000_000_000L;
+    private static final int SECONDS_PER_DAY = 60 * 60 * 24;
+
+    private SimpleLoggerLayouts() {}
+
+    private enum LayoutOrder {
+        DATE_TIME,
+        IMPLEMENTATION,
+        LEVEL,
+        ENVIRONMENT,
+        THREAD,
+        LOGGER_NAME
+    }
+
+    private static final class DateTimeCache {
+
+        private final long epochMillis;
+        private final String formatted;
+
+        private DateTimeCache(long epochMillis, String formatted) {
+            this.epochMillis = epochMillis;
+            this.formatted = formatted;
+        }
+    }
+
+    static final class DateTimeLayout implements Layout {
+
+        private final Clock clock = Clock.systemDefaultZone();
+        private final SimpleLoggerConfiguration configuration;
+
+        private volatile DateTimeCache cache = new DateTimeCache(-1, null);
+
+        DateTimeLayout(SimpleLoggerConfiguration configuration) {
+            this.configuration = configuration;
+        }
+
+        @Override
+        public void print(String loggerName, int level, StringBuilder builder) {
+            builder.append(getFormattedDateTime());
+            builder.append(' ');
+        }
+
+        /**
+         * @see LocalDateTime#ofEpochSecond(long, int, ZoneOffset)
+         * @return formatter date time
+         */
+        private String getFormattedDateTime() {
+            final DateTimeCache localCache = this.cache;
+            final long epochMilli = System.currentTimeMillis();
+
+            if (localCache.epochMillis == epochMilli) {
+                return localCache.formatted;
+            } else {
+                final Instant now = Instant.ofEpochMilli(epochMilli);
+                final ZoneOffset offset = clock.getZone().getRules().getOffset(now);
+                final long localSecond = now.getEpochSecond() + offset.getTotalSeconds(); // overflow caught later
+                final long localEpochDay = Math.floorDiv(localSecond, SECONDS_PER_DAY);
+                final int secsOfDay = Math.floorMod(localSecond, SECONDS_PER_DAY);
+                final LocalDate date = LocalDate.ofEpochDay(localEpochDay);
+                final LocalTime time = LocalTime.ofNanoOfDay(secsOfDay * NANOS_PER_SECOND + now.getNano());
+                final LocalDateTime dateTime = LocalDateTime.of(date, time);
+
+                final String formatted = configuration.dateTimeFormatter.format(dateTime);
+                this.cache = new DateTimeCache(epochMilli, formatted);
+                return formatted;
+            }
+        }
+
+        @Override
+        public int order() {
+            return LayoutOrder.DATE_TIME.ordinal();
+        }
+    }
+
+    static final class TimeLayout implements Layout {
+
+        private final Clock clock = Clock.systemDefaultZone();
+        private final SimpleLoggerConfiguration configuration;
+
+        private volatile DateTimeCache cache = new DateTimeCache(-1, null);
+
+        TimeLayout(SimpleLoggerConfiguration configuration) {
+            this.configuration = configuration;
+        }
+
+        @Override
+        public void print(String loggerName, int level, StringBuilder builder) {
+            builder.append(getFormattedTime());
+            builder.append(' ');
+        }
+
+        /**
+         * @see LocalTime#ofNanoOfDay(long) (long, int, ZoneOffset)
+         * @return formatter date time
+         */
+        private String getFormattedTime() {
+            final DateTimeCache localCache = this.cache;
+            final long epochMilli = System.currentTimeMillis();
+
+            if (localCache.epochMillis == epochMilli) {
+                return localCache.formatted;
+            } else {
+                final Instant now = Instant.ofEpochMilli(epochMilli);
+                final ZoneOffset offset = clock.getZone().getRules().getOffset(now);
+                final long localSecond = now.getEpochSecond() + offset.getTotalSeconds();
+                final int secsOfDay = Math.floorMod(localSecond, SECONDS_PER_DAY);
+                final LocalTime localTime = LocalTime.ofNanoOfDay(secsOfDay * NANOS_PER_SECOND + now.getNano());
+
+                final String formatted = configuration.dateTimeFormatter.format(localTime);
+                this.cache = new DateTimeCache(epochMilli, formatted);
+                return formatted;
+            }
+        }
+
+        @Override
+        public int order() {
+            return LayoutOrder.DATE_TIME.ordinal();
+        }
+    }
+
+    static final class UnixTimeLayout implements Layout {
+
+        @Override
+        public void print(String loggerName, int level, StringBuilder builder) {
+            builder.append(System.currentTimeMillis());
+            builder.append(' ');
+        }
+
+        @Override
+        public int order() {
+            return LayoutOrder.DATE_TIME.ordinal();
+        }
+    }
+
+    static final class MillisFromStartLayout implements Layout {
+
+        private final SimpleLoggerConfiguration configuration;
+
+        MillisFromStartLayout(SimpleLoggerConfiguration configuration) {
+            this.configuration = configuration;
+        }
+
+        @Override
+        public void print(String loggerName, int level, StringBuilder builder) {
+            builder.append(System.currentTimeMillis() - configuration.initializeTime);
+            builder.append(' ');
+        }
+
+        @Override
+        public int order() {
+            return LayoutOrder.DATE_TIME.ordinal();
+        }
+    }
+
+    static final class ImplementationLayout implements Layout {
+
+        private final SimpleLoggerConfiguration configuration;
+
+        ImplementationLayout(SimpleLoggerConfiguration configuration) {
+            this.configuration = configuration;
+        }
+
+        @Override
+        public void print(String loggerName, int level, StringBuilder builder) {
+            builder.append(configuration.implementationVersion);
+        }
+
+        @Override
+        public int order() {
+            return LayoutOrder.IMPLEMENTATION.ordinal();
+        }
+    }
+
+    static final class LevelLayout implements Layout {
+
+        @Override
+        public void print(String loggerName, int level, StringBuilder builder) {
+            builder.append(renderLevel(level));
+        }
+
+        private String renderLevel(int level) {
+            switch (level) {
+                case SimpleLogger.LOG_LEVEL_INFO:
+                    return "INFO ";
+                case SimpleLogger.LOG_LEVEL_WARN:
+                    return "WARN ";
+                case SimpleLogger.LOG_LEVEL_ERROR:
+                    return "ERROR ";
+                case SimpleLogger.LOG_LEVEL_DEBUG:
+                    return "DEBUG ";
+                case SimpleLogger.LOG_LEVEL_TRACE:
+                    return "TRACE ";
+                default:
+                    throw new IllegalStateException("Unrecognized level [" + level + "]");
+            }
+        }
+
+        @Override
+        public int order() {
+            return LayoutOrder.LEVEL.ordinal();
+        }
+    }
+
+    static final class LevelInBracketLayout implements Layout {
+
+        @Override
+        public void print(String loggerName, int level, StringBuilder builder) {
+            builder.append(renderLevel(level));
+        }
+
+        private String renderLevel(int level) {
+            switch (level) {
+                case SimpleLogger.LOG_LEVEL_INFO:
+                    return "[INFO] ";
+                case SimpleLogger.LOG_LEVEL_WARN:
+                    return "[WARN] ";
+                case SimpleLogger.LOG_LEVEL_ERROR:
+                    return "[ERROR] ";
+                case SimpleLogger.LOG_LEVEL_DEBUG:
+                    return "[DEBUG] ";
+                case SimpleLogger.LOG_LEVEL_TRACE:
+                    return "[TRACE] ";
+                default:
+                    throw new IllegalStateException("Unrecognized level [" + level + "]");
+            }
+        }
+
+        @Override
+        public int order() {
+            return LayoutOrder.LEVEL.ordinal();
+        }
+    }
+
+    static final class EnvironmentOnStartLayout implements Layout {
+
+        private final SimpleLoggerConfiguration configuration;
+
+        EnvironmentOnStartLayout(SimpleLoggerConfiguration configuration) {
+            this.configuration = configuration;
+        }
+
+        @Override
+        public void print(String loggerName, int level, StringBuilder builder) {
+            builder.append(configuration.environmentsOnStart);
+        }
+
+        @Override
+        public int order() {
+            return LayoutOrder.ENVIRONMENT.ordinal();
+        }
+    }
+
+    static final class EnvironmentLayout implements Layout {
+
+        private final SimpleLoggerConfiguration configuration;
+
+        EnvironmentLayout(SimpleLoggerConfiguration configuration) {
+            this.configuration = configuration;
+        }
+
+        @Override
+        public void print(String loggerName, int level, StringBuilder builder) {
+            boolean bracketUsed = false;
+            for (String envName : configuration.environments) {
+                final String envValue = System.getenv(envName);
+                if (envValue == null && !configuration.environmentShowNullable) {
+                    continue;
+                }
+
+                if (!bracketUsed) {
+                    builder.append('[');
+                    bracketUsed = true;
+                } else {
+                    builder.append(", ");
+                }
+
+                if (configuration.environmentShowName) {
+                    builder.append(envName);
+                    builder.append('=');
+                }
+
+                builder.append(envValue);
+            }
+
+            if (bracketUsed) {
+                builder.append("] ");
+            }
+        }
+
+        @Override
+        public int order() {
+            return LayoutOrder.ENVIRONMENT.ordinal();
+        }
+    }
+
+    static final class ThreadLayout implements Layout {
+
+        @Override
+        public void print(String loggerName, int level, StringBuilder builder) {
+            final String threadName = Thread.currentThread().getName();
+            builder.append('[');
+            builder.append(threadName);
+            builder.append("] ");
+        }
+
+        @Override
+        public int order() {
+            return LayoutOrder.THREAD.ordinal();
+        }
+    }
+
+    static final class LoggerNameLayout implements Layout {
+
+        @Override
+        public void print(String loggerName, int level, StringBuilder builder) {
+            builder.append(loggerName);
+        }
+
+        @Override
+        public int order() {
+            return LayoutOrder.LOGGER_NAME.ordinal();
+        }
+    }
+}

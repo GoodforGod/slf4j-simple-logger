@@ -3,8 +3,6 @@ package io.goodforgod.slf4j.simplelogger;
 import static io.goodforgod.slf4j.simplelogger.SimpleLoggerProperties.PREFIX_LOG;
 
 import java.io.*;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import org.slf4j.Logger;
 import org.slf4j.event.LoggingEvent;
 import org.slf4j.helpers.FormattingTuple;
@@ -155,18 +153,15 @@ public class SimpleLogger extends MarkerIgnoringBase {
     /**
      * The short name of this simple log instance
      */
-    private final transient String logName;
-    private final transient String logNameShort;
+    final String logName;
 
     /**
      * Package access allows only {@link SimpleLoggerFactory} to instantiate SimpleLogger instances.
      */
     SimpleLogger(String name) {
         this.name = name;
-        this.logNameShort = computeShortName() + " - ";
-        this.logName = (CONFIG.logNameLength == null)
-                ? name + " - "
-                : ClassNameAbbreviator.abbreviate(name, CONFIG.logNameLength) + " - ";
+        this.logName = computeLogName();
+
         final String levelString = recursivelyComputeLevelString();
         this.currentLogLevel = (levelString != null)
                 ? SimpleLoggerConfiguration.tryStringToLevel(levelString).orElse(LOG_LEVEL_INFO)
@@ -203,60 +198,9 @@ public class SimpleLogger extends MarkerIgnoringBase {
             return;
         }
 
-        final String threadName = (CONFIG.showThreadName)
-                ? Thread.currentThread().getName()
-                : null;
-
-        final int length = predictBuilderLength(message, threadName, throwable);
-        final StringBuilder builder = new StringBuilder(length);
-
-        // Append date-time if so configured
-        if (CONFIG.showDateTime) {
-            switch (CONFIG.dateTimeOutputType) {
-                case DATE_TIME:
-                    builder.append(getFormattedDateTime());
-                    break;
-                case TIME:
-                    builder.append(getFormattedTime());
-                    break;
-                case UNIX_TIME:
-                    builder.append(System.currentTimeMillis());
-                    break;
-                case MILLIS_FROM_START:
-                    builder.append(System.currentTimeMillis() - CONFIG.initializeTime);
-                    break;
-            }
-
-            builder.append(' ');
-        }
-
-        // Append package implementation version
-        if (CONFIG.showImplementationVersion) {
-            builder.append('[');
-            builder.append(CONFIG.implementationVersion);
-            builder.append("] ");
-        }
-
-        // Append a readable representation of the log level
-        final String levelStr = (CONFIG.levelInBrackets)
-                ? renderLevelInBrackets(level)
-                : renderLevel(level);
-        builder.append(levelStr);
-
-        logEnvironment(builder);
-
-        // Append current thread name if so configured
-        if (CONFIG.showThreadName) {
-            builder.append('[');
-            builder.append(threadName);
-            builder.append("] ");
-        }
-
-        // Append the name of the log instance if so configured
-        if (CONFIG.showShortLogName) {
-            builder.append(logNameShort);
-        } else if (CONFIG.showLogName) {
-            builder.append(logName);
+        final StringBuilder builder = new StringBuilder();
+        for (Layout layout : CONFIG.layouts) {
+            layout.print(logName, level, builder);
         }
 
         // Append the message
@@ -270,139 +214,33 @@ public class SimpleLogger extends MarkerIgnoringBase {
             throwable.printStackTrace(printWriter);
         }
 
-        write(builder);
-    }
-
-    private void logEnvironment(StringBuilder builder) {
-        if (CONFIG.environments.isEmpty()) {
-            return;
-        }
-
-        if (CONFIG.environmentsOnStart != null) {
-            builder.append(CONFIG.environmentsOnStart);
-        } else {
-            boolean bracketUsed = false;
-            for (String envName : CONFIG.environments) {
-                final String envValue = System.getenv(envName);
-                if (envValue == null && !CONFIG.environmentShowNullable) {
-                    continue;
-                }
-
-                if (!bracketUsed) {
-                    builder.append('[');
-                    bracketUsed = true;
-                } else {
-                    builder.append(", ");
-                }
-
-                if (CONFIG.environmentShowName) {
-                    builder.append(envName);
-                    builder.append('=');
-                }
-
-                builder.append(envValue);
-            }
-
-            if (bracketUsed) {
-                builder.append("] ");
-            }
-        }
-    }
-
-    private int predictBuilderLength(String message, String threadName, Throwable throwable) {
-        int length = 14;
-
-        if (message != null)
-            length += message.length();
-        if (throwable != null)
-            length += 2048;
-        if (threadName != null)
-            length += threadName.length();
-        if (CONFIG.showDateTime)
-            length += 24;
-
-        if (CONFIG.environmentsOnStart != null) {
-            length += CONFIG.environmentsOnStart.length();
-        } else {
-            for (String env : CONFIG.environments) {
-                length += (CONFIG.environmentShowName)
-                        ? env.length() + 6
-                        : 10;
-            }
-        }
-
-        if (CONFIG.showImplementationVersion)
-            length += CONFIG.implementationVersion.length() + 4;
-        if (CONFIG.showShortLogName) {
-            length += logNameShort.length();
-        } else if (CONFIG.showLogName) {
-            length += logName.length();
-        }
-
-        return length;
-    }
-
-    protected String renderLevel(int level) {
-        switch (level) {
-            case LOG_LEVEL_INFO:
-                return "INFO ";
-            case LOG_LEVEL_WARN:
-                return "WARN ";
-            case LOG_LEVEL_ERROR:
-                return "ERROR ";
-            case LOG_LEVEL_DEBUG:
-                return "DEBUG ";
-            case LOG_LEVEL_TRACE:
-                return "TRACE ";
-            default:
-                throw new IllegalStateException("Unrecognized level [" + level + "]");
-        }
-    }
-
-    protected String renderLevelInBrackets(int level) {
-        switch (level) {
-            case LOG_LEVEL_INFO:
-                return "[INFO] ";
-            case LOG_LEVEL_WARN:
-                return "[WARN] ";
-            case LOG_LEVEL_ERROR:
-                return "[ERROR] ";
-            case LOG_LEVEL_DEBUG:
-                return "[DEBUG] ";
-            case LOG_LEVEL_TRACE:
-                return "[TRACE] ";
-            default:
-                throw new IllegalStateException("Unrecognized level [" + level + "]");
-        }
+        write(builder.toString());
     }
 
     /**
      * To avoid intermingling of log messages and associated stack traces, the two operations are done
      * in a synchronized block.
      *
-     * @param builder of logging message
+     * @param message of logging message
      */
-    void write(StringBuilder builder) {
-        final String message = builder.toString();
+    void write(String message) {
         final byte[] bytes = (CONFIG.charset == null)
                 ? message.getBytes()
                 : message.getBytes(CONFIG.charset);
 
         final PrintStream printStream = getOutputStream();
-        synchronized (printStream) {
-            try {
-                printStream.write(bytes);
-                printStream.flush();
-            } catch (IOException e) {
-                // do nothing
-            }
+        CONFIG.lock.lock();
+        try {
+            printStream.write(bytes);
+            printStream.flush();
+        } catch (IOException e) {
+            // do nothing
+        } finally {
+            CONFIG.lock.unlock();
         }
     }
 
     private PrintStream getOutputStream() {
-        if (CONFIG.sameOutputChoice)
-            return CONFIG.outputChoice.getTargetPrintStream();
-
         switch (currentLogLevel) {
             case LOG_LEVEL_WARN:
                 return CONFIG.outputChoiceWarn.getTargetPrintStream();
@@ -413,16 +251,18 @@ public class SimpleLogger extends MarkerIgnoringBase {
         }
     }
 
-    private String getFormattedDateTime() {
-        return CONFIG.dateTimeFormatter.format(LocalDateTime.now());
-    }
-
-    private String getFormattedTime() {
-        return CONFIG.dateTimeFormatter.format(LocalTime.now());
-    }
-
-    private String computeShortName() {
-        return name.substring(name.lastIndexOf('.') + 1);
+    private String computeLogName() {
+        if (CONFIG.showShortLogName) {
+            return name.substring(name.lastIndexOf('.') + 1) + " - ";
+        } else if (CONFIG.showLogName) {
+            if (CONFIG.logNameLength == null) {
+                return name + " - ";
+            } else {
+                return ClassNameAbbreviator.abbreviate(name, CONFIG.logNameLength) + " - ";
+            }
+        } else {
+            return null;
+        }
     }
 
     /**
