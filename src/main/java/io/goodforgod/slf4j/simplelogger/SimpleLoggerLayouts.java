@@ -184,35 +184,19 @@ final class SimpleLoggerLayouts {
 
     static final class LevelLayout implements Layout {
 
-        @Override
-        public void print(String loggerName, int level, StringBuilder builder) {
-            builder.append(renderLevel(level));
-        }
+        private final String trace;
+        private final String debug;
+        private final String info;
+        private final String warn;
+        private final String error;
 
-        private String renderLevel(int level) {
-            switch (level) {
-                case SimpleLogger.LOG_LEVEL_INFO:
-                    return "INFO ";
-                case SimpleLogger.LOG_LEVEL_WARN:
-                    return "WARN ";
-                case SimpleLogger.LOG_LEVEL_ERROR:
-                    return "ERROR ";
-                case SimpleLogger.LOG_LEVEL_DEBUG:
-                    return "DEBUG ";
-                case SimpleLogger.LOG_LEVEL_TRACE:
-                    return "TRACE ";
-                default:
-                    throw new IllegalStateException("Unrecognized level [" + level + "]");
-            }
+        LevelLayout(String trace, String debug, String info, String warn, String error) {
+            this.trace = trace;
+            this.debug = debug;
+            this.info = info;
+            this.warn = warn;
+            this.error = error;
         }
-
-        @Override
-        public int order() {
-            return LayoutOrder.LEVEL.ordinal();
-        }
-    }
-
-    static final class LevelInBracketLayout implements Layout {
 
         @Override
         public void print(String loggerName, int level, StringBuilder builder) {
@@ -222,15 +206,15 @@ final class SimpleLoggerLayouts {
         private String renderLevel(int level) {
             switch (level) {
                 case SimpleLogger.LOG_LEVEL_INFO:
-                    return "[INFO] ";
+                    return info;
                 case SimpleLogger.LOG_LEVEL_WARN:
-                    return "[WARN] ";
+                    return warn;
                 case SimpleLogger.LOG_LEVEL_ERROR:
-                    return "[ERROR] ";
+                    return error;
                 case SimpleLogger.LOG_LEVEL_DEBUG:
-                    return "[DEBUG] ";
+                    return debug;
                 case SimpleLogger.LOG_LEVEL_TRACE:
-                    return "[TRACE] ";
+                    return trace;
                 default:
                     throw new IllegalStateException("Unrecognized level [" + level + "]");
             }

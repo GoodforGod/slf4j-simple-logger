@@ -146,9 +146,9 @@ public final class SimpleLoggerConfiguration {
 
         final boolean levelInBrackets = getBooleanProperty(LEVEL_IN_BRACKETS, LEVEL_IN_BRACKETS_DEFAULT);
         if (levelInBrackets) {
-            layouts.add(new SimpleLoggerLayouts.LevelInBracketLayout());
+            layouts.add(new SimpleLoggerLayouts.LevelLayout("[TRACE] ", "[DEBUG] ", "[INFO] ", "[WARN] ", "[ERROR] "));
         } else {
-            layouts.add(new SimpleLoggerLayouts.LevelLayout());
+            layouts.add(new SimpleLoggerLayouts.LevelLayout("TRACE ", "DEBUG ", "INFO ", "WARN ", "ERROR "));
         }
 
         this.showShortLogName = getBooleanProperty(SHOW_SHORT_LOG_NAME, SHOW_SHORT_LOG_NAME_DEFAULT);
