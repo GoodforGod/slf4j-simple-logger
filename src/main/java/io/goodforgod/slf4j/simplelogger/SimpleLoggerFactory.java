@@ -14,7 +14,7 @@ import org.slf4j.event.Level;
  * @author Anton Kurako (GoodforGod)
  * @since 09.10.2021
  */
-public class SimpleLoggerFactory implements ILoggerFactory {
+public final class SimpleLoggerFactory implements ILoggerFactory {
 
     private final ConcurrentMap<String, SimpleLogger> loggerMap;
 

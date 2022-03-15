@@ -13,7 +13,7 @@ import org.slf4j.spi.LoggerFactoryBinder;
  * @author Anton Kurako (GoodforGod)
  * @since 09.10.2021
  */
-public class StaticLoggerBinder implements LoggerFactoryBinder {
+public final class StaticLoggerBinder implements LoggerFactoryBinder {
 
     /**
      * The unique instance of this class.

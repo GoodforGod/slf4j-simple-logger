@@ -12,6 +12,8 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import org.slf4j.event.Level;
 import org.slf4j.helpers.Util;
@@ -28,87 +30,70 @@ import org.slf4j.helpers.Util;
  * @author Anton Kurako (GoodforGod)
  * @since 09.10.2021
  */
-public class SimpleLoggerConfiguration {
+public final class SimpleLoggerConfiguration {
 
     private static final String CONFIGURATION_FILE = "simplelogger.properties";
 
     private static final String SYSTEM_ERR = "System.err";
     private static final String SYSTEM_OUT = "System.out";
-    private static final String BOOLEAN_TRUE = "true";
 
-    private static final String DATE_TIME_FORMAT_DEFAULT = "uuuu-MM-dd'T'HH:mm:ss.SSS";
-    private static final String TIME_FORMAT_DEFAULT = "HH:mm:ss.SSS";
-    private static final DateTimeFormatter DATE_TIME_FORMATTER_DEFAULT = DateTimeFormatter.ofPattern(DATE_TIME_FORMAT_DEFAULT);
-    private static final DateTimeFormatter TIME_FORMATTER_DEFAULT = DateTimeFormatter.ofPattern(TIME_FORMAT_DEFAULT);
-    private static final String LOG_FILE_DEFAULT = SYSTEM_OUT;
+    private static final DateTimeFormatter DATE_TIME_FORMATTER_DEFAULT = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss.SSS");
+    private static final DateTimeFormatter TIME_FORMATTER_DEFAULT = DateTimeFormatter.ofPattern("HH:mm:ss.SSS");
     private static final boolean CACHE_OUTPUT_STREAM_DEFAULT = false;
-
     private static final boolean LEVEL_IN_BRACKETS_DEFAULT = true;
     private static final boolean SHOW_THREAD_NAME_DEFAULT = false;
     private static final boolean SHOW_LOG_NAME_DEFAULT = true;
     private static final boolean SHOW_IMPLEMENTATION_VERSION_DEFAULT = false;
     private static final boolean SHOW_SHORT_LOG_NAME_DEFAULT = false;
-
     private static final boolean SHOW_DATE_TIME_DEFAULT = true;
 
-    boolean sameOutputChoice = false;
-    final long initializeTime = System.currentTimeMillis();
+    private long initializeTime;
+    private final ReentrantLock lock = new ReentrantLock(false);
+    private Charset charset = StandardCharsets.UTF_8;
+    private int defaultLogLevel = SimpleLogger.LOG_LEVEL_INFO;
 
-    Charset charset = StandardCharsets.UTF_8;
-    OutputChoice outputChoice = null;
-    OutputChoice outputChoiceWarn = null;
-    OutputChoice outputChoiceError = null;
-    int defaultLogLevel = SimpleLogger.LOG_LEVEL_INFO;
+    private OutputChoice outputChoice = null;
+    private OutputChoice outputChoiceWarn = null;
+    private OutputChoice outputChoiceError = null;
 
-    boolean levelInBrackets = LEVEL_IN_BRACKETS_DEFAULT;
-    boolean showThreadName = SHOW_THREAD_NAME_DEFAULT;
-    boolean showLogName = SHOW_LOG_NAME_DEFAULT;
-    boolean showImplementationVersion = SHOW_IMPLEMENTATION_VERSION_DEFAULT;
-    Integer logNameLength = null;
-    boolean showShortLogName = SHOW_SHORT_LOG_NAME_DEFAULT;
+    private boolean showLogName = SHOW_LOG_NAME_DEFAULT;
+    private Integer logNameLength = null;
+    private boolean showShortLogName = SHOW_SHORT_LOG_NAME_DEFAULT;
 
-    boolean showDateTime = SHOW_DATE_TIME_DEFAULT;
-    DateTimeOutputType dateTimeOutputType = DateTimeOutputType.DATE_TIME;
-    DateTimeFormatter dateTimeFormatter;
+    private DateTimeFormatter dateTimeFormatter;
+    private String implementationVersion;
 
-    String implementationVersion = SimpleLoggerConfiguration.class.getPackage().getImplementationVersion();
-    List<String> environments;
-    boolean environmentShowNullable = false;
-    boolean environmentShowName = true;
-    String environmentsOnStart = null;
+    private List<String> environments;
+    private boolean environmentShowNullable = false;
+    private boolean environmentShowName = true;
+    private String environmentsOnStart = null;
 
+    private List<Layout> layouts;
     private final Properties properties = new Properties();
 
     void init() {
         loadProperties();
+        this.initializeTime = System.currentTimeMillis();
 
         final String defaultLogLevelString = getStringProperty(DEFAULT_LOG_LEVEL, null);
         if (defaultLogLevelString != null) {
             this.defaultLogLevel = tryStringToLevel(defaultLogLevelString).orElse(SimpleLogger.LOG_LEVEL_INFO);
         }
 
-        this.showImplementationVersion = getBooleanProperty(SHOW_IMPLEMENTATION_VERSION, SHOW_IMPLEMENTATION_VERSION_DEFAULT)
-                && implementationVersion != null
-                && !"null".equalsIgnoreCase(implementationVersion);
-        this.levelInBrackets = getBooleanProperty(LEVEL_IN_BRACKETS, LEVEL_IN_BRACKETS_DEFAULT);
+        final String impl = SimpleLoggerConfiguration.class.getPackage().getImplementationVersion();
+        this.implementationVersion = (impl == null)
+                ? null
+                : "[" + impl + "] ";
         this.showLogName = getBooleanProperty(SHOW_LOG_NAME, SimpleLoggerConfiguration.SHOW_LOG_NAME_DEFAULT);
-        this.showShortLogName = getBooleanProperty(SHOW_SHORT_LOG_NAME, SHOW_SHORT_LOG_NAME_DEFAULT);
-        this.showThreadName = getBooleanProperty(SHOW_THREAD_NAME, SHOW_THREAD_NAME_DEFAULT);
         this.logNameLength = getIntProperty(SHOW_LOG_NAME_LENGTH)
                 .filter(i -> i > 0)
                 .orElse(null);
 
-        final String logFile = getStringProperty(LOG_FILE, LOG_FILE_DEFAULT);
-        final String logFileWarn = getStringProperty(LOG_FILE_WARN, LOG_FILE_DEFAULT);
-        final String logFileError = getStringProperty(LOG_FILE_ERROR, LOG_FILE_DEFAULT);
-        this.sameOutputChoice = logFile.equals(logFileWarn) && logFileWarn.equals(logFileError);
+        final String logFile = getStringProperty(LOG_FILE, SYSTEM_OUT);
+        final String logFileWarn = getStringProperty(LOG_FILE_WARN, SYSTEM_OUT);
+        final String logFileError = getStringProperty(LOG_FILE_ERROR, SYSTEM_OUT);
 
-        this.charset = Optional.ofNullable(getStringProperty(CHARSET, null))
-                .map(charset -> ("null".equals(charset))
-                        ? null
-                        : Charset.forName(charset))
-                .orElse(StandardCharsets.UTF_8);
-
+        this.charset = computeCharset();
         final boolean cacheOutputStream = getBooleanProperty(CACHE_OUTPUT_STREAM_STRING, CACHE_OUTPUT_STREAM_DEFAULT);
         this.outputChoice = computeOutputChoice(logFile, cacheOutputStream);
         this.outputChoiceWarn = (logFile.equals(logFileWarn))
@@ -123,13 +108,68 @@ public class SimpleLoggerConfiguration {
             this.outputChoiceError = computeOutputChoice(logFileError, cacheOutputStream);
         }
 
-        this.environments = getEnvironments();
+        this.environments = computeEnvironments();
         this.environmentShowNullable = getBooleanProperty(ENVIRONMENT_SHOW_NULLABLE, false);
         this.environmentShowName = getBooleanProperty(ENVIRONMENT_SHOW_NAME, false);
-        this.environmentsOnStart = getEnvironmentsOnStart();
+        this.environmentsOnStart = computeEnvironmentsOnStart(this.environments, this.environmentShowNullable,
+                this.environmentShowName);
 
-        this.showDateTime = getBooleanProperty(SHOW_DATE_TIME, SHOW_DATE_TIME_DEFAULT);
-        this.dateTimeOutputType = Optional.ofNullable(getStringProperty(DATE_TIME_OUTPUT_TYPE))
+        final DateTimeOutputType dateTimeOutputType = computeDateTimeOutputType();
+        if (DateTimeOutputType.DATE_TIME.equals(dateTimeOutputType) || DateTimeOutputType.TIME.equals(dateTimeOutputType)) {
+            this.dateTimeFormatter = getDateTimeFormatter(dateTimeOutputType);
+        }
+
+        final List<Layout> layouts = new ArrayList<>();
+        final boolean showDateTime = getBooleanProperty(SHOW_DATE_TIME, SHOW_DATE_TIME_DEFAULT);
+        if (showDateTime) {
+            layouts.add(getDateTimeLayout(dateTimeOutputType));
+        }
+
+        final boolean showImplementationVersion = getBooleanProperty(SHOW_IMPLEMENTATION_VERSION,
+                SHOW_IMPLEMENTATION_VERSION_DEFAULT)
+                && this.implementationVersion != null
+                && !"null".equalsIgnoreCase(this.implementationVersion);
+        if (showImplementationVersion) {
+            layouts.add(new SimpleLoggerLayouts.ImplementationLayout(this));
+        }
+
+        final boolean showThreadName = getBooleanProperty(SHOW_THREAD_NAME, SHOW_THREAD_NAME_DEFAULT);
+        if (showThreadName) {
+            layouts.add(new SimpleLoggerLayouts.ThreadLayout());
+        }
+
+        if (environmentsOnStart != null) {
+            layouts.add(new SimpleLoggerLayouts.EnvironmentOnStartLayout(this));
+        } else if (!environments.isEmpty()) {
+            layouts.add(new SimpleLoggerLayouts.EnvironmentLayout(this));
+        }
+
+        final boolean levelInBrackets = getBooleanProperty(LEVEL_IN_BRACKETS, LEVEL_IN_BRACKETS_DEFAULT);
+        if (levelInBrackets) {
+            layouts.add(new SimpleLoggerLayouts.LevelLayout("[TRACE] ", "[DEBUG] ", "[INFO] ", "[WARN] ", "[ERROR] "));
+        } else {
+            layouts.add(new SimpleLoggerLayouts.LevelLayout("TRACE ", "DEBUG ", "INFO ", "WARN ", "ERROR "));
+        }
+
+        this.showShortLogName = getBooleanProperty(SHOW_SHORT_LOG_NAME, SHOW_SHORT_LOG_NAME_DEFAULT);
+        if (showShortLogName || showLogName) {
+            layouts.add(new SimpleLoggerLayouts.LoggerNameLayout());
+        }
+
+        Collections.sort(layouts);
+        this.layouts = layouts;
+    }
+
+    private Charset computeCharset() {
+        return Optional.ofNullable(getStringProperty(CHARSET, null))
+                .map(charset -> ("null".equals(charset))
+                        ? null
+                        : Charset.forName(charset))
+                .orElse(StandardCharsets.UTF_8);
+    }
+
+    private DateTimeOutputType computeDateTimeOutputType() {
+        return Optional.ofNullable(getStringProperty(DATE_TIME_OUTPUT_TYPE))
                 .map(s -> {
                     try {
                         return DateTimeOutputType.valueOf(s);
@@ -138,38 +178,71 @@ public class SimpleLoggerConfiguration {
                     }
                 })
                 .orElse(DateTimeOutputType.DATE_TIME);
+    }
 
-        if (DateTimeOutputType.DATE_TIME.equals(this.dateTimeOutputType)
-                || DateTimeOutputType.TIME.equals(this.dateTimeOutputType)) {
-            this.dateTimeFormatter = getDateTimeFormatter(this.dateTimeOutputType);
+    String computeLogName(String name) {
+        if (showShortLogName) {
+            return name.substring(name.lastIndexOf('.') + 1) + " - ";
+        } else if (showLogName) {
+            if (logNameLength == null) {
+                return name + " - ";
+            } else {
+                return ClassNameAbbreviator.abbreviate(name, logNameLength) + " - ";
+            }
+        } else {
+            return null;
         }
     }
 
-    private List<String> getEnvironments() {
+    PrintStream getOutputStream(int logLevel) {
+        switch (logLevel) {
+            case SimpleLogger.LOG_LEVEL_WARN:
+                return outputChoiceWarn.getTargetPrintStream();
+            case SimpleLogger.LOG_LEVEL_ERROR:
+                return outputChoiceError.getTargetPrintStream();
+            default:
+                return outputChoice.getTargetPrintStream();
+        }
+    }
+
+    private Layout getDateTimeLayout(DateTimeOutputType dateTimeOutputType) {
+        switch (dateTimeOutputType) {
+            case TIME:
+                return new SimpleLoggerLayouts.TimeLayout(this);
+            case DATE_TIME:
+                return new SimpleLoggerLayouts.DateTimeLayout(this);
+            case UNIX_TIME:
+                return new SimpleLoggerLayouts.UnixTimeLayout();
+            case MILLIS_FROM_START:
+                return new SimpleLoggerLayouts.MillisFromStartLayout(this);
+            default:
+                throw new IllegalStateException("Unknown DateTimeOutputType: " + dateTimeOutputType);
+        }
+    }
+
+    private List<String> computeEnvironments() {
         return Optional.ofNullable(getStringProperty(ENVIRONMENTS))
                 .filter(envs -> !envs.isBlank())
-                .map(envs -> {
-                    final List<String> envsToOutput = Arrays.stream(envs.split(","))
-                            .map(String::strip)
-                            .filter(env -> !env.isBlank())
-                            .collect(Collectors.toList());
-
-                    return List.copyOf(envsToOutput);
-                })
+                .map(envs -> List.copyOf(Arrays.stream(envs.split(","))
+                        .map(String::strip)
+                        .filter(env -> !env.isBlank())
+                        .collect(Collectors.toList())))
                 .orElse(Collections.emptyList());
     }
 
-    private String getEnvironmentsOnStart() {
+    private String computeEnvironmentsOnStart(List<String> environments,
+                                              boolean environmentShowNullable,
+                                              boolean environmentShowName) {
         final boolean rememberEnvsOnStart = getBooleanProperty(ENVIRONMENT_REMEMBER_ON_START, false);
         if (rememberEnvsOnStart) {
-            final String envsOnStart = this.environments.stream()
+            final String envsOnStart = environments.stream()
                     .map(env -> {
                         final String envValue = System.getenv(env);
-                        if (envValue == null && !this.environmentShowNullable) {
+                        if (envValue == null && !environmentShowNullable) {
                             return null;
                         }
 
-                        return this.environmentShowName
+                        return environmentShowName
                                 ? env + "=" + envValue
                                 : envValue;
                     })
@@ -210,8 +283,52 @@ public class SimpleLoggerConfiguration {
         } else if (DateTimeOutputType.TIME.equals(dateTimeOutputType)) {
             return TIME_FORMATTER_DEFAULT;
         } else {
-            throw new UnsupportedOperationException("Unsupported Date Output Type formatter: " + this.dateTimeOutputType);
+            throw new UnsupportedOperationException("Unsupported Date Output Type formatter: " + dateTimeOutputType);
         }
+    }
+
+    List<String> getEnvironments() {
+        return environments;
+    }
+
+    String getEnvironmentsOnStart() {
+        return environmentsOnStart;
+    }
+
+    boolean isEnvironmentShowNullable() {
+        return environmentShowNullable;
+    }
+
+    boolean isEnvironmentShowName() {
+        return environmentShowName;
+    }
+
+    List<Layout> getLayouts() {
+        return layouts;
+    }
+
+    String getImplementationVersion() {
+        return implementationVersion;
+    }
+
+    DateTimeFormatter getDateTimeFormatter() {
+        return dateTimeFormatter;
+    }
+
+    long getInitializeTime() {
+        return initializeTime;
+    }
+
+    int getDefaultLogLevel() {
+        return defaultLogLevel;
+    }
+
+    Charset getCharset() {
+        return charset;
+    }
+
+    Lock getLock() {
+        return lock;
     }
 
     private void loadProperties() {
@@ -241,14 +358,14 @@ public class SimpleLoggerConfiguration {
                 : prop;
     }
 
-    boolean getBooleanProperty(String name, boolean defaultValue) {
+    private boolean getBooleanProperty(String name, boolean defaultValue) {
         final String prop = getStringProperty(name);
         return (prop == null)
                 ? defaultValue
-                : BOOLEAN_TRUE.equalsIgnoreCase(prop);
+                : "true".equalsIgnoreCase(prop);
     }
 
-    Optional<Integer> getIntProperty(String name) {
+    private Optional<Integer> getIntProperty(String name) {
         final String prop = getStringProperty(name);
         if (prop == null)
             return Optional.empty();
@@ -260,7 +377,7 @@ public class SimpleLoggerConfiguration {
         }
     }
 
-    String getStringProperty(String name) {
+    private String getStringProperty(String name) {
         String prop = null;
         try {
             prop = System.getProperty(name);
