@@ -15,6 +15,9 @@ final class SimpleLoggerLayouts {
 
     private SimpleLoggerLayouts() {}
 
+    /**
+     * Uses {@link LayoutOrder#ordinal()} for ordering layouts between each other
+     */
     private enum LayoutOrder {
         DATE_TIME,
         IMPLEMENTATION,
@@ -37,9 +40,7 @@ final class SimpleLoggerLayouts {
 
     static final class DateTimeLayout implements Layout {
 
-        private final Clock clock = Clock.systemDefaultZone();
         private final SimpleLoggerConfiguration configuration;
-
         private volatile DateTimeCache cache = new DateTimeCache(-1, null);
 
         DateTimeLayout(SimpleLoggerConfiguration configuration) {
@@ -64,7 +65,7 @@ final class SimpleLoggerLayouts {
                 return localCache.formatted;
             } else {
                 final Instant now = Instant.ofEpochMilli(epochMilli);
-                final ZoneOffset offset = clock.getZone().getRules().getOffset(now);
+                final ZoneOffset offset = Clock.systemDefaultZone().getZone().getRules().getOffset(now);
                 final long localSecond = now.getEpochSecond() + offset.getTotalSeconds(); // overflow caught later
                 final long localEpochDay = Math.floorDiv(localSecond, SECONDS_PER_DAY);
                 final int secsOfDay = Math.floorMod(localSecond, SECONDS_PER_DAY);
@@ -72,7 +73,7 @@ final class SimpleLoggerLayouts {
                 final LocalTime time = LocalTime.ofNanoOfDay(secsOfDay * NANOS_PER_SECOND + now.getNano());
                 final LocalDateTime dateTime = LocalDateTime.of(date, time);
 
-                final String formatted = configuration.dateTimeFormatter.format(dateTime);
+                final String formatted = configuration.getDateTimeFormatter().format(dateTime);
                 this.cache = new DateTimeCache(epochMilli, formatted);
                 return formatted;
             }
@@ -86,9 +87,7 @@ final class SimpleLoggerLayouts {
 
     static final class TimeLayout implements Layout {
 
-        private final Clock clock = Clock.systemDefaultZone();
         private final SimpleLoggerConfiguration configuration;
-
         private volatile DateTimeCache cache = new DateTimeCache(-1, null);
 
         TimeLayout(SimpleLoggerConfiguration configuration) {
@@ -102,7 +101,7 @@ final class SimpleLoggerLayouts {
         }
 
         /**
-         * @see LocalTime#ofNanoOfDay(long) (long, int, ZoneOffset)
+         * @see LocalTime#ofInstant(Instant, ZoneId)
          * @return formatter date time
          */
         private String getFormattedTime() {
@@ -113,12 +112,12 @@ final class SimpleLoggerLayouts {
                 return localCache.formatted;
             } else {
                 final Instant now = Instant.ofEpochMilli(epochMilli);
-                final ZoneOffset offset = clock.getZone().getRules().getOffset(now);
+                final ZoneOffset offset = Clock.systemDefaultZone().getZone().getRules().getOffset(now);
                 final long localSecond = now.getEpochSecond() + offset.getTotalSeconds();
                 final int secsOfDay = Math.floorMod(localSecond, SECONDS_PER_DAY);
                 final LocalTime localTime = LocalTime.ofNanoOfDay(secsOfDay * NANOS_PER_SECOND + now.getNano());
 
-                final String formatted = configuration.dateTimeFormatter.format(localTime);
+                final String formatted = configuration.getDateTimeFormatter().format(localTime);
                 this.cache = new DateTimeCache(epochMilli, formatted);
                 return formatted;
             }
@@ -154,7 +153,7 @@ final class SimpleLoggerLayouts {
 
         @Override
         public void print(String loggerName, int level, StringBuilder builder) {
-            builder.append(System.currentTimeMillis() - configuration.initializeTime);
+            builder.append(System.currentTimeMillis() - configuration.getInitializeTime());
             builder.append(' ');
         }
 
@@ -174,7 +173,7 @@ final class SimpleLoggerLayouts {
 
         @Override
         public void print(String loggerName, int level, StringBuilder builder) {
-            builder.append(configuration.implementationVersion);
+            builder.append(configuration.getImplementationVersion());
         }
 
         @Override
@@ -253,7 +252,7 @@ final class SimpleLoggerLayouts {
 
         @Override
         public void print(String loggerName, int level, StringBuilder builder) {
-            builder.append(configuration.environmentsOnStart);
+            builder.append(configuration.getEnvironmentsOnStart());
         }
 
         @Override
@@ -273,9 +272,9 @@ final class SimpleLoggerLayouts {
         @Override
         public void print(String loggerName, int level, StringBuilder builder) {
             boolean bracketUsed = false;
-            for (String envName : configuration.environments) {
+            for (String envName : configuration.getEnvironments()) {
                 final String envValue = System.getenv(envName);
-                if (envValue == null && !configuration.environmentShowNullable) {
+                if (envValue == null && !configuration.isEnvironmentShowNullable()) {
                     continue;
                 }
 
@@ -286,7 +285,7 @@ final class SimpleLoggerLayouts {
                     builder.append(", ");
                 }
 
-                if (configuration.environmentShowName) {
+                if (configuration.isEnvironmentShowName()) {
                     builder.append(envName);
                     builder.append('=');
                 }

@@ -3,6 +3,9 @@ package io.goodforgod.slf4j.simplelogger;
 import static io.goodforgod.slf4j.simplelogger.SimpleLoggerProperties.PREFIX_LOG;
 
 import java.io.*;
+import java.nio.charset.Charset;
+import java.util.List;
+import java.util.concurrent.locks.Lock;
 import org.slf4j.Logger;
 import org.slf4j.event.LoggingEvent;
 import org.slf4j.helpers.FormattingTuple;
@@ -160,12 +163,12 @@ public class SimpleLogger extends MarkerIgnoringBase {
      */
     SimpleLogger(String name) {
         this.name = name;
-        this.logName = computeLogName();
+        this.logName = CONFIG.computeLogName(name);
 
         final String levelString = recursivelyComputeLevelString();
         this.currentLogLevel = (levelString != null)
                 ? SimpleLoggerConfiguration.tryStringToLevel(levelString).orElse(LOG_LEVEL_INFO)
-                : CONFIG.defaultLogLevel;
+                : CONFIG.getDefaultLogLevel();
         this.originalLogLevel = this.currentLogLevel;
     }
 
@@ -199,7 +202,8 @@ public class SimpleLogger extends MarkerIgnoringBase {
         }
 
         final StringBuilder builder = new StringBuilder();
-        for (Layout layout : CONFIG.layouts) {
+        final List<Layout> layouts = CONFIG.getLayouts();
+        for (Layout layout : layouts) {
             layout.print(logName, level, builder);
         }
 
@@ -214,7 +218,7 @@ public class SimpleLogger extends MarkerIgnoringBase {
             throwable.printStackTrace(printWriter);
         }
 
-        write(builder.toString());
+        write(level, builder.toString());
     }
 
     /**
@@ -223,45 +227,22 @@ public class SimpleLogger extends MarkerIgnoringBase {
      *
      * @param message of logging message
      */
-    void write(String message) {
-        final byte[] bytes = (CONFIG.charset == null)
+    void write(int level, String message) {
+        final Charset charset = CONFIG.getCharset();
+        final byte[] bytes = (charset == null)
                 ? message.getBytes()
-                : message.getBytes(CONFIG.charset);
+                : message.getBytes(charset);
 
-        final PrintStream printStream = getOutputStream();
-        CONFIG.lock.lock();
+        final PrintStream printStream = CONFIG.getOutputStream(level);
+        final Lock lock = CONFIG.getLock();
+        lock.lock();
         try {
             printStream.write(bytes);
             printStream.flush();
         } catch (IOException e) {
             // do nothing
         } finally {
-            CONFIG.lock.unlock();
-        }
-    }
-
-    private PrintStream getOutputStream() {
-        switch (currentLogLevel) {
-            case LOG_LEVEL_WARN:
-                return CONFIG.outputChoiceWarn.getTargetPrintStream();
-            case LOG_LEVEL_ERROR:
-                return CONFIG.outputChoiceError.getTargetPrintStream();
-            default:
-                return CONFIG.outputChoice.getTargetPrintStream();
-        }
-    }
-
-    private String computeLogName() {
-        if (CONFIG.showShortLogName) {
-            return name.substring(name.lastIndexOf('.') + 1) + " - ";
-        } else if (CONFIG.showLogName) {
-            if (CONFIG.logNameLength == null) {
-                return name + " - ";
-            } else {
-                return ClassNameAbbreviator.abbreviate(name, CONFIG.logNameLength) + " - ";
-            }
-        } else {
-            return null;
+            lock.unlock();
         }
     }
 
