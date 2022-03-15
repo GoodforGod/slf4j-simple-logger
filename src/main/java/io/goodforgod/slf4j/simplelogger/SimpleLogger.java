@@ -119,14 +119,14 @@ import org.slf4j.spi.LocationAwareLogger;
  * @author Anton Kurako (GoodforGod)
  * @since 09.10.2021
  */
-public class SimpleLogger extends MarkerIgnoringBase {
+public final class SimpleLogger extends MarkerIgnoringBase {
 
-    protected static final int LOG_LEVEL_TRACE = LocationAwareLogger.TRACE_INT;
-    protected static final int LOG_LEVEL_DEBUG = LocationAwareLogger.DEBUG_INT;
-    protected static final int LOG_LEVEL_INFO = LocationAwareLogger.INFO_INT;
-    protected static final int LOG_LEVEL_WARN = LocationAwareLogger.WARN_INT;
-    protected static final int LOG_LEVEL_ERROR = LocationAwareLogger.ERROR_INT;
-    protected static final int LOG_LEVEL_OFF = LOG_LEVEL_ERROR + 10;
+    static final int LOG_LEVEL_TRACE = LocationAwareLogger.TRACE_INT;
+    static final int LOG_LEVEL_DEBUG = LocationAwareLogger.DEBUG_INT;
+    static final int LOG_LEVEL_INFO = LocationAwareLogger.INFO_INT;
+    static final int LOG_LEVEL_WARN = LocationAwareLogger.WARN_INT;
+    static final int LOG_LEVEL_ERROR = LocationAwareLogger.ERROR_INT;
+    static final int LOG_LEVEL_OFF = LOG_LEVEL_ERROR + 10;
 
     private static final SimpleLoggerConfiguration CONFIG = new SimpleLoggerConfiguration();
 
@@ -151,8 +151,8 @@ public class SimpleLogger extends MarkerIgnoringBase {
     /**
      * The current log level
      */
-    protected int currentLogLevel;
-    protected final int originalLogLevel;
+    int currentLogLevel;
+    final int originalLogLevel;
     /**
      * The short name of this simple log instance
      */
@@ -302,7 +302,7 @@ public class SimpleLogger extends MarkerIgnoringBase {
      * @param logLevel is this level enabled?
      * @return true if enabled
      */
-    protected boolean isLevelEnabled(int logLevel) {
+    boolean isLevelEnabled(int logLevel) {
         return (logLevel >= currentLogLevel);
     }
 

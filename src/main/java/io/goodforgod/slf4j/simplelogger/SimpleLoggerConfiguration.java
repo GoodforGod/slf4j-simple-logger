@@ -30,7 +30,7 @@ import org.slf4j.helpers.Util;
  * @author Anton Kurako (GoodforGod)
  * @since 09.10.2021
  */
-public class SimpleLoggerConfiguration {
+public final class SimpleLoggerConfiguration {
 
     private static final String CONFIGURATION_FILE = "simplelogger.properties";
 

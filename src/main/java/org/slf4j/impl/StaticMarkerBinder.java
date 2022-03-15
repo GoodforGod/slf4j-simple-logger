@@ -13,7 +13,7 @@ import org.slf4j.spi.MarkerFactoryBinder;
  * @author Anton Kurako (GoodforGod)
  * @since 09.10.2021
  */
-public class StaticMarkerBinder implements MarkerFactoryBinder {
+public final class StaticMarkerBinder implements MarkerFactoryBinder {
 
     /**
      * The unique instance of this class.
