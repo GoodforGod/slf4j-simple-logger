@@ -2,6 +2,8 @@ package io.goodforgod.slf4j.simplelogger;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.function.Supplier;
 import org.slf4j.helpers.FormattingTuple;
 import org.slf4j.helpers.Util;
 
@@ -199,7 +201,15 @@ final class MessageFormatter {
 
     private static void objectAppendSafe(StringBuilder builder, Object o) {
         try {
-            builder.append(o.toString());
+            if (o instanceof Supplier) {
+                final Object supplied = ((Supplier<?>) o).get();
+                builder.append(supplied);
+            } else if (o instanceof Callable) {
+                final Object supplied = ((Callable<?>) o).call();
+                builder.append(supplied);
+            } else {
+                builder.append(o);
+            }
         } catch (Throwable var3) {
             Util.report("SLF4J: Failed toString() invocation on an object of type [" + o.getClass().getName() + "]", var3);
             builder.append("[FAILED toString()]");

@@ -1,5 +1,7 @@
 package io.goodforgod.slf4j.simplelogger;
 
+import java.util.concurrent.Callable;
+import java.util.function.Supplier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.helpers.FormattingTuple;
@@ -39,6 +41,20 @@ class MessageFormatterTests extends Assertions {
 
         result = MessageFormatter.formatArray(msg, a0).getMessage();
         assertEquals(msg, result);
+    }
+
+    @Test
+    void messageSupplierAppended() {
+        Supplier<String> supplier = () -> "argument";
+        String result = MessageFormatter.format("Value supplier is {}.", supplier).getMessage();
+        assertEquals("Value supplier is argument.", result);
+    }
+
+    @Test
+    void messageCallableAppended() {
+        Callable<String> supplier = () -> "argument";
+        String result = MessageFormatter.format("Value supplier is {}.", supplier).getMessage();
+        assertEquals("Value supplier is argument.", result);
     }
 
     @Test
