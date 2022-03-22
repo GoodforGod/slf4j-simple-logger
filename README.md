@@ -15,9 +15,8 @@ Features:
 - Global logger level change.
 - Split output for errors and other.
 - GraalVM friendly.
+- [slf4j-simple-logger](https://www.slf4j.org/api/org/slf4j/impl/SimpleLogger.html) compatible configuration.
 - Simple!
-
-And more.
 
 ## Dependency :rocket:
 
@@ -62,7 +61,7 @@ ___________|__________   ______|_______   __|__   ___________________|__________
 
 This implementation is based on default *slf4j-simple-logger*, but there are plenty of performance and feature improvements.
 
-Some cases are 100% faster others are even 800% faster, you can read more about here in my [JVM benchmark](https://github.com/GoodforGod/java-logger-benchmark).
+Some cases are 200% faster others are 800% faster, you can read more about here in my [JVM benchmark](https://github.com/GoodforGod/java-logger-benchmark).
 
 ### DateTime output
 
@@ -167,7 +166,7 @@ factory.setLogLevel(Level.DEBUG, logger -> logger.getName().startsWith("io.goodf
 
 ## Configuration
 
-Library support all options of *slf4j-simple-logger*, you can check them [here](https://www.slf4j.org/api/org/slf4j/impl/SimpleLogger.html).
+Library is fully compatibly with *slf4j-simple-logger* configuration, you can check it [here](https://www.slf4j.org/api/org/slf4j/impl/SimpleLogger.html).
 
 Example of full *simplelogger.properties* file:
 ```properties
