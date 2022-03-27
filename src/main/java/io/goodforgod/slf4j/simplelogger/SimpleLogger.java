@@ -153,9 +153,11 @@ public final class SimpleLogger extends MarkerIgnoringBase {
      */
     int currentLogLevel;
     final int originalLogLevel;
+
     /**
      * The short name of this simple log instance
      */
+    final String logNameShort;
     final String logName;
 
     /**
@@ -163,6 +165,7 @@ public final class SimpleLogger extends MarkerIgnoringBase {
      */
     SimpleLogger(String name) {
         this.name = name;
+        this.logNameShort = name.substring(name.lastIndexOf('.') + 1);
         this.logName = CONFIG.computeLogName(name);
 
         final String levelString = recursivelyComputeLevelString();
@@ -183,7 +186,7 @@ public final class SimpleLogger extends MarkerIgnoringBase {
         int indexOfLastDot = tempName.length();
         while ((levelString == null) && (indexOfLastDot > -1)) {
             tempName = tempName.substring(0, indexOfLastDot);
-            levelString = CONFIG.getStringProperty(PREFIX_LOG + tempName, null);
+            levelString = CONFIG.getStringProperty(PREFIX_LOG + tempName);
             indexOfLastDot = tempName.lastIndexOf('.');
         }
         return levelString;
@@ -197,43 +200,32 @@ public final class SimpleLogger extends MarkerIgnoringBase {
      * @param throwable The exception whose stack trace should be logged
      */
     private void log(int level, String message, Throwable throwable) {
-        if (!isLevelEnabled(level)) {
-            return;
-        }
+        final SimpleLoggingEvent event = (CONFIG.isShowShortLogName())
+                ? new SimpleLoggingEvent(logNameShort, level, message, throwable)
+                : new SimpleLoggingEvent(logName, level, message, throwable);
 
-        final StringBuilder builder = new StringBuilder();
         final List<Layout> layouts = CONFIG.getLayouts();
         for (Layout layout : layouts) {
-            layout.print(logName, level, builder);
+            layout.print(event);
         }
 
-        // Append the message
-        builder.append(message);
-        builder.append(System.lineSeparator());
-
-        // Append throwable if present
-        if (throwable != null) {
-            final StringBuilderWriter stringWriter = new StringBuilderWriter(builder);
-            final PrintWriter printWriter = new PrintWriter(stringWriter);
-            throwable.printStackTrace(printWriter);
-        }
-
-        write(level, builder.toString());
+        write(event);
     }
 
     /**
      * To avoid intermingling of log messages and associated stack traces, the two operations are done
      * in a synchronized block.
      *
-     * @param message of logging message
+     * @param event of logging message
      */
-    void write(int level, String message) {
+    void write(SimpleLoggingEvent event) {
+        final String eventAsString = event.toString();
         final Charset charset = CONFIG.getCharset();
         final byte[] bytes = (charset == null)
-                ? message.getBytes()
-                : message.getBytes(charset);
+                ? eventAsString.getBytes()
+                : eventAsString.getBytes(charset);
 
-        final PrintStream printStream = CONFIG.getOutputStream(level);
+        final PrintStream printStream = CONFIG.getOutputStream(event.level());
         final Lock lock = CONFIG.getLock();
         lock.lock();
         try {
@@ -302,7 +294,7 @@ public final class SimpleLogger extends MarkerIgnoringBase {
      * @param logLevel is this level enabled?
      * @return true if enabled
      */
-    boolean isLevelEnabled(int logLevel) {
+    private boolean isLevelEnabled(int logLevel) {
         return (logLevel >= currentLogLevel);
     }
 
@@ -318,6 +310,10 @@ public final class SimpleLogger extends MarkerIgnoringBase {
      * above.
      */
     public void trace(String msg) {
+        if (!isLevelEnabled(LOG_LEVEL_TRACE)) {
+            return;
+        }
+
         log(LOG_LEVEL_TRACE, msg, null);
     }
 
@@ -349,6 +345,10 @@ public final class SimpleLogger extends MarkerIgnoringBase {
      * Log a message of level TRACE, including an exception.
      */
     public void trace(String msg, Throwable throwable) {
+        if (!isLevelEnabled(LOG_LEVEL_TRACE)) {
+            return;
+        }
+
         log(LOG_LEVEL_TRACE, msg, throwable);
     }
 
@@ -364,6 +364,10 @@ public final class SimpleLogger extends MarkerIgnoringBase {
      * above.
      */
     public void debug(String msg) {
+        if (!isLevelEnabled(LOG_LEVEL_DEBUG)) {
+            return;
+        }
+
         log(LOG_LEVEL_DEBUG, msg, null);
     }
 
@@ -395,6 +399,10 @@ public final class SimpleLogger extends MarkerIgnoringBase {
      * Log a message of level DEBUG, including an exception.
      */
     public void debug(String msg, Throwable throwable) {
+        if (!isLevelEnabled(LOG_LEVEL_DEBUG)) {
+            return;
+        }
+
         log(LOG_LEVEL_DEBUG, msg, throwable);
     }
 
@@ -409,6 +417,10 @@ public final class SimpleLogger extends MarkerIgnoringBase {
      * A simple implementation which logs messages of level INFO according to the format outlined above.
      */
     public void info(String msg) {
+        if (!isLevelEnabled(LOG_LEVEL_INFO)) {
+            return;
+        }
+
         log(LOG_LEVEL_INFO, msg, null);
     }
 
@@ -440,6 +452,10 @@ public final class SimpleLogger extends MarkerIgnoringBase {
      * Log a message of level INFO, including an exception.
      */
     public void info(String msg, Throwable throwable) {
+        if (!isLevelEnabled(LOG_LEVEL_INFO)) {
+            return;
+        }
+
         log(LOG_LEVEL_INFO, msg, throwable);
     }
 
@@ -455,6 +471,10 @@ public final class SimpleLogger extends MarkerIgnoringBase {
      * above.
      */
     public void warn(String msg) {
+        if (!isLevelEnabled(LOG_LEVEL_WARN)) {
+            return;
+        }
+
         log(LOG_LEVEL_WARN, msg, null);
     }
 
@@ -486,6 +506,10 @@ public final class SimpleLogger extends MarkerIgnoringBase {
      * Log a message of level WARN, including an exception.
      */
     public void warn(String msg, Throwable throwable) {
+        if (!isLevelEnabled(LOG_LEVEL_WARN)) {
+            return;
+        }
+
         log(LOG_LEVEL_WARN, msg, throwable);
     }
 
@@ -501,6 +525,10 @@ public final class SimpleLogger extends MarkerIgnoringBase {
      * outlined above.
      */
     public void error(String msg) {
+        if (!isLevelEnabled(LOG_LEVEL_ERROR)) {
+            return;
+        }
+
         log(LOG_LEVEL_ERROR, msg, null);
     }
 
@@ -532,6 +560,10 @@ public final class SimpleLogger extends MarkerIgnoringBase {
      * Log a message of level ERROR, including an exception.
      */
     public void error(String msg, Throwable throwable) {
+        if (!isLevelEnabled(LOG_LEVEL_ERROR)) {
+            return;
+        }
+
         log(LOG_LEVEL_ERROR, msg, throwable);
     }
 

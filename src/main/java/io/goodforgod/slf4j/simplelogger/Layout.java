@@ -9,11 +9,9 @@ package io.goodforgod.slf4j.simplelogger;
 interface Layout extends Comparable<Layout> {
 
     /**
-     * @param loggerName of the logger invoked
-     * @param level      of the logger invoked
-     * @param builder    to append layout
+     * @param event to log
      */
-    void print(String loggerName, int level, StringBuilder builder);
+    void print(SimpleLoggingEvent event);
 
     /**
      * @return order layout compared to all others layouts
