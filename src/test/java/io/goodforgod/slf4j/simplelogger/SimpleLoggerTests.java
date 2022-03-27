@@ -165,7 +165,7 @@ class SimpleLoggerTests extends Assertions {
     }
 
     @Test
-    void checkUseShowStartTimeFormat() {
+    void checkUseShowStartTimeFormat() throws InterruptedException {
         System.setOut(replacement);
         System.setProperty(SimpleLoggerProperties.SHOW_DATE_TIME, "true");
         System.setProperty(SimpleLoggerProperties.DATE_TIME_OUTPUT_TYPE, "MILLIS_FROM_START");
@@ -174,6 +174,8 @@ class SimpleLoggerTests extends Assertions {
 
         SimpleLogger.init();
         SimpleLogger simpleLogger = new SimpleLogger(this.getClass().getName());
+
+        Thread.sleep(5);
 
         simpleLogger.info("hello");
         replacement.flush();
