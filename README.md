@@ -8,15 +8,13 @@
 
 [SLF4J](https://github.com/qos-ch/slf4j) based, simple, efficient logger.
 
+This logger is great for applications that use synchronous output or run in single-thread like command line applications or serverless applications.
+
 Features:
 - Performance optimizations.
-- Logger name abbreviation (logback analog).
-- Environment variables logging.
-- Global logger level change.
-- Split output for errors and other.
 - GraalVM friendly.
+- Environment variables logging.
 - [slf4j-simple-logger](https://www.slf4j.org/api/org/slf4j/impl/SimpleLogger.html) compatible configuration.
-- Simple!
 
 ## Dependency :rocket:
 
