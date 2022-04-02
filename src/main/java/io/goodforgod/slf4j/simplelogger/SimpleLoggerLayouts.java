@@ -33,19 +33,25 @@ final class SimpleLoggerLayouts {
 
     private static final class DateTimeCache {
 
-        private final long epochMillis;
         private final String formatted;
+        private final long epochMillis;
+        private final long epochShort;
 
-        private DateTimeCache(long epochMillis, String formatted) {
-            this.epochMillis = epochMillis;
+        private DateTimeCache(String formatted, long epochMillis, long epochShort) {
             this.formatted = formatted;
+            this.epochMillis = epochMillis;
+            this.epochShort = epochShort;
+        }
+
+        private DateTimeCache(String formatted, long epochMillis) {
+            this(formatted, epochMillis, -1);
         }
     }
 
     private abstract static class AbstractTimeLayout implements Layout {
 
         final SimpleLoggerConfiguration configuration;
-        volatile DateTimeCache cache = new DateTimeCache(-1, null);
+        DateTimeCache cache = new DateTimeCache(null, -1);
 
         AbstractTimeLayout(SimpleLoggerConfiguration configuration) {
             this.configuration = configuration;
@@ -53,31 +59,33 @@ final class SimpleLoggerLayouts {
 
         abstract String getFormattedTime(long currentMillis);
 
-        abstract boolean formatterSupportSeconds();
+        abstract boolean isFormatterDefault();
 
         String getCachedFormattedTime() {
-            final DateTimeCache localCache = this.cache;
+            final DateTimeCache cacheLocal = this.cache;
             final long epochMilli = System.currentTimeMillis();
-            long epochShort = -1;
+            if (cacheLocal.epochMillis == epochMilli) {
+                return cacheLocal.formatted;
+            }
 
-            final boolean isDefaultFormatter = formatterSupportSeconds();
+            long epochShort = -1;
+            final boolean isDefaultFormatter = isFormatterDefault();
             if (isDefaultFormatter) {
                 epochShort = epochMilli / 10000;
-                if (localCache.epochMillis == epochShort) {
+                if (cacheLocal.epochShort == epochShort) {
                     final String secondsAndMillis = String.valueOf(epochMilli % 10000);
                     final char seconds = secondsAndMillis.charAt(0);
                     final String millis = secondsAndMillis.substring(1);
-                    return localCache.formatted + seconds + "." + millis;
+                    return cacheLocal.formatted + seconds + "." + millis;
                 }
-            } else if (localCache.epochMillis == epochMilli) {
-                return localCache.formatted;
             }
 
             final String formatted = getFormattedTime(epochMilli);
             if (isDefaultFormatter) {
-                this.cache = new DateTimeCache(epochShort, formatted.substring(0, formatted.length() - 5));
+                final String timeUpToSeconds = formatted.substring(0, formatted.length() - 5);
+                this.cache = new DateTimeCache(timeUpToSeconds, epochMilli, epochShort);
             } else {
-                this.cache = new DateTimeCache(epochMilli, formatted);
+                this.cache = new DateTimeCache(formatted, epochMilli);
             }
 
             return formatted;
@@ -97,7 +105,7 @@ final class SimpleLoggerLayouts {
         }
 
         @Override
-        boolean formatterSupportSeconds() {
+        boolean isFormatterDefault() {
             return configuration.getDateTimeFormatter() == SimpleLoggerConfiguration.DATE_TIME_FORMATTER_DEFAULT;
         }
 
@@ -140,7 +148,7 @@ final class SimpleLoggerLayouts {
         }
 
         @Override
-        boolean formatterSupportSeconds() {
+        boolean isFormatterDefault() {
             return configuration.getDateTimeFormatter() == SimpleLoggerConfiguration.TIME_FORMATTER_DEFAULT;
         }
 
