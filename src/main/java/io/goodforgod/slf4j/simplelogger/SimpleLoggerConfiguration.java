@@ -50,13 +50,12 @@ final class SimpleLoggerConfiguration {
     private static final boolean SHOW_SHORT_LOG_NAME_DEFAULT = false;
     private static final boolean SHOW_DATE_TIME_DEFAULT = true;
 
-    private List<Layout> layouts;
     private final Properties properties = new Properties();
+    private final Lock lock = computeLock();
 
     // Non changeable configuration
     private long initializeTime;
-    private final ReentrantLock lock = new ReentrantLock(false);
-    private Charset charset = StandardCharsets.UTF_8;
+    private Charset charset;
     private String implementationVersion;
     private OutputChoice outputChoice;
     private OutputChoice outputChoiceWarn;
@@ -74,6 +73,8 @@ final class SimpleLoggerConfiguration {
     private List<String> environments;
     private boolean environmentShowName = true;
     private boolean environmentShowNullable = false;
+
+    private List<Layout> layouts;
 
     void init() {
         loadProperties();
@@ -131,6 +132,19 @@ final class SimpleLoggerConfiguration {
         this.environments = computeEnvironments();
         this.environmentShowName = getBooleanProperty(ENVIRONMENT_SHOW_NAME, false);
         this.environmentShowNullable = getBooleanProperty(ENVIRONMENT_SHOW_NULLABLE, false);
+    }
+
+    /**
+     * Computes use {@link ReentrantLock} or use {@link FakeLock} if version is equal or higher than
+     * Java 14
+     * Use Fake lock due to implementation of {@link PrintStream#write(byte[])} in Java 14+
+     *
+     * @return lock used for {@link OutputStream}
+     */
+    private Lock computeLock() {
+        return (Runtime.version().feature() >= 14)
+                ? new FakeLock()
+                : new ReentrantLock();
     }
 
     private Charset computeCharset() {

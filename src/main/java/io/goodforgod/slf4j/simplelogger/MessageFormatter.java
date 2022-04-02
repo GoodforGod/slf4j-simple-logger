@@ -17,7 +17,7 @@ final class MessageFormatter {
 
     private static final FormattingTuple EMPTY = new FormattingTuple(null, null, null);
 
-    private static class FormatBuilder {
+    private static final class FormatBuilder {
 
         private final StringBuilder builder;
         private int i = 0;
@@ -29,7 +29,7 @@ final class MessageFormatter {
         }
     }
 
-    private static final String DELIM_STR = "{}";
+    private static final String DELIMITER = "{}";
     private static final char ESCAPE_CHAR = '\\';
 
     private MessageFormatter() {}
@@ -39,7 +39,7 @@ final class MessageFormatter {
             return EMPTY;
         }
 
-        final int j = messagePattern.lastIndexOf(DELIM_STR);
+        final int j = messagePattern.lastIndexOf(DELIMITER);
         if (j == -1) {
             return new FormattingTuple(messagePattern, null, null);
         }
@@ -59,12 +59,12 @@ final class MessageFormatter {
             return EMPTY;
         }
 
-        final int j2 = messagePattern.lastIndexOf(DELIM_STR);
+        final int j2 = messagePattern.lastIndexOf(DELIMITER);
         if (j2 == -1) {
             return new FormattingTuple(messagePattern, null, null);
         }
 
-        final int j1 = messagePattern.lastIndexOf(DELIM_STR, j2 - 1);
+        final int j1 = messagePattern.lastIndexOf(DELIMITER, j2 - 1);
 
         final int argumentsSize = predictArgumentSize(arg1) + predictArgumentSize(arg2);
         final FormatBuilder fb = new FormatBuilder(messagePattern.length() + argumentsSize);
@@ -103,7 +103,7 @@ final class MessageFormatter {
         } else if (argArray == null) {
             return new FormattingTuple(messagePattern, null, throwable);
         } else {
-            int firstArg = messagePattern.indexOf(DELIM_STR);
+            int firstArg = messagePattern.indexOf(DELIMITER);
             if (firstArg == -1) {
                 return new FormattingTuple(messagePattern, null, throwable);
             }
@@ -116,7 +116,7 @@ final class MessageFormatter {
                 appendArgument(messagePattern, fb, arg);
                 fb.a++;
 
-                fb.j = messagePattern.indexOf(DELIM_STR, fb.i);
+                fb.j = messagePattern.indexOf(DELIMITER, fb.i);
                 if (fb.j == -1) {
                     break;
                 }

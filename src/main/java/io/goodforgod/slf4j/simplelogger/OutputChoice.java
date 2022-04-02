@@ -26,6 +26,7 @@ final class OutputChoice {
         if (outputChoiceType == OutputChoiceType.FILE) {
             throw new IllegalArgumentException();
         }
+
         this.outputChoiceType = outputChoiceType;
         if (outputChoiceType == OutputChoiceType.CACHED_SYS_OUT) {
             this.targetPrintStream = System.out;
