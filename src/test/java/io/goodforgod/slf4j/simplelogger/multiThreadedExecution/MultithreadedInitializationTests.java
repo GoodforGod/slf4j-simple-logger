@@ -33,7 +33,7 @@ abstract public class MultithreadedInitializationTests extends Assertions {
 
         assertAllSubstLoggersAreFixed();
         long recordedEventCount = getRecordedEventCount();
-        int LENIENCY_COUNT = 18;
+        int LENIENCY_COUNT = 16;
 
         long expectedEventCount = eventCount.get() + extraLogEvents();
 

@@ -2,7 +2,6 @@ package io.goodforgod.slf4j.simplelogger;
 
 import static io.goodforgod.slf4j.simplelogger.SimpleLoggerProperties.*;
 
-import io.goodforgod.slf4j.simplelogger.OutputChoice.OutputChoiceType;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -14,8 +13,6 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import org.slf4j.event.Level;
 import org.slf4j.helpers.Util;
@@ -51,28 +48,27 @@ final class SimpleLoggerConfiguration {
     private static final boolean SHOW_DATE_TIME_DEFAULT = true;
 
     private final Properties properties = new Properties();
-    private final Lock lock = computeLock();
 
     // Non changeable configuration
     private long initializeTime;
-    private Charset charset;
+    private EventEncoder eventEncoder;
     private String implementationVersion;
-    private OutputChoice outputChoice;
-    private OutputChoice outputChoiceWarn;
-    private OutputChoice outputChoiceError;
+    private EventWriter eventWriter;
+    private EventWriter eventWriterWarn;
+    private EventWriter eventWriterError;
     private String environmentsOnStart;
 
     // Changeable configuration
     private ZoneId zoneId;
     private DateTimeOutputType dateTimeOutputType = DateTimeOutputType.DATE_TIME;
     private DateTimeFormatter dateTimeFormatter;
-    private int defaultLogLevel = SimpleLogger.LOG_LEVEL_INFO;
+    private int defaultLogLevel = Level.INFO.toInt();
     private boolean showShortLogName = SHOW_SHORT_LOG_NAME_DEFAULT;
     private boolean showLogName = SHOW_LOG_NAME_DEFAULT;
     private Integer logNameLength;
     private List<String> environments;
-    private boolean environmentShowName = true;
-    private boolean environmentShowNullable = false;
+    private boolean environmentShowName;
+    private boolean environmentShowNullable;
 
     private List<Layout> layouts;
 
@@ -86,19 +82,19 @@ final class SimpleLoggerConfiguration {
         final String logFileWarn = getStringProperty(LOG_FILE_WARN, SYSTEM_OUT);
         final String logFileError = getStringProperty(LOG_FILE_ERROR, SYSTEM_OUT);
 
-        this.charset = computeCharset();
+        this.eventEncoder = computeEventEncoder();
         final boolean cacheOutputStream = getBooleanProperty(CACHE_OUTPUT_STREAM_STRING, CACHE_OUTPUT_STREAM_DEFAULT);
-        this.outputChoice = computeOutputChoice(logFile, cacheOutputStream);
-        this.outputChoiceWarn = (logFile.equals(logFileWarn))
-                ? outputChoice
-                : computeOutputChoice(logFileWarn, cacheOutputStream);
+        this.eventWriter = computeLoggerStream(computeOutputChoice(logFile, cacheOutputStream));
+        this.eventWriterWarn = (logFile.equals(logFileWarn))
+                ? eventWriter
+                : computeLoggerStream(computeOutputChoice(logFileWarn, cacheOutputStream));
 
         if (logFile.equals(logFileError)) {
-            this.outputChoiceError = outputChoice;
+            this.eventWriterError = eventWriter;
         } else if (logFileWarn.equals(logFileError)) {
-            this.outputChoiceError = outputChoiceWarn;
+            this.eventWriterError = eventWriterWarn;
         } else {
-            this.outputChoiceError = computeOutputChoice(logFileError, cacheOutputStream);
+            this.eventWriterError = computeLoggerStream(computeOutputChoice(logFileError, cacheOutputStream));
         }
 
         computeChangeableConfiguration();
@@ -120,7 +116,7 @@ final class SimpleLoggerConfiguration {
 
         final String defaultLogLevelString = getStringProperty(DEFAULT_LOG_LEVEL);
         if (defaultLogLevelString != null) {
-            this.defaultLogLevel = tryStringToLevel(defaultLogLevelString).orElse(SimpleLogger.LOG_LEVEL_INFO);
+            this.defaultLogLevel = tryStringToLevel(defaultLogLevelString).orElse(Level.INFO.toInt());
         }
 
         this.showShortLogName = getBooleanProperty(SHOW_SHORT_LOG_NAME, SHOW_SHORT_LOG_NAME_DEFAULT);
@@ -130,29 +126,35 @@ final class SimpleLoggerConfiguration {
                 .orElse(null);
 
         this.environments = computeEnvironments();
-        this.environmentShowName = getBooleanProperty(ENVIRONMENT_SHOW_NAME, false);
+        this.environmentShowName = getBooleanProperty(ENVIRONMENT_SHOW_NAME, true);
         this.environmentShowNullable = getBooleanProperty(ENVIRONMENT_SHOW_NULLABLE, false);
     }
 
     /**
-     * Computes use {@link ReentrantLock} or use {@link FakeLock} if version is equal or higher than
-     * Java 14
-     * Use Fake lock due to implementation of {@link PrintStream#write(byte[])} in Java 14+
+     * If Java Version is equal or higher than Java 14 then uses
+     * {@link EventWriters.SimpleEventWriter} cause impl have internal synchronization or
+     * {@link EventWriters.LockAndFlushEventWriter} otherwise for manual locking
+     * Use simple impl due to implementation of {@link PrintStream#write(byte[])} in Java 14+
      *
-     * @return lock used for {@link OutputStream}
+     * @return logger stream used for writing events
      */
-    private Lock computeLock() {
-        return (Runtime.version().feature() >= 14)
-                ? new FakeLock()
-                : new ReentrantLock();
+    private EventWriter computeLoggerStream(OutputChoice outputChoice) {
+        final boolean isSimple = outputChoice instanceof OutputChoices.SystemOutOutputChoice
+                || outputChoice instanceof OutputChoices.CachedSystemOutOutputChoice
+                || outputChoice instanceof OutputChoices.SystemErrOutputChoice
+                || outputChoice instanceof OutputChoices.CachedSystemErrOutputChoice;
+
+        return (Runtime.version().feature() >= 14 && isSimple)
+                ? new EventWriters.SimpleEventWriter(this, outputChoice)
+                : new EventWriters.LockAndFlushEventWriter(this, outputChoice);
     }
 
-    private Charset computeCharset() {
+    private EventEncoder computeEventEncoder() {
         return Optional.ofNullable(getStringProperty(CHARSET, null))
-                .map(charset -> ("null".equals(charset))
-                        ? null
-                        : Charset.forName(charset))
-                .orElse(StandardCharsets.UTF_8);
+                .map(charset -> "null".equals(charset)
+                        ? new EventEncoders.SimpleEventEncoder()
+                        : new EventEncoders.CharsetEventEncoder(Charset.forName(charset)))
+                .orElseGet(() -> new EventEncoders.CharsetEventEncoder(StandardCharsets.UTF_8));
     }
 
     private DateTimeOutputType computeDateTimeOutputType() {
@@ -177,14 +179,14 @@ final class SimpleLoggerConfiguration {
                 : ClassNameAbbreviator.abbreviate(name, logNameLength);
     }
 
-    PrintStream getOutputStream(int logLevel) {
+    EventWriter getEventWriter(Level logLevel) {
         switch (logLevel) {
-            case SimpleLogger.LOG_LEVEL_WARN:
-                return outputChoiceWarn.getTargetPrintStream();
-            case SimpleLogger.LOG_LEVEL_ERROR:
-                return outputChoiceError.getTargetPrintStream();
+            case WARN:
+                return eventWriterWarn;
+            case ERROR:
+                return eventWriterError;
             default:
-                return outputChoice.getTargetPrintStream();
+                return eventWriter;
         }
     }
 
@@ -359,12 +361,8 @@ final class SimpleLoggerConfiguration {
         return showShortLogName;
     }
 
-    Charset getCharset() {
-        return charset;
-    }
-
-    Lock getLock() {
-        return lock;
+    EventEncoder getEventEncoder() {
+        return eventEncoder;
     }
 
     private void loadProperties() {
@@ -464,15 +462,15 @@ final class SimpleLoggerConfiguration {
         }
 
         if (Level.TRACE.name().equalsIgnoreCase(levelStr)) {
-            return SimpleLogger.LOG_LEVEL_TRACE;
+            return Level.TRACE.toInt();
         } else if (Level.DEBUG.name().equalsIgnoreCase(levelStr)) {
-            return SimpleLogger.LOG_LEVEL_DEBUG;
+            return Level.DEBUG.toInt();
         } else if (Level.INFO.name().equalsIgnoreCase(levelStr)) {
-            return SimpleLogger.LOG_LEVEL_INFO;
+            return Level.INFO.toInt();
         } else if (Level.WARN.name().equalsIgnoreCase(levelStr)) {
-            return SimpleLogger.LOG_LEVEL_WARN;
+            return Level.WARN.toInt();
         } else if (Level.ERROR.name().equalsIgnoreCase(levelStr)) {
-            return SimpleLogger.LOG_LEVEL_ERROR;
+            return Level.ERROR.toInt();
         } else if ("off".equalsIgnoreCase(levelStr)) {
             return SimpleLogger.LOG_LEVEL_OFF;
         }
@@ -483,15 +481,15 @@ final class SimpleLoggerConfiguration {
     private static int stringToLevelOptimized(String level) {
         switch (level) {
             case "TRACE":
-                return SimpleLogger.LOG_LEVEL_TRACE;
+                return Level.TRACE.toInt();
             case "DEBUG":
-                return SimpleLogger.LOG_LEVEL_DEBUG;
+                return Level.DEBUG.toInt();
             case "INFO":
-                return SimpleLogger.LOG_LEVEL_INFO;
+                return Level.INFO.toInt();
             case "WARN":
-                return SimpleLogger.LOG_LEVEL_WARN;
+                return Level.WARN.toInt();
             case "ERROR":
-                return SimpleLogger.LOG_LEVEL_ERROR;
+                return Level.ERROR.toInt();
             case "OFF":
                 return SimpleLogger.LOG_LEVEL_OFF;
             default:
@@ -502,22 +500,23 @@ final class SimpleLoggerConfiguration {
     private static OutputChoice computeOutputChoice(String logFile, boolean cacheOutputStream) {
         if (SYSTEM_ERR.equalsIgnoreCase(logFile)) {
             if (cacheOutputStream) {
-                return new OutputChoice(OutputChoiceType.CACHED_SYS_ERR);
+                return new OutputChoices.CachedSystemErrOutputChoice();
             } else {
-                return new OutputChoice(OutputChoiceType.SYS_ERR);
+                return new OutputChoices.SystemErrOutputChoice();
             }
         } else if (SYSTEM_OUT.equalsIgnoreCase(logFile)) {
             if (cacheOutputStream) {
-                return new OutputChoice(OutputChoiceType.CACHED_SYS_OUT);
+                return new OutputChoices.CachedSystemOutOutputChoice();
             } else {
-                return new OutputChoice(OutputChoiceType.SYS_OUT);
+                return new OutputChoices.SystemOutOutputChoice();
             }
         } else {
-            try (PrintStream printStream = new PrintStream(new FileOutputStream(logFile), true)) {
-                return new OutputChoice(printStream);
+            try {
+                final PrintStream printStream = new PrintStream(new FileOutputStream(logFile), true);
+                return new OutputChoices.FileOutputChoice(printStream);
             } catch (IOException e) {
                 Util.report("Could not open [" + logFile + "]. Defaulting to System.err", e);
-                return new OutputChoice(OutputChoiceType.SYS_ERR);
+                return new OutputChoices.SystemErrOutputChoice();
             }
         }
     }

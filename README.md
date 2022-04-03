@@ -176,6 +176,8 @@ org.slf4j.simpleLogger.showDateTime=true
 org.slf4j.simpleLogger.dateTimeOutputType=DATE_TIME
 # The date and time formatter pattern to be used in the output. (default uuuu-MM-dd'T'HH:mm:ss.SSS)
 org.slf4j.simpleLogger.dateTimeFormat=uuuu-MM-dd'T'HH:mm:ss.SSS
+# Set ZoneId to use as adjustment for DATE_TIME or TIME. (default Clock.systemDefaultZone())
+org.slf4j.simpleLogger.zoneId=UTC
 # Set to true if to show application implementation version from MANIFEST.MF (default false)
 org.slf4j.simpleLogger.showImplementationVersion=false
 # Set to true to show logging level in brackets like: [INFO] (default true)

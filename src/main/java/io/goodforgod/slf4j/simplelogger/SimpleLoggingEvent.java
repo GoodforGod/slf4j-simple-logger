@@ -1,5 +1,8 @@
 package io.goodforgod.slf4j.simplelogger;
 
+import java.io.PrintWriter;
+import org.slf4j.event.Level;
+
 /**
  * @author Anton Kurako (GoodforGod)
  * @since 27.03.2022
@@ -9,41 +12,40 @@ final class SimpleLoggingEvent {
     private final StringBuilder builder = new StringBuilder();
 
     private final String loggerName;
-    private final int level;
+    private final Level level;
     private final String message;
     private final Throwable throwable;
 
-    SimpleLoggingEvent(String loggerName, int level, String message, Throwable throwable) {
+    SimpleLoggingEvent(String loggerName, Level level, String message, Throwable throwable) {
         this.loggerName = loggerName;
         this.level = level;
         this.message = message;
         this.throwable = throwable;
     }
 
-    StringBuilder builder() {
-        return builder;
+    void append(Throwable throwable) {
+        final StringBuilderWriter stringWriter = new StringBuilderWriter(builder);
+        final PrintWriter printWriter = new PrintWriter(stringWriter);
+        throwable.printStackTrace(printWriter);
     }
 
-    SimpleLoggingEvent append(CharSequence text) {
+    void append(CharSequence text) {
         builder.append(text);
-        return this;
     }
 
-    SimpleLoggingEvent append(char character) {
+    void append(char character) {
         builder.append(character);
-        return this;
     }
 
-    SimpleLoggingEvent append(long number) {
+    void append(long number) {
         builder.append(number);
-        return this;
     }
 
     String logger() {
         return loggerName;
     }
 
-    int level() {
+    Level level() {
         return level;
     }
 

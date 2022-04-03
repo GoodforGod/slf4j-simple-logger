@@ -91,7 +91,7 @@ class SimpleLoggerTests extends Assertions {
 
         SimpleLogger.init();
         SimpleLogger simpleLogger = (SimpleLogger) factory.getLogger("x.y");
-        assertEquals(SimpleLogger.LOG_LEVEL_INFO, simpleLogger.currentLogLevel);
+        assertEquals(Level.INFO.toInt(), simpleLogger.currentLogLevel);
 
         for (Level lvl : Level.values()) {
             factory.setLogLevel(lvl);

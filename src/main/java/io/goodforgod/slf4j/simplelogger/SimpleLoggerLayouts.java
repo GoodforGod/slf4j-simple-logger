@@ -1,7 +1,7 @@
 package io.goodforgod.slf4j.simplelogger;
 
-import java.io.PrintWriter;
 import java.time.*;
+import org.slf4j.event.Level;
 
 /**
  * Default SimpleLogger layout implementations
@@ -51,7 +51,7 @@ final class SimpleLoggerLayouts {
     private abstract static class AbstractTimeLayout implements Layout {
 
         final SimpleLoggerConfiguration configuration;
-        DateTimeCache cache = new DateTimeCache(null, -1);
+        volatile DateTimeCache cache = new DateTimeCache(null, -1);
 
         AbstractTimeLayout(SimpleLoggerConfiguration configuration) {
             this.configuration = configuration;
@@ -76,7 +76,9 @@ final class SimpleLoggerLayouts {
                     final String secondsAndMillis = String.valueOf(epochMilli % 10000);
                     final char seconds = secondsAndMillis.charAt(0);
                     final String millis = secondsAndMillis.substring(1);
-                    return cacheLocal.formatted + seconds + "." + millis;
+                    final String formatted = cacheLocal.formatted + seconds + "." + millis;
+                    this.cache = new DateTimeCache(formatted, epochMilli);
+                    return formatted;
                 }
             }
 
@@ -219,9 +221,9 @@ final class SimpleLoggerLayouts {
 
         @Override
         public void print(SimpleLoggingEvent event) {
-            event.append("[")
-                    .append(configuration.getImplementationVersion())
-                    .append("] ");
+            event.append("[");
+            event.append(configuration.getImplementationVersion());
+            event.append("] ");
         }
 
         @Override
@@ -251,17 +253,17 @@ final class SimpleLoggerLayouts {
             event.append(renderLevel(event.level()));
         }
 
-        private String renderLevel(int level) {
+        private String renderLevel(Level level) {
             switch (level) {
-                case SimpleLogger.LOG_LEVEL_INFO:
+                case INFO:
                     return info;
-                case SimpleLogger.LOG_LEVEL_WARN:
+                case WARN:
                     return warn;
-                case SimpleLogger.LOG_LEVEL_ERROR:
+                case ERROR:
                     return error;
-                case SimpleLogger.LOG_LEVEL_DEBUG:
+                case DEBUG:
                     return debug;
-                case SimpleLogger.LOG_LEVEL_TRACE:
+                case TRACE:
                     return trace;
                 default:
                     throw new IllegalStateException("Unrecognized level [" + level + "]");
@@ -340,9 +342,8 @@ final class SimpleLoggerLayouts {
 
         @Override
         public void print(SimpleLoggingEvent event) {
-            final String threadName = Thread.currentThread().getName();
             event.append('[');
-            event.append(threadName);
+            event.append(Thread.currentThread().getName());
             event.append("] ");
         }
 
@@ -356,7 +357,8 @@ final class SimpleLoggerLayouts {
 
         @Override
         public void print(SimpleLoggingEvent event) {
-            event.append(event.logger()).append(" - ");
+            event.append(event.logger());
+            event.append(" - ");
         }
 
         @Override
@@ -397,9 +399,7 @@ final class SimpleLoggerLayouts {
         public void print(SimpleLoggingEvent event) {
             final Throwable throwable = event.throwable();
             if (throwable != null) {
-                final StringBuilderWriter stringWriter = new StringBuilderWriter(event.builder());
-                final PrintWriter printWriter = new PrintWriter(stringWriter);
-                throwable.printStackTrace(printWriter);
+                event.append(throwable);
             }
         }
 
