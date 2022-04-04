@@ -14,6 +14,8 @@ final class EventWriters {
 
     private EventWriters() {}
 
+    private static final Lock LOCK = new ReentrantLock();
+
     static final class SimpleEventWriter implements EventWriter {
 
         private final EventEncoder eventEncoder;
@@ -35,9 +37,31 @@ final class EventWriters {
         }
     }
 
-    static final class LockAndFlushEventWriter implements EventWriter {
+    static final class LockEventWriter implements EventWriter {
 
-        private static final Lock LOCK = new ReentrantLock();
+        private final EventEncoder eventEncoder;
+        private final OutputChoice outputChoice;
+
+        LockEventWriter(SimpleLoggerConfiguration configuration, OutputChoice outputChoice) {
+            this.outputChoice = outputChoice;
+            this.eventEncoder = configuration.getEventEncoder();
+        }
+
+        @Override
+        public void write(SimpleLoggingEvent event) {
+            final byte[] bytes = eventEncoder.encode(event);
+            LOCK.lock();
+            try {
+                outputChoice.getStream().write(bytes);
+            } catch (IOException e) {
+                // do nothing
+            } finally {
+                LOCK.unlock();
+            }
+        }
+    }
+
+    static final class LockAndFlushEventWriter implements EventWriter {
 
         private final EventEncoder eventEncoder;
         private final OutputChoice outputChoice;

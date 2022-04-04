@@ -7,7 +7,6 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -144,9 +143,10 @@ final class SimpleLoggerConfiguration {
                 || outputChoice instanceof OutputChoices.SystemErrOutputChoice
                 || outputChoice instanceof OutputChoices.CachedSystemErrOutputChoice;
 
-        return (Runtime.version().feature() >= 14 && isSimple)
-                ? new EventWriters.SimpleEventWriter(this, outputChoice)
-                : new EventWriters.LockAndFlushEventWriter(this, outputChoice);
+        return new EventWriters.LockAndFlushEventWriter(this, outputChoice);
+        // return (Runtime.version().feature() >= 14 && isSimple)
+        // ? new EventWriters.SimpleEventWriter(this, outputChoice)
+        // : new EventWriters.LockAndFlushEventWriter(this, outputChoice);
     }
 
     private EventEncoder computeEventEncoder() {
@@ -315,10 +315,10 @@ final class SimpleLoggerConfiguration {
         return loggerLayouts;
     }
 
-    Clock getClock() {
+    ZoneId getZoneId() {
         return (zoneId == null)
-                ? Clock.systemDefaultZone()
-                : Clock.system(zoneId);
+                ? ZoneId.systemDefault()
+                : zoneId;
     }
 
     List<String> getEnvironments() {

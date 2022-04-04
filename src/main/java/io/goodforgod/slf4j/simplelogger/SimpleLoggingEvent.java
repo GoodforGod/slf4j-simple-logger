@@ -10,6 +10,7 @@ import org.slf4j.event.Level;
 final class SimpleLoggingEvent {
 
     private final StringBuilder builder = new StringBuilder();
+    private final long created = System.currentTimeMillis();
 
     private final String loggerName;
     private final Level level;
@@ -39,6 +40,10 @@ final class SimpleLoggingEvent {
 
     void append(long number) {
         builder.append(number);
+    }
+
+    long created() {
+        return created;
     }
 
     String logger() {

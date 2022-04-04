@@ -11,9 +11,6 @@ import org.slf4j.event.Level;
  */
 final class SimpleLoggerLayouts {
 
-    private static final long NANOS_PER_SECOND = 1000_000_000L;
-    private static final int SECONDS_PER_DAY = 60 * 60 * 24;
-
     private SimpleLoggerLayouts() {}
 
     /**
@@ -35,99 +32,55 @@ final class SimpleLoggerLayouts {
 
         private final String formatted;
         private final long epochMillis;
-        private final long epochShort;
-
-        private DateTimeCache(String formatted, long epochMillis, long epochShort) {
-            this.formatted = formatted;
-            this.epochMillis = epochMillis;
-            this.epochShort = epochShort;
-        }
 
         private DateTimeCache(String formatted, long epochMillis) {
-            this(formatted, epochMillis, -1);
+            this.formatted = formatted;
+            this.epochMillis = epochMillis;
         }
     }
 
     private abstract static class AbstractTimeLayout implements Layout {
 
-        final SimpleLoggerConfiguration configuration;
-        volatile DateTimeCache cache = new DateTimeCache(null, -1);
+        private volatile DateTimeCache cache = new DateTimeCache(null, -1);
 
-        AbstractTimeLayout(SimpleLoggerConfiguration configuration) {
-            this.configuration = configuration;
-        }
+        abstract String format(long eventCreatMillis);
 
-        abstract String getFormattedTime(long currentMillis);
-
-        abstract boolean isFormatterDefault();
-
-        String getCachedFormattedTime() {
+        String getEventTime(SimpleLoggingEvent event) {
             final DateTimeCache cacheLocal = this.cache;
-            final long epochMilli = System.currentTimeMillis();
-            if (cacheLocal.epochMillis == epochMilli) {
+            if (cacheLocal.epochMillis == event.created()) {
                 return cacheLocal.formatted;
-            }
-
-            long epochShort = -1;
-            final boolean isDefaultFormatter = isFormatterDefault();
-            if (isDefaultFormatter) {
-                epochShort = epochMilli / 10000;
-                if (cacheLocal.epochShort == epochShort) {
-                    final String secondsAndMillis = String.valueOf(epochMilli % 10000);
-                    final char seconds = secondsAndMillis.charAt(0);
-                    final String millis = secondsAndMillis.substring(1);
-                    final String formatted = cacheLocal.formatted + seconds + "." + millis;
-                    this.cache = new DateTimeCache(formatted, epochMilli);
-                    return formatted;
-                }
-            }
-
-            final String formatted = getFormattedTime(epochMilli);
-            if (isDefaultFormatter) {
-                final String timeUpToSeconds = formatted.substring(0, formatted.length() - 5);
-                this.cache = new DateTimeCache(timeUpToSeconds, epochMilli, epochShort);
             } else {
-                this.cache = new DateTimeCache(formatted, epochMilli);
+                final String formatted = format(event.created());
+                this.cache = new DateTimeCache(formatted, event.created());
+                return formatted;
             }
-
-            return formatted;
         }
     }
 
     static final class DateTimeLayout extends AbstractTimeLayout {
 
+        private final SimpleLoggerConfiguration configuration;
+
         DateTimeLayout(SimpleLoggerConfiguration configuration) {
-            super(configuration);
+            this.configuration = configuration;
         }
 
         @Override
         public void print(SimpleLoggingEvent event) {
-            event.append(getCachedFormattedTime());
+            event.append(getEventTime(event));
             event.append(' ');
         }
 
-        @Override
-        boolean isFormatterDefault() {
-            return configuration.getDateTimeFormatter() == SimpleLoggerConfiguration.DATE_TIME_FORMATTER_DEFAULT;
-        }
-
         /**
-         * @param currentMillis from epoch
+         * @param eventCreatMillis from epoch
          * @see LocalTime#ofNanoOfDay(long)
          * @return formatter date time
          */
         @Override
-        String getFormattedTime(long currentMillis) {
-            final Instant now = Instant.ofEpochMilli(currentMillis);
-            final Clock clock = configuration.getClock();
-            final ZoneOffset offset = clock.getZone().getRules().getOffset(now);
-            final long localSecond = now.getEpochSecond() + offset.getTotalSeconds(); // overflow caught later
-            final long localEpochDay = Math.floorDiv(localSecond, SECONDS_PER_DAY);
-            final int secsOfDay = Math.floorMod(localSecond, SECONDS_PER_DAY);
-            final LocalDate date = LocalDate.ofEpochDay(localEpochDay);
-            final LocalTime time = LocalTime.ofNanoOfDay(secsOfDay * NANOS_PER_SECOND + now.getNano());
-            final LocalDateTime dateTime = LocalDateTime.of(date, time);
-
+        String format(long eventCreatMillis) {
+            final Instant now = Instant.ofEpochMilli(eventCreatMillis);
+            final ZoneId zoneId = configuration.getZoneId();
+            final LocalDateTime dateTime = LocalDateTime.ofInstant(now, zoneId);
             return configuration.getDateTimeFormatter().format(dateTime);
         }
 
@@ -139,35 +92,28 @@ final class SimpleLoggerLayouts {
 
     static final class TimeLayout extends AbstractTimeLayout {
 
+        private final SimpleLoggerConfiguration configuration;
+
         TimeLayout(SimpleLoggerConfiguration configuration) {
-            super(configuration);
+            this.configuration = configuration;
         }
 
         @Override
         public void print(SimpleLoggingEvent event) {
-            event.append(getCachedFormattedTime());
+            event.append(getEventTime(event));
             event.append(' ');
         }
 
-        @Override
-        boolean isFormatterDefault() {
-            return configuration.getDateTimeFormatter() == SimpleLoggerConfiguration.TIME_FORMATTER_DEFAULT;
-        }
-
         /**
-         * @param currentMillis from epoch
+         * @param eventCreatMillis from epoch
          * @see LocalTime#ofInstant(Instant, ZoneId)
          * @return formatter date time
          */
         @Override
-        String getFormattedTime(long currentMillis) {
-            final Instant now = Instant.ofEpochMilli(currentMillis);
-            final Clock clock = configuration.getClock();
-            final ZoneOffset offset = clock.getZone().getRules().getOffset(now);
-            final long localSecond = now.getEpochSecond() + offset.getTotalSeconds();
-            final int secsOfDay = Math.floorMod(localSecond, SECONDS_PER_DAY);
-            final LocalTime localTime = LocalTime.ofNanoOfDay(secsOfDay * NANOS_PER_SECOND + now.getNano());
-
+        String format(long eventCreatMillis) {
+            final Instant now = Instant.ofEpochMilli(eventCreatMillis);
+            final ZoneId zoneId = configuration.getZoneId();
+            final LocalTime localTime = LocalTime.ofInstant(now, zoneId);
             return configuration.getDateTimeFormatter().format(localTime);
         }
 
