@@ -138,15 +138,7 @@ final class SimpleLoggerConfiguration {
      * @return logger stream used for writing events
      */
     private EventWriter computeLoggerStream(OutputChoice outputChoice) {
-        final boolean isSimple = outputChoice instanceof OutputChoices.SystemOutOutputChoice
-                || outputChoice instanceof OutputChoices.CachedSystemOutOutputChoice
-                || outputChoice instanceof OutputChoices.SystemErrOutputChoice
-                || outputChoice instanceof OutputChoices.CachedSystemErrOutputChoice;
-
-        return new EventWriters.LockAndFlushEventWriter(this, outputChoice);
-        // return (Runtime.version().feature() >= 14 && isSimple)
-        // ? new EventWriters.SimpleEventWriter(this, outputChoice)
-        // : new EventWriters.LockAndFlushEventWriter(this, outputChoice);
+        return new EventWriters.LockEventWriter(this, outputChoice);
     }
 
     private EventEncoder computeEventEncoder() {
