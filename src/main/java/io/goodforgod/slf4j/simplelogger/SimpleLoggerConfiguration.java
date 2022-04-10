@@ -104,6 +104,7 @@ final class SimpleLoggerConfiguration {
 
     void refresh() {
         computeChangeableConfiguration();
+        this.layouts = computeLayouts();
     }
 
     private void computeChangeableConfiguration() {

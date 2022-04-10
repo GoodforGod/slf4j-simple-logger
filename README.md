@@ -8,7 +8,7 @@
 
 [SLF4J](https://github.com/qos-ch/slf4j) based, simple, efficient logger.
 
-This logger is great for applications that use synchronous output or run in single-thread like command line applications or serverless applications.
+This logger is great for applications that use synchronous output or run in single-thread like command line applications or Serverless applications.
 
 Features:
 - Performance optimizations.
@@ -22,7 +22,7 @@ Java 11+ compatible.
 
 [**Gradle**](https://mvnrepository.com/artifact/io.goodforgod/slf4j-simple-logger)
 ```groovy
-implementation "io.goodforgod:slf4j-simple-logger:0.13.0"
+implementation "io.goodforgod:slf4j-simple-logger:0.14.0"
 ```
 
 [**Maven**](https://mvnrepository.com/artifact/io.goodforgod/slf4j-simple-logger)
@@ -30,7 +30,7 @@ implementation "io.goodforgod:slf4j-simple-logger:0.13.0"
 <dependency>
     <groupId>io.goodforgod</groupId>
     <artifactId>slf4j-simple-logger</artifactId>
-    <version>0.13.0</version>
+    <version>0.14.0</version>
 </dependency>
 ```
 
@@ -132,6 +132,57 @@ Then the output will be:
 
 Environment variables are printed in order they preserve in configuration (in example above first SESSION, then PROCESSOR_LEVEL).
 
+### Environment configuration
+
+You can use environment variables to configure values for property config.
+
+Below is example where there are two environment variables are used for configuration (*SHOW_LOG_NAME* and *LOG_NAME_LENGTH*):
+```
+org.slf4j.simpleLogger.showLogName=${SHOW_LOG_NAME}
+org.slf4j.simpleLogger.logNameLength=${LOG_NAME_LENGTH:36}
+```
+
+If environment variable value is absent, then [default value](#configuration) is used.
+
+#### Runtime refresh
+
+Environment variable configuration can be refresh in runtime. This can be useful when environment changed, and it is required to update logger config without stopping application.
+```java
+SimpleLoggerFactory.refresh();
+```
+
+Only these properties can be changed in runtime:
+```properties
+# Default logging level for all loggers. Must be one of ("TRACE", "DEBUG", "INFO", "WARN", or "ERROR"). (default INFO)
+org.slf4j.simpleLogger.defaultLogLevel=INFO
+# Set to true to show current datetime in output. (default true)
+org.slf4j.simpleLogger.showDateTime=true
+# Set datetime output type. Must be one of ("TIME", "DATE_TIME", "UNIX_TIME", "MILLIS_FROM_START"). (default DATE_TIME)
+org.slf4j.simpleLogger.dateTimeOutputType=DATE_TIME
+# The date and time formatter pattern to be used in the output. (default uuuu-MM-dd'T'HH:mm:ss.SSS)
+org.slf4j.simpleLogger.dateTimeFormat=uuuu-MM-dd'T'HH:mm:ss.SSS
+# Set ZoneId to use as adjustment for DATE_TIME or TIME. (default ZoneId.systemDefault())
+org.slf4j.simpleLogger.zoneId=UTC
+# Set to true if to show application implementation version from MANIFEST.MF (default false)
+org.slf4j.simpleLogger.showImplementationVersion=false
+# Set to true to show logging level in brackets like: [INFO] (default true)
+org.slf4j.simpleLogger.levelInBrackets=true
+# Set to true if to show current thread in output. (default false)
+org.slf4j.simpleLogger.showThreadName=false
+# Set to true to show only class name in output. (default false)
+org.slf4j.simpleLogger.showShortLogName=false
+# Set to true if to show full class name in output (package + class name). (default true)
+org.slf4j.simpleLogger.showLogName=true
+# Set maximum logger name to output and abbreviate if it exceeds length. (default null)
+org.slf4j.simpleLogger.logNameLength=36
+# Set environment names to show in output. Envs will be printed out in order they preserve in configuration. (default null)
+org.slf4j.simpleLogger.environments=SESSION_ID,ORIGIN,HOST
+# Set to true to show environment with nullable values. (default false)
+org.slf4j.simpleLogger.environmentShowNullable=false
+# Set to true to show environment names. (default false)
+org.slf4j.simpleLogger.environmentShowName=false
+```
+
 ### Output split
 
 There is possibility to split *WARN* and *ERROR* logs to different output.
@@ -147,6 +198,18 @@ org.slf4j.simpleLogger.logFileError=System.error
 ```
 
 Then all logs of TRACE, DEBUG, INFO will be forwarded to *System.out* and all WARN & ERROR logs will be forwarded to *System.error*.
+
+### Callable and Supplier
+
+Callable or Supplier can be passed as arguments to logger and computed correctly:
+```java
+Callable<String> supplier = () -> "argument";
+logger.info("Value supplier is {}.", supplier);
+```
+Resulted output:
+```text
+Value supplier is argument.
+```
 
 ### Logger level change
 
@@ -176,7 +239,7 @@ org.slf4j.simpleLogger.showDateTime=true
 org.slf4j.simpleLogger.dateTimeOutputType=DATE_TIME
 # The date and time formatter pattern to be used in the output. (default uuuu-MM-dd'T'HH:mm:ss.SSS)
 org.slf4j.simpleLogger.dateTimeFormat=uuuu-MM-dd'T'HH:mm:ss.SSS
-# Set ZoneId to use as adjustment for DATE_TIME or TIME. (default Clock.systemDefaultZone())
+# Set ZoneId to use as adjustment for DATE_TIME or TIME. (default ZoneId.systemDefault())
 org.slf4j.simpleLogger.zoneId=UTC
 # Set to true if to show application implementation version from MANIFEST.MF (default false)
 org.slf4j.simpleLogger.showImplementationVersion=false
