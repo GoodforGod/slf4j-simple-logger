@@ -102,6 +102,10 @@ final class SimpleLoggerConfiguration {
         this.layouts = computeLayouts();
     }
 
+    void refresh() {
+        computeChangeableConfiguration();
+    }
+
     private void computeChangeableConfiguration() {
         this.dateTimeOutputType = computeDateTimeOutputType();
         if (DateTimeOutputType.DATE_TIME.equals(dateTimeOutputType) || DateTimeOutputType.TIME.equals(dateTimeOutputType)) {

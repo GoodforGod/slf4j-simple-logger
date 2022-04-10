@@ -54,6 +54,13 @@ public final class SimpleLoggerFactory implements ILoggerFactory {
     }
 
     /**
+     * Refresh loggers
+     */
+    void refresh() {
+        SimpleLogger.CONFIG.refresh();
+    }
+
+    /**
      * Clear the internal logger cache.
      * This method is intended to be called by classes (in the same package) for testing purposes. This
      * method is internal. It can be modified, renamed or removed at any time without notice.

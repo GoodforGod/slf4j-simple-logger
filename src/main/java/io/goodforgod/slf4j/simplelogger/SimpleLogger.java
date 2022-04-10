@@ -120,7 +120,7 @@ public final class SimpleLogger extends MarkerIgnoringBase {
 
     static final int LOG_LEVEL_OFF = Level.ERROR.toInt() + 10;
 
-    private static final SimpleLoggerConfiguration CONFIG = new SimpleLoggerConfiguration();
+    static final SimpleLoggerConfiguration CONFIG = new SimpleLoggerConfiguration();
 
     private static boolean isInitialized = false;
 
