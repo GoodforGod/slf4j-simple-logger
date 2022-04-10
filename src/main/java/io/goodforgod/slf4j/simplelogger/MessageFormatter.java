@@ -2,6 +2,8 @@ package io.goodforgod.slf4j.simplelogger;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.function.Supplier;
 import org.slf4j.helpers.FormattingTuple;
 import org.slf4j.helpers.Util;
 
@@ -15,19 +17,21 @@ final class MessageFormatter {
 
     private static final FormattingTuple EMPTY = new FormattingTuple(null, null, null);
 
-    private static class FormatBuilder {
+    private static final class FormatBuilder {
 
         private final StringBuilder builder;
         private int i = 0;
         private int j = 0;
         private int a = 0;
 
-        private FormatBuilder(int size) {
-            this.builder = new StringBuilder(size);
+        private FormatBuilder() {
+            this.builder = new StringBuilder();
         }
     }
 
-    private static final String DELIM_STR = "{}";
+    private static final char DELIMITER_OPEN = '{';
+    private static final char DELIMITER_CLOSE = '}';
+    private static final String DELIMITER = "{}";
     private static final char ESCAPE_CHAR = '\\';
 
     private MessageFormatter() {}
@@ -37,13 +41,12 @@ final class MessageFormatter {
             return EMPTY;
         }
 
-        final int j = messagePattern.lastIndexOf(DELIM_STR);
+        final int j = findDelimiterLast(messagePattern, messagePattern.length() - 1);
         if (j == -1) {
             return new FormattingTuple(messagePattern, null, null);
         }
 
-        final int argumentSize = predictArgumentSize(arg);
-        final FormatBuilder fb = new FormatBuilder(messagePattern.length() + argumentSize);
+        final FormatBuilder fb = new FormatBuilder();
 
         fb.j = j;
         appendArgument(messagePattern, fb, arg);
@@ -57,16 +60,13 @@ final class MessageFormatter {
             return EMPTY;
         }
 
-        final int j2 = messagePattern.lastIndexOf(DELIM_STR);
+        final int j2 = findDelimiterLast(messagePattern, messagePattern.length() - 1);
         if (j2 == -1) {
             return new FormattingTuple(messagePattern, null, null);
         }
 
-        final int j1 = messagePattern.lastIndexOf(DELIM_STR, j2 - 1);
-
-        final int argumentsSize = predictArgumentSize(arg1) + predictArgumentSize(arg2);
-        final FormatBuilder fb = new FormatBuilder(messagePattern.length() + argumentsSize);
-
+        final int j1 = findDelimiterLast(messagePattern, j2 - 1);
+        final FormatBuilder fb = new FormatBuilder();
         fb.j = (j1 < 0)
                 ? j2
                 : j1;
@@ -85,6 +85,23 @@ final class MessageFormatter {
         return new FormattingTuple(fb.builder.toString(), null, null);
     }
 
+    private static int findDelimiterLast(String message, int startPosition) {
+        int opened = message.lastIndexOf(DELIMITER_OPEN, startPosition);
+        if (opened == message.length() - 1) {
+            opened = message.lastIndexOf(DELIMITER_OPEN, opened - 1);
+        }
+
+        while (opened != -1) {
+            if (message.charAt(opened + 1) == DELIMITER_CLOSE) {
+                return opened;
+            } else {
+                opened = message.lastIndexOf(DELIMITER_OPEN, opened - 1);
+            }
+        }
+
+        return opened;
+    }
+
     static FormattingTuple formatArray(String messagePattern, Object[] argArray) {
         Throwable throwableCandidate = org.slf4j.helpers.MessageFormatter.getThrowableCandidate(argArray);
         Object[] args = argArray;
@@ -101,20 +118,20 @@ final class MessageFormatter {
         } else if (argArray == null) {
             return new FormattingTuple(messagePattern, null, throwable);
         } else {
-            int firstArg = messagePattern.indexOf(DELIM_STR);
+            int firstArg = messagePattern.indexOf(DELIMITER);
             if (firstArg == -1) {
                 return new FormattingTuple(messagePattern, null, throwable);
             }
 
             final int limit = argArray.length;
-            final FormatBuilder fb = new FormatBuilder(messagePattern.length() + 15);
+            final FormatBuilder fb = new FormatBuilder();
             fb.j = firstArg;
             while (fb.a < limit) {
                 final Object arg = argArray[fb.a];
                 appendArgument(messagePattern, fb, arg);
                 fb.a++;
 
-                fb.j = messagePattern.indexOf(DELIM_STR, fb.i);
+                fb.j = messagePattern.indexOf(DELIMITER, fb.i);
                 if (fb.j == -1) {
                     break;
                 }
@@ -126,7 +143,7 @@ final class MessageFormatter {
     }
 
     private static void appendArgument(String messagePattern, FormatBuilder fb, Object arg) {
-        if (isEscapedDelimeter(messagePattern, fb.j)) {
+        if (isEscapedDelimiter(messagePattern, fb.j)) {
             if (!isDoubleEscaped(messagePattern, fb.j)) {
                 --fb.a;
                 fb.builder.append(messagePattern, fb.i, fb.j - 1);
@@ -144,24 +161,14 @@ final class MessageFormatter {
         }
     }
 
-    private static int predictArgumentSize(Object argument) {
-        if (argument == null) {
-            return 5;
-        } else if (argument instanceof String) {
-            return ((String) argument).length() + 1;
-        } else {
-            return 25;
-        }
+    private static boolean isEscapedDelimiter(String messagePattern, int delimiterStartIndex) {
+        return delimiterStartIndex != 0
+                && messagePattern.charAt(delimiterStartIndex - 1) == ESCAPE_CHAR;
     }
 
-    private static boolean isEscapedDelimeter(String messagePattern, int delimeterStartIndex) {
-        return delimeterStartIndex != 0
-                && messagePattern.charAt(delimeterStartIndex - 1) == '\\';
-    }
-
-    private static boolean isDoubleEscaped(String messagePattern, int delimeterStartIndex) {
-        return delimeterStartIndex >= 2
-                && messagePattern.charAt(delimeterStartIndex - 2) == ESCAPE_CHAR;
+    private static boolean isDoubleEscaped(String messagePattern, int delimiterStartIndex) {
+        return delimiterStartIndex >= 2
+                && messagePattern.charAt(delimiterStartIndex - 2) == ESCAPE_CHAR;
     }
 
     private static void deeplyAppendParameter(StringBuilder builder, Object o, Map<Object[], Object> seenMap) {
@@ -199,9 +206,17 @@ final class MessageFormatter {
 
     private static void objectAppendSafe(StringBuilder builder, Object o) {
         try {
-            builder.append(o.toString());
-        } catch (Throwable var3) {
-            Util.report("SLF4J: Failed toString() invocation on an object of type [" + o.getClass().getName() + "]", var3);
+            if (o instanceof Supplier) {
+                final Object supplied = ((Supplier<?>) o).get();
+                builder.append(supplied);
+            } else if (o instanceof Callable) {
+                final Object called = ((Callable<?>) o).call();
+                builder.append(called);
+            } else {
+                builder.append(o);
+            }
+        } catch (Throwable throwable) {
+            Util.report("SLF4J: Failed toString() invocation on an object of type [" + o.getClass().getName() + "]", throwable);
             builder.append("[FAILED toString()]");
         }
     }
@@ -229,82 +244,74 @@ final class MessageFormatter {
     }
 
     private static void booleanArrayAppend(StringBuilder sbuf, boolean[] a) {
-        int len = a.length;
-        for (int i = 0; i < a.length; ++i) {
+        int len = a.length - 1;
+        for (int i = 0; i < len; ++i) {
             sbuf.append(a[i]);
-            if (i != len - 1) {
-                sbuf.append(", ");
-            }
+            sbuf.append(", ");
         }
+        sbuf.append(a[len]);
     }
 
     private static void byteArrayAppend(StringBuilder sbuf, byte[] a) {
-        int len = a.length;
+        int len = a.length - 1;
         for (int i = 0; i < len; ++i) {
             sbuf.append(a[i]);
-            if (i != len - 1) {
-                sbuf.append(", ");
-            }
+            sbuf.append(", ");
         }
+        sbuf.append(a[len]);
     }
 
     private static void charArrayAppend(StringBuilder sbuf, char[] a) {
-        int len = a.length;
+        int len = a.length - 1;
         for (int i = 0; i < len; ++i) {
             sbuf.append(a[i]);
-            if (i != len - 1) {
-                sbuf.append(", ");
-            }
+            sbuf.append(", ");
         }
+        sbuf.append(a[len]);
     }
 
     private static void shortArrayAppend(StringBuilder sbuf, short[] a) {
-        int len = a.length;
+        int len = a.length - 1;
         for (int i = 0; i < len; ++i) {
             sbuf.append(a[i]);
-            if (i != len - 1) {
-                sbuf.append(", ");
-            }
+            sbuf.append(", ");
         }
+        sbuf.append(a[len]);
     }
 
     private static void intArrayAppend(StringBuilder sbuf, int[] a) {
-        int len = a.length;
+        int len = a.length - 1;
         for (int i = 0; i < len; ++i) {
             sbuf.append(a[i]);
-            if (i != len - 1) {
-                sbuf.append(", ");
-            }
+            sbuf.append(", ");
         }
+        sbuf.append(a[len]);
     }
 
     private static void longArrayAppend(StringBuilder sbuf, long[] a) {
-        int len = a.length;
+        int len = a.length - 1;
         for (int i = 0; i < len; ++i) {
             sbuf.append(a[i]);
-            if (i != len - 1) {
-                sbuf.append(", ");
-            }
+            sbuf.append(", ");
         }
+        sbuf.append(a[len]);
     }
 
     private static void floatArrayAppend(StringBuilder sbuf, float[] a) {
-        int len = a.length;
+        int len = a.length - 1;
         for (int i = 0; i < len; ++i) {
             sbuf.append(a[i]);
-            if (i != len - 1) {
-                sbuf.append(", ");
-            }
+            sbuf.append(", ");
         }
+        sbuf.append(a[len]);
     }
 
     private static void doubleArrayAppend(StringBuilder sbuf, double[] a) {
-        int len = a.length;
+        int len = a.length - 1;
         for (int i = 0; i < len; ++i) {
             sbuf.append(a[i]);
-            if (i != len - 1) {
-                sbuf.append(", ");
-            }
+            sbuf.append(", ");
         }
+        sbuf.append(a[len]);
     }
 }

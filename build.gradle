@@ -19,23 +19,6 @@ version = artifactVersion
 sourceCompatibility = JavaVersion.VERSION_11
 targetCompatibility = JavaVersion.VERSION_11
 
-spotless {
-    java {
-        encoding("UTF-8")
-        importOrder()
-        removeUnusedImports()
-        eclipse().configFile("${projectDir}/config/codestyle.xml")
-    }
-}
-
-sonarqube {
-    properties {
-        property "sonar.host.url", "https://sonarcloud.io"
-        property "sonar.organization", "goodforgod"
-        property "sonar.projectKey", "GoodforGod_slf4j-simple-logger"
-    }
-}
-
 dependencies {
     api "org.slf4j:slf4j-api:1.7.36"
 
@@ -55,6 +38,23 @@ test {
     reports {
         html.enabled(false)
         junitXml.enabled(false)
+    }
+}
+
+spotless {
+    java {
+        encoding("UTF-8")
+        importOrder()
+        removeUnusedImports()
+        eclipse("4.21.0").configFile("${rootDir}/config/codestyle.xml")
+    }
+}
+
+sonarqube {
+    properties {
+        property "sonar.host.url", "https://sonarcloud.io"
+        property "sonar.organization", "goodforgod"
+        property "sonar.projectKey", "GoodforGod_$artifactId"
     }
 }
 

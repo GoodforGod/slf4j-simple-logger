@@ -44,7 +44,7 @@ class SimpleLoggerTests extends Assertions {
     void emptyLoggerName() {
         SimpleLogger.init();
         SimpleLogger simpleLogger = new SimpleLogger("a");
-        assertEquals("info", simpleLogger.recursivelyComputeLevelString());
+        assertEquals(Level.INFO.toInt(), simpleLogger.currentLogLevel);
     }
 
     @Test
@@ -52,7 +52,7 @@ class SimpleLoggerTests extends Assertions {
         System.setProperty(A_KEY, "off");
         SimpleLogger.init();
         SimpleLogger simpleLogger = new SimpleLogger("a");
-        assertEquals("off", simpleLogger.recursivelyComputeLevelString());
+        assertEquals(SimpleLogger.LOG_LEVEL_OFF, simpleLogger.currentLogLevel);
         assertFalse(simpleLogger.isErrorEnabled());
     }
 
@@ -61,28 +61,14 @@ class SimpleLoggerTests extends Assertions {
         SimpleLogger.init();
         SimpleLogger simpleLogger = new SimpleLogger("a");
 
-        assertEquals("info", simpleLogger.recursivelyComputeLevelString());
+        assertEquals(Level.INFO.toInt(), simpleLogger.currentLogLevel);
     }
 
     @Test
     void loggerNameWithOneDotShouldInheritFromParent() {
         SimpleLogger.init();
         SimpleLogger simpleLogger = new SimpleLogger("a.b");
-        assertEquals("info", simpleLogger.recursivelyComputeLevelString());
-    }
-
-    @Test
-    void loggerNameWithNoDots_WithNoSetLevel() {
-        SimpleLogger.init();
-        SimpleLogger simpleLogger = new SimpleLogger("x");
-        assertNull(simpleLogger.recursivelyComputeLevelString());
-    }
-
-    @Test
-    void loggerNameWithOneDot_NoSetLevel() {
-        SimpleLogger.init();
-        SimpleLogger simpleLogger = new SimpleLogger("x.y");
-        assertNull(simpleLogger.recursivelyComputeLevelString());
+        assertEquals(Level.INFO.toInt(), simpleLogger.currentLogLevel);
     }
 
     @Test
@@ -91,7 +77,7 @@ class SimpleLoggerTests extends Assertions {
 
         SimpleLogger.init();
         SimpleLogger simpleLogger = (SimpleLogger) factory.getLogger("x.y");
-        assertEquals(SimpleLogger.LOG_LEVEL_INFO, simpleLogger.currentLogLevel);
+        assertEquals(Level.INFO.toInt(), simpleLogger.currentLogLevel);
 
         for (Level lvl : Level.values()) {
             factory.setLogLevel(lvl);
@@ -165,7 +151,7 @@ class SimpleLoggerTests extends Assertions {
     }
 
     @Test
-    void checkUseShowStartTimeFormat() {
+    void checkUseShowStartTimeFormat() throws InterruptedException {
         System.setOut(replacement);
         System.setProperty(SimpleLoggerProperties.SHOW_DATE_TIME, "true");
         System.setProperty(SimpleLoggerProperties.DATE_TIME_OUTPUT_TYPE, "MILLIS_FROM_START");
@@ -174,6 +160,8 @@ class SimpleLoggerTests extends Assertions {
 
         SimpleLogger.init();
         SimpleLogger simpleLogger = new SimpleLogger(this.getClass().getName());
+
+        Thread.sleep(5);
 
         simpleLogger.info("hello");
         replacement.flush();

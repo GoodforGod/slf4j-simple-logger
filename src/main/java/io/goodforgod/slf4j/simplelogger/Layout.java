@@ -1,7 +1,7 @@
 package io.goodforgod.slf4j.simplelogger;
 
 /**
- * Used to print part of logger layout
+ * Responsible for printing part of logger layout
  *
  * @author Anton Kurako (GoodforGod)
  * @since 14.03.2022
@@ -9,14 +9,12 @@ package io.goodforgod.slf4j.simplelogger;
 interface Layout extends Comparable<Layout> {
 
     /**
-     * @param loggerName of the logger invoked
-     * @param level      of the logger invoked
-     * @param builder    to append layout
+     * @param event to transform into part of the logging message layout
      */
-    void print(String loggerName, int level, StringBuilder builder);
+    void print(SimpleLoggingEvent event);
 
     /**
-     * @return order layout compared to all others layouts
+     * @return order layout positioned according to others layouts
      */
     int order();
 

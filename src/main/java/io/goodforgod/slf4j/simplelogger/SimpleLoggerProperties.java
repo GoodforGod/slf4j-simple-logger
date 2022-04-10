@@ -42,6 +42,7 @@ public final class SimpleLoggerProperties {
 
     public static final String SHOW_DATE_TIME = PREFIX + "showDateTime";
     public static final String DATE_TIME_FORMAT = PREFIX + "dateTimeFormat";
+    public static final String ZONE_ID = PREFIX + "zoneId";
     public static final String DATE_TIME_OUTPUT_TYPE = PREFIX + "dateTimeOutputType";
 
     public static final String DEFAULT_LOG_LEVEL = PREFIX + "defaultLogLevel";

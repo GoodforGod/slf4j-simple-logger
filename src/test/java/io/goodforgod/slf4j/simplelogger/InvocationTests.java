@@ -36,6 +36,7 @@ class InvocationTests extends Assertions {
         System.clearProperty(SimpleLoggerProperties.SHOW_DATE_TIME);
         System.clearProperty(SimpleLoggerProperties.SHOW_SHORT_LOG_NAME);
         System.clearProperty(SimpleLoggerProperties.SHOW_IMPLEMENTATION_VERSION);
+        System.clearProperty(SimpleLoggerProperties.ZONE_ID);
         System.clearProperty(SimpleLoggerProperties.DATE_TIME_FORMAT);
         System.clearProperty(SimpleLoggerProperties.DATE_TIME_OUTPUT_TYPE);
         System.clearProperty(SimpleLoggerProperties.DEFAULT_LOG_LEVEL);

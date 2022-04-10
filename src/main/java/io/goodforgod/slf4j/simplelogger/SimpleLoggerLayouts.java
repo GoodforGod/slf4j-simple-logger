@@ -1,6 +1,7 @@
 package io.goodforgod.slf4j.simplelogger;
 
 import java.time.*;
+import org.slf4j.event.Level;
 
 /**
  * Default SimpleLogger layout implementations
@@ -9,9 +10,6 @@ import java.time.*;
  * @since 14.03.2022
  */
 final class SimpleLoggerLayouts {
-
-    private static final long NANOS_PER_SECOND = 1000_000_000L;
-    private static final int SECONDS_PER_DAY = 60 * 60 * 24;
 
     private SimpleLoggerLayouts() {}
 
@@ -24,59 +22,66 @@ final class SimpleLoggerLayouts {
         LEVEL,
         ENVIRONMENT,
         THREAD,
-        LOGGER_NAME
+        LOGGER_NAME,
+        MESSAGE,
+        EVENT_SEPARATOR,
+        THROWABLE
     }
 
     private static final class DateTimeCache {
 
-        private final long epochMillis;
         private final String formatted;
+        private final long epochMillis;
 
-        private DateTimeCache(long epochMillis, String formatted) {
-            this.epochMillis = epochMillis;
+        private DateTimeCache(String formatted, long epochMillis) {
             this.formatted = formatted;
+            this.epochMillis = epochMillis;
         }
     }
 
-    static final class DateTimeLayout implements Layout {
+    private abstract static class AbstractTimeLayout implements Layout {
+
+        private volatile DateTimeCache cache = new DateTimeCache(null, -1);
+
+        abstract String format(long eventCreatMillis);
+
+        String getEventTime(SimpleLoggingEvent event) {
+            final DateTimeCache cacheLocal = this.cache;
+            if (cacheLocal.epochMillis == event.created()) {
+                return cacheLocal.formatted;
+            } else {
+                final String formatted = format(event.created());
+                this.cache = new DateTimeCache(formatted, event.created());
+                return formatted;
+            }
+        }
+    }
+
+    static final class DateTimeLayout extends AbstractTimeLayout {
 
         private final SimpleLoggerConfiguration configuration;
-        private volatile DateTimeCache cache = new DateTimeCache(-1, null);
 
         DateTimeLayout(SimpleLoggerConfiguration configuration) {
             this.configuration = configuration;
         }
 
         @Override
-        public void print(String loggerName, int level, StringBuilder builder) {
-            builder.append(getFormattedDateTime());
-            builder.append(' ');
+        public void print(SimpleLoggingEvent event) {
+            event.append(getEventTime(event));
+            event.append(' ');
         }
 
         /**
-         * @see LocalDateTime#ofEpochSecond(long, int, ZoneOffset)
+         * @param eventCreatMillis from epoch
+         * @see LocalTime#ofNanoOfDay(long)
          * @return formatter date time
          */
-        private String getFormattedDateTime() {
-            final DateTimeCache localCache = this.cache;
-            final long epochMilli = System.currentTimeMillis();
-
-            if (localCache.epochMillis == epochMilli) {
-                return localCache.formatted;
-            } else {
-                final Instant now = Instant.ofEpochMilli(epochMilli);
-                final ZoneOffset offset = Clock.systemDefaultZone().getZone().getRules().getOffset(now);
-                final long localSecond = now.getEpochSecond() + offset.getTotalSeconds(); // overflow caught later
-                final long localEpochDay = Math.floorDiv(localSecond, SECONDS_PER_DAY);
-                final int secsOfDay = Math.floorMod(localSecond, SECONDS_PER_DAY);
-                final LocalDate date = LocalDate.ofEpochDay(localEpochDay);
-                final LocalTime time = LocalTime.ofNanoOfDay(secsOfDay * NANOS_PER_SECOND + now.getNano());
-                final LocalDateTime dateTime = LocalDateTime.of(date, time);
-
-                final String formatted = configuration.getDateTimeFormatter().format(dateTime);
-                this.cache = new DateTimeCache(epochMilli, formatted);
-                return formatted;
-            }
+        @Override
+        String format(long eventCreatMillis) {
+            final Instant now = Instant.ofEpochMilli(eventCreatMillis);
+            final ZoneId zoneId = configuration.getZoneId();
+            final LocalDateTime dateTime = LocalDateTime.ofInstant(now, zoneId);
+            return configuration.getDateTimeFormatter().format(dateTime);
         }
 
         @Override
@@ -85,42 +90,31 @@ final class SimpleLoggerLayouts {
         }
     }
 
-    static final class TimeLayout implements Layout {
+    static final class TimeLayout extends AbstractTimeLayout {
 
         private final SimpleLoggerConfiguration configuration;
-        private volatile DateTimeCache cache = new DateTimeCache(-1, null);
 
         TimeLayout(SimpleLoggerConfiguration configuration) {
             this.configuration = configuration;
         }
 
         @Override
-        public void print(String loggerName, int level, StringBuilder builder) {
-            builder.append(getFormattedTime());
-            builder.append(' ');
+        public void print(SimpleLoggingEvent event) {
+            event.append(getEventTime(event));
+            event.append(' ');
         }
 
         /**
+         * @param eventCreatMillis from epoch
          * @see LocalTime#ofInstant(Instant, ZoneId)
          * @return formatter date time
          */
-        private String getFormattedTime() {
-            final DateTimeCache localCache = this.cache;
-            final long epochMilli = System.currentTimeMillis();
-
-            if (localCache.epochMillis == epochMilli) {
-                return localCache.formatted;
-            } else {
-                final Instant now = Instant.ofEpochMilli(epochMilli);
-                final ZoneOffset offset = Clock.systemDefaultZone().getZone().getRules().getOffset(now);
-                final long localSecond = now.getEpochSecond() + offset.getTotalSeconds();
-                final int secsOfDay = Math.floorMod(localSecond, SECONDS_PER_DAY);
-                final LocalTime localTime = LocalTime.ofNanoOfDay(secsOfDay * NANOS_PER_SECOND + now.getNano());
-
-                final String formatted = configuration.getDateTimeFormatter().format(localTime);
-                this.cache = new DateTimeCache(epochMilli, formatted);
-                return formatted;
-            }
+        @Override
+        String format(long eventCreatMillis) {
+            final Instant now = Instant.ofEpochMilli(eventCreatMillis);
+            final ZoneId zoneId = configuration.getZoneId();
+            final LocalTime localTime = LocalTime.ofInstant(now, zoneId);
+            return configuration.getDateTimeFormatter().format(localTime);
         }
 
         @Override
@@ -132,9 +126,9 @@ final class SimpleLoggerLayouts {
     static final class UnixTimeLayout implements Layout {
 
         @Override
-        public void print(String loggerName, int level, StringBuilder builder) {
-            builder.append(System.currentTimeMillis());
-            builder.append(' ');
+        public void print(SimpleLoggingEvent event) {
+            event.append(System.currentTimeMillis());
+            event.append(' ');
         }
 
         @Override
@@ -152,9 +146,9 @@ final class SimpleLoggerLayouts {
         }
 
         @Override
-        public void print(String loggerName, int level, StringBuilder builder) {
-            builder.append(System.currentTimeMillis() - configuration.getInitializeTime());
-            builder.append(' ');
+        public void print(SimpleLoggingEvent event) {
+            event.append(System.currentTimeMillis() - configuration.getInitializeTime());
+            event.append(' ');
         }
 
         @Override
@@ -172,8 +166,10 @@ final class SimpleLoggerLayouts {
         }
 
         @Override
-        public void print(String loggerName, int level, StringBuilder builder) {
-            builder.append(configuration.getImplementationVersion());
+        public void print(SimpleLoggingEvent event) {
+            event.append("[");
+            event.append(configuration.getImplementationVersion());
+            event.append("] ");
         }
 
         @Override
@@ -199,21 +195,21 @@ final class SimpleLoggerLayouts {
         }
 
         @Override
-        public void print(String loggerName, int level, StringBuilder builder) {
-            builder.append(renderLevel(level));
+        public void print(SimpleLoggingEvent event) {
+            event.append(renderLevel(event.level()));
         }
 
-        private String renderLevel(int level) {
+        private String renderLevel(Level level) {
             switch (level) {
-                case SimpleLogger.LOG_LEVEL_INFO:
+                case INFO:
                     return info;
-                case SimpleLogger.LOG_LEVEL_WARN:
+                case WARN:
                     return warn;
-                case SimpleLogger.LOG_LEVEL_ERROR:
+                case ERROR:
                     return error;
-                case SimpleLogger.LOG_LEVEL_DEBUG:
+                case DEBUG:
                     return debug;
-                case SimpleLogger.LOG_LEVEL_TRACE:
+                case TRACE:
                     return trace;
                 default:
                     throw new IllegalStateException("Unrecognized level [" + level + "]");
@@ -235,8 +231,8 @@ final class SimpleLoggerLayouts {
         }
 
         @Override
-        public void print(String loggerName, int level, StringBuilder builder) {
-            builder.append(configuration.getEnvironmentsOnStart());
+        public void print(SimpleLoggingEvent event) {
+            event.append(configuration.getEnvironmentsOnStart());
         }
 
         @Override
@@ -254,7 +250,7 @@ final class SimpleLoggerLayouts {
         }
 
         @Override
-        public void print(String loggerName, int level, StringBuilder builder) {
+        public void print(SimpleLoggingEvent event) {
             boolean bracketUsed = false;
             for (String envName : configuration.getEnvironments()) {
                 final String envValue = System.getenv(envName);
@@ -263,22 +259,22 @@ final class SimpleLoggerLayouts {
                 }
 
                 if (!bracketUsed) {
-                    builder.append('[');
+                    event.append('[');
                     bracketUsed = true;
                 } else {
-                    builder.append(", ");
+                    event.append(", ");
                 }
 
                 if (configuration.isEnvironmentShowName()) {
-                    builder.append(envName);
-                    builder.append('=');
+                    event.append(envName);
+                    event.append('=');
                 }
 
-                builder.append(envValue);
+                event.append(envValue);
             }
 
             if (bracketUsed) {
-                builder.append("] ");
+                event.append("] ");
             }
         }
 
@@ -291,11 +287,10 @@ final class SimpleLoggerLayouts {
     static final class ThreadLayout implements Layout {
 
         @Override
-        public void print(String loggerName, int level, StringBuilder builder) {
-            final String threadName = Thread.currentThread().getName();
-            builder.append('[');
-            builder.append(threadName);
-            builder.append("] ");
+        public void print(SimpleLoggingEvent event) {
+            event.append('[');
+            event.append(Thread.currentThread().getName());
+            event.append("] ");
         }
 
         @Override
@@ -307,13 +302,56 @@ final class SimpleLoggerLayouts {
     static final class LoggerNameLayout implements Layout {
 
         @Override
-        public void print(String loggerName, int level, StringBuilder builder) {
-            builder.append(loggerName);
+        public void print(SimpleLoggingEvent event) {
+            event.append(event.logger());
+            event.append(" - ");
         }
 
         @Override
         public int order() {
             return LayoutOrder.LOGGER_NAME.ordinal();
+        }
+    }
+
+    static final class MessageLayout implements Layout {
+
+        @Override
+        public void print(SimpleLoggingEvent event) {
+            event.append(event.message());
+        }
+
+        @Override
+        public int order() {
+            return LayoutOrder.MESSAGE.ordinal();
+        }
+    }
+
+    static final class SeparatorLayout implements Layout {
+
+        @Override
+        public void print(SimpleLoggingEvent event) {
+            event.append(System.lineSeparator());
+        }
+
+        @Override
+        public int order() {
+            return LayoutOrder.EVENT_SEPARATOR.ordinal();
+        }
+    }
+
+    static final class ThrowableLayout implements Layout {
+
+        @Override
+        public void print(SimpleLoggingEvent event) {
+            final Throwable throwable = event.throwable();
+            if (throwable != null) {
+                event.append(throwable);
+            }
+        }
+
+        @Override
+        public int order() {
+            return LayoutOrder.THROWABLE.ordinal();
         }
     }
 }
