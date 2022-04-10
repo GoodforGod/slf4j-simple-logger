@@ -36,7 +36,22 @@ implementation "io.goodforgod:slf4j-simple-logger:0.14.0"
 
 Based on SLF4J 1.7.36
 
-## Log Example
+## Content
+
+- [Logging example](#logging-example)
+- [Features](#features)
+  - [Performance Optimizations](#performance-optimizations)
+  - [DateTime output](#datetime-output)
+  - [Logger name abbreviation](#logger-name-abbreviation)
+  - [Environment logging](#environment-logging)
+  - [Environment configuration](#environment-configuration)
+    - [Runtime refresh](#runtime-refresh)
+  - [Output split](#output-split)
+  - [Callable and Supplier](#callable-and-supplier)
+  - [Logger level change](#logger-level-change)
+- [Configuration](#configuration)
+
+## Logging example
 
 Below is example of logged message:
 ```java
