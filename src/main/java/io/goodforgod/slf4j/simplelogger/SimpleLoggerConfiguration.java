@@ -135,11 +135,6 @@ final class SimpleLoggerConfiguration {
     }
 
     /**
-     * If Java Version is equal or higher than Java 14 then uses
-     * {@link EventWriters.SimpleEventWriter} cause impl have internal synchronization or
-     * {@link EventWriters.LockAndFlushEventWriter} otherwise for manual locking
-     * Use simple impl due to implementation of {@link PrintStream#write(byte[])} in Java 14+
-     *
      * @return logger stream used for writing events
      */
     private EventWriter computeLoggerStream(OutputChoice outputChoice) {

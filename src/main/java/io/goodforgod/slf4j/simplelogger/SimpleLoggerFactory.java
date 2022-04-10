@@ -58,6 +58,9 @@ public final class SimpleLoggerFactory implements ILoggerFactory {
      */
     void refresh() {
         SimpleLogger.CONFIG.refresh();
+        for (SimpleLogger logger : loggerMap.values()) {
+            logger.computeCurrentLogLevel();
+        }
     }
 
     /**

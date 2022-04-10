@@ -159,11 +159,7 @@ public final class SimpleLogger extends MarkerIgnoringBase {
         this.name = name;
         this.logNameShort = name.substring(name.lastIndexOf('.') + 1);
         this.logName = CONFIG.computeLogName(name);
-
-        final String levelString = recursivelyComputeLevelString();
-        this.currentLogLevel = (levelString != null)
-                ? SimpleLoggerConfiguration.tryStringToLevel(levelString).orElse(Level.INFO.toInt())
-                : CONFIG.getDefaultLogLevel();
+        computeCurrentLogLevel();
         this.originalLogLevel = this.currentLogLevel;
     }
 
@@ -172,7 +168,14 @@ public final class SimpleLogger extends MarkerIgnoringBase {
                 .orElse(this.currentLogLevel);
     }
 
-    String recursivelyComputeLevelString() {
+    void computeCurrentLogLevel() {
+        final String levelString = recursivelyComputeLevelString();
+        this.currentLogLevel = (levelString != null)
+                ? SimpleLoggerConfiguration.tryStringToLevel(levelString).orElse(Level.INFO.toInt())
+                : CONFIG.getDefaultLogLevel();
+    }
+
+    private String recursivelyComputeLevelString() {
         String tempName = name;
         String levelString = null;
         int indexOfLastDot = tempName.length();
