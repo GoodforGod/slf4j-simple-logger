@@ -397,7 +397,7 @@ final class SimpleLoggerConfiguration {
                 : prop;
 
         if (isEnvironmentValue(value)) {
-            final String property = value.substring(2, value.length() - 2);
+            final String property = value.substring(2, value.length() - 1);
             final String[] propertyAndDefault = property.split(":");
 
             if (propertyAndDefault.length > 2) {
