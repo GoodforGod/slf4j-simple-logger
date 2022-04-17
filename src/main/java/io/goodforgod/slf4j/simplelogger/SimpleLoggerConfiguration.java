@@ -55,9 +55,11 @@ final class SimpleLoggerConfiguration {
     private EventWriter eventWriter;
     private EventWriter eventWriterWarn;
     private EventWriter eventWriterError;
-    private String environmentsOnStart;
+    private String environmentsOnStartText;
+    private String environmentsOnStartJson;
 
     // Changeable configuration
+    private OutputFormat format;
     private ZoneId zoneId;
     private DateTimeOutputType dateTimeOutputType = DateTimeOutputType.DATE_TIME;
     private DateTimeFormatter dateTimeFormatter;
@@ -97,17 +99,22 @@ final class SimpleLoggerConfiguration {
         }
 
         computeChangeableConfiguration();
-
-        this.environmentsOnStart = computeEnvironmentsOnStart();
-        this.layouts = computeLayouts();
+        this.environmentsOnStartText = computeEnvironmentsOnStartText();
+        this.environmentsOnStartJson = computeEnvironmentsOnStartJson();
+        this.layouts = OutputFormat.TEXT.equals(format)
+                ? computeTextLayouts()
+                : computeJsonLayouts();
     }
 
     void refresh() {
         computeChangeableConfiguration();
-        this.layouts = computeLayouts();
+        this.layouts = OutputFormat.TEXT.equals(format)
+                ? computeTextLayouts()
+                : computeJsonLayouts();
     }
 
     private void computeChangeableConfiguration() {
+        this.format = computeOutputFormat();
         this.dateTimeOutputType = computeDateTimeOutputType();
         if (DateTimeOutputType.DATE_TIME.equals(dateTimeOutputType) || DateTimeOutputType.TIME.equals(dateTimeOutputType)) {
             this.dateTimeFormatter = getDateTimeFormatter(dateTimeOutputType);
@@ -139,6 +146,15 @@ final class SimpleLoggerConfiguration {
      */
     private EventWriter computeLoggerStream(OutputChoice outputChoice) {
         return new EventWriters.LockEventWriter(this, outputChoice);
+    }
+
+    private OutputFormat computeOutputFormat() {
+        try {
+            return OutputFormat.valueOf(getStringProperty(FORMAT, OutputFormat.TEXT.name()));
+        } catch (Exception e) {
+            Util.report("Invalid output format in " + CONFIGURATION_FILE + ", will output in TEXT format", e);
+            return OutputFormat.TEXT;
+        }
     }
 
     private EventEncoder computeEventEncoder() {
@@ -182,7 +198,7 @@ final class SimpleLoggerConfiguration {
         }
     }
 
-    private Layout getDateTimeLayout(DateTimeOutputType dateTimeOutputType) {
+    private Layout getDateTimeTextLayout(DateTimeOutputType dateTimeOutputType) {
         switch (dateTimeOutputType) {
             case TIME:
                 return new SimpleLoggerLayouts.TimeLayout(this);
@@ -192,6 +208,21 @@ final class SimpleLoggerConfiguration {
                 return new SimpleLoggerLayouts.UnixTimeLayout();
             case MILLIS_FROM_START:
                 return new SimpleLoggerLayouts.MillisFromStartLayout(this);
+            default:
+                throw new IllegalStateException("Unknown DateTimeOutputType: " + dateTimeOutputType);
+        }
+    }
+
+    private Layout getDateTimeJsonLayout(DateTimeOutputType dateTimeOutputType) {
+        switch (dateTimeOutputType) {
+            case TIME:
+                return new JsonLoggerLayouts.TimeLayout(this);
+            case DATE_TIME:
+                return new JsonLoggerLayouts.DateTimeLayout(this);
+            case UNIX_TIME:
+                return new JsonLoggerLayouts.UnixTimeLayout();
+            case MILLIS_FROM_START:
+                return new JsonLoggerLayouts.MillisFromStartLayout(this);
             default:
                 throw new IllegalStateException("Unknown DateTimeOutputType: " + dateTimeOutputType);
         }
@@ -207,7 +238,7 @@ final class SimpleLoggerConfiguration {
                 .orElse(Collections.emptyList());
     }
 
-    private String computeEnvironmentsOnStart() {
+    private String computeEnvironmentsOnStartText() {
         final boolean rememberEnvsOnStart = getBooleanProperty(ENVIRONMENT_REMEMBER_ON_START, false);
         if (rememberEnvsOnStart) {
             final String envsOnStart = this.environments.stream()
@@ -234,6 +265,35 @@ final class SimpleLoggerConfiguration {
         }
     }
 
+    private String computeEnvironmentsOnStartJson() {
+        final boolean rememberEnvsOnStart = getBooleanProperty(ENVIRONMENT_REMEMBER_ON_START, false);
+        if (rememberEnvsOnStart) {
+            final List<String> envsOnStart = this.environments.stream()
+                    .map(envName -> {
+                        final String envValue = System.getenv(envName);
+                        if (envValue == null && !environmentShowNullable) {
+                            return null;
+                        }
+
+                        return (environmentShowName)
+                                ? "\"" + envName + "\": \"" + envValue + "\""
+                                : "\"" + envValue + "\"";
+                    })
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+
+            if (envsOnStart.isEmpty()) {
+                return null;
+            } else if (environmentShowName) {
+                return envsOnStart.stream().collect(Collectors.joining(",", "\"environments\": {", "}"));
+            } else {
+                return envsOnStart.stream().collect(Collectors.joining(",", "\"environments\": [", "]"));
+            }
+        } else {
+            return null;
+        }
+    }
+
     private DateTimeFormatter getDateTimeFormatter(DateTimeOutputType dateTimeOutputType) {
         final String dateTimeFormatStr = getStringProperty(DATE_TIME_FORMAT);
         if (dateTimeFormatStr != null) {
@@ -249,7 +309,7 @@ final class SimpleLoggerConfiguration {
 
                 return formatter;
             } catch (IllegalArgumentException e) {
-                Util.report("Bad date format in " + CONFIGURATION_FILE + "; will output relative time", e);
+                Util.report("Invalid date output format in " + CONFIGURATION_FILE + ", will output in DATE_TIME format", e);
             }
         }
 
@@ -262,11 +322,11 @@ final class SimpleLoggerConfiguration {
         }
     }
 
-    private List<Layout> computeLayouts() {
+    private List<Layout> computeTextLayouts() {
         final List<Layout> loggerLayouts = new ArrayList<>();
         final boolean showDateTime = getBooleanProperty(SHOW_DATE_TIME, SHOW_DATE_TIME_DEFAULT);
         if (showDateTime) {
-            loggerLayouts.add(getDateTimeLayout(dateTimeOutputType));
+            loggerLayouts.add(getDateTimeTextLayout(dateTimeOutputType));
         }
 
         final boolean showImplementationVersion = getBooleanProperty(SHOW_IMPLEMENTATION_VERSION,
@@ -282,7 +342,7 @@ final class SimpleLoggerConfiguration {
             loggerLayouts.add(new SimpleLoggerLayouts.ThreadLayout());
         }
 
-        if (environmentsOnStart != null) {
+        if (environmentsOnStartText != null) {
             loggerLayouts.add(new SimpleLoggerLayouts.EnvironmentOnStartLayout(this));
         } else if (!environments.isEmpty()) {
             loggerLayouts.add(new SimpleLoggerLayouts.EnvironmentLayout(this));
@@ -304,7 +364,57 @@ final class SimpleLoggerConfiguration {
         loggerLayouts.add(new SimpleLoggerLayouts.ThrowableLayout());
 
         Collections.sort(loggerLayouts);
-        return loggerLayouts;
+        return Collections.unmodifiableList(loggerLayouts);
+    }
+
+    private List<Layout> computeJsonLayouts() {
+        final List<Layout> loggerLayouts = new ArrayList<>();
+        final boolean showDateTime = getBooleanProperty(SHOW_DATE_TIME, SHOW_DATE_TIME_DEFAULT);
+        if (showDateTime) {
+            loggerLayouts.add(getDateTimeJsonLayout(dateTimeOutputType));
+        }
+
+        final boolean showImplementationVersion = getBooleanProperty(SHOW_IMPLEMENTATION_VERSION,
+                SHOW_IMPLEMENTATION_VERSION_DEFAULT)
+                && this.implementationVersion != null
+                && !"null".equalsIgnoreCase(this.implementationVersion);
+        if (showImplementationVersion) {
+            loggerLayouts.add(new JsonLoggerLayouts.ImplementationLayout(this));
+        }
+
+        final boolean showThreadName = getBooleanProperty(SHOW_THREAD_NAME, SHOW_THREAD_NAME_DEFAULT);
+        if (showThreadName) {
+            loggerLayouts.add(new JsonLoggerLayouts.ThreadLayout());
+        }
+
+        if (environmentsOnStartJson != null) {
+            loggerLayouts.add(new JsonLoggerLayouts.EnvironmentOnStartLayout(this));
+        } else if (!environments.isEmpty()) {
+            loggerLayouts.add(new JsonLoggerLayouts.EnvironmentLayout(this));
+        }
+
+        loggerLayouts.add(new JsonLoggerLayouts.LevelLayout("TRACE", "DEBUG", "INFO", "WARN", "ERROR"));
+        if (showShortLogName || showLogName) {
+            loggerLayouts.add(new JsonLoggerLayouts.LoggerNameLayout());
+        }
+
+        loggerLayouts.add(new JsonLoggerLayouts.MessageLayout());
+        loggerLayouts.add(new JsonLoggerLayouts.ThrowableLayout());
+
+        Collections.sort(loggerLayouts);
+
+        final List<Layout> jsonLayouts = new ArrayList<>();
+        jsonLayouts.add(new JsonLoggerLayouts.JsonStartTokenLayout());
+        for (int i = 0; i < loggerLayouts.size(); i++) {
+            jsonLayouts.add(loggerLayouts.get(i));
+            if (i + 1 != loggerLayouts.size()) {
+                jsonLayouts.add(new JsonLoggerLayouts.JsonSeparatorLayout());
+            } else {
+                jsonLayouts.add(new JsonLoggerLayouts.JsonEndTokenLayout());
+            }
+        }
+
+        return Collections.unmodifiableList(jsonLayouts);
     }
 
     ZoneId getZoneId() {
@@ -317,8 +427,12 @@ final class SimpleLoggerConfiguration {
         return environments;
     }
 
-    String getEnvironmentsOnStart() {
-        return environmentsOnStart;
+    String getEnvironmentsOnStartText() {
+        return environmentsOnStartText;
+    }
+
+    String getEnvironmentsOnStartJson() {
+        return environmentsOnStartJson;
     }
 
     boolean isEnvironmentShowNullable() {

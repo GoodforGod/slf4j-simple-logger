@@ -1,17 +1,18 @@
 package io.goodforgod.slf4j.simplelogger;
 
-import java.time.*;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import org.slf4j.event.Level;
 
 /**
- * Default SimpleLogger layout implementations
+ * JSON logger layout implementations
  *
  * @author Anton Kurako (GoodforGod)
- * @since 14.03.2022
+ * @since 16.04.2022
  */
-final class SimpleLoggerLayouts {
+final class JsonLoggerLayouts {
 
-    private SimpleLoggerLayouts() {}
+    private JsonLoggerLayouts() {}
 
     /**
      * Uses {@link LayoutOrder#ordinal()} for ordering layouts between each other
@@ -28,60 +29,17 @@ final class SimpleLoggerLayouts {
         THROWABLE
     }
 
-    private static final class DateTimeCache {
+    static final class DateTimeLayout extends SimpleLoggerLayouts.DateTimeLayout {
 
-        private final String formatted;
-        private final long epochMillis;
-
-        private DateTimeCache(String formatted, long epochMillis) {
-            this.formatted = formatted;
-            this.epochMillis = epochMillis;
-        }
-    }
-
-    private abstract static class AbstractTimeLayout implements Layout {
-
-        private volatile DateTimeCache cache = new DateTimeCache(null, -1);
-
-        abstract String format(long eventCreatMillis);
-
-        String getEventTime(SimpleLoggingEvent event) {
-            final DateTimeCache cacheLocal = this.cache;
-            if (cacheLocal.epochMillis == event.created()) {
-                return cacheLocal.formatted;
-            } else {
-                final String formatted = format(event.created());
-                this.cache = new DateTimeCache(formatted, event.created());
-                return formatted;
-            }
-        }
-    }
-
-    static class DateTimeLayout extends AbstractTimeLayout {
-
-        private final SimpleLoggerConfiguration configuration;
-
-        protected DateTimeLayout(SimpleLoggerConfiguration configuration) {
-            this.configuration = configuration;
+        DateTimeLayout(SimpleLoggerConfiguration configuration) {
+            super(configuration);
         }
 
         @Override
         public void print(SimpleLoggingEvent event) {
+            event.append("\"timestamp\": \"");
             event.append(getEventTime(event));
-            event.append(' ');
-        }
-
-        /**
-         * @param eventCreatMillis from epoch
-         * @see LocalTime#ofNanoOfDay(long)
-         * @return formatter date time
-         */
-        @Override
-        String format(long eventCreatMillis) {
-            final Instant now = Instant.ofEpochMilli(eventCreatMillis);
-            final ZoneId zoneId = configuration.getZoneId();
-            final LocalDateTime dateTime = LocalDateTime.ofInstant(now, zoneId);
-            return configuration.getDateTimeFormatter().format(dateTime);
+            event.append("\"");
         }
 
         @Override
@@ -90,31 +48,17 @@ final class SimpleLoggerLayouts {
         }
     }
 
-    static class TimeLayout extends AbstractTimeLayout {
+    static final class TimeLayout extends SimpleLoggerLayouts.TimeLayout {
 
-        private final SimpleLoggerConfiguration configuration;
-
-        protected TimeLayout(SimpleLoggerConfiguration configuration) {
-            this.configuration = configuration;
+        TimeLayout(SimpleLoggerConfiguration configuration) {
+            super(configuration);
         }
 
         @Override
         public void print(SimpleLoggingEvent event) {
+            event.append("\"timestamp\": \"");
             event.append(getEventTime(event));
-            event.append(' ');
-        }
-
-        /**
-         * @param eventCreatMillis from epoch
-         * @see LocalTime#ofInstant(Instant, ZoneId)
-         * @return formatter date time
-         */
-        @Override
-        String format(long eventCreatMillis) {
-            final Instant now = Instant.ofEpochMilli(eventCreatMillis);
-            final ZoneId zoneId = configuration.getZoneId();
-            final LocalTime localTime = LocalTime.ofInstant(now, zoneId);
-            return configuration.getDateTimeFormatter().format(localTime);
+            event.append("\"");
         }
 
         @Override
@@ -127,8 +71,9 @@ final class SimpleLoggerLayouts {
 
         @Override
         public void print(SimpleLoggingEvent event) {
+            event.append("\"timestamp\": \"");
             event.append(System.currentTimeMillis());
-            event.append(' ');
+            event.append("\"");
         }
 
         @Override
@@ -147,8 +92,9 @@ final class SimpleLoggerLayouts {
 
         @Override
         public void print(SimpleLoggingEvent event) {
+            event.append("\"timestamp\": \"");
             event.append(System.currentTimeMillis() - configuration.getInitializeTime());
-            event.append(' ');
+            event.append("\"");
         }
 
         @Override
@@ -167,9 +113,9 @@ final class SimpleLoggerLayouts {
 
         @Override
         public void print(SimpleLoggingEvent event) {
-            event.append("[");
+            event.append("\"implementation\": \"");
             event.append(configuration.getImplementationVersion());
-            event.append("] ");
+            event.append("\"");
         }
 
         @Override
@@ -196,7 +142,9 @@ final class SimpleLoggerLayouts {
 
         @Override
         public void print(SimpleLoggingEvent event) {
+            event.append("\"level\": \"");
             event.append(renderLevel(event.level()));
+            event.append("\"");
         }
 
         private String renderLevel(Level level) {
@@ -232,7 +180,7 @@ final class SimpleLoggerLayouts {
 
         @Override
         public void print(SimpleLoggingEvent event) {
-            event.append(configuration.getEnvironmentsOnStartText());
+            event.append(configuration.getEnvironmentsOnStartJson());
         }
 
         @Override
@@ -251,30 +199,28 @@ final class SimpleLoggerLayouts {
 
         @Override
         public void print(SimpleLoggingEvent event) {
-            boolean bracketUsed = false;
-            for (String envName : configuration.getEnvironments()) {
-                final String envValue = System.getenv(envName);
-                if (envValue == null && !configuration.isEnvironmentShowNullable()) {
-                    continue;
-                }
+            final String environments = configuration.getEnvironments().stream()
+                    .map(envName -> {
+                        final String envValue = System.getenv(envName);
+                        if (envValue == null && !configuration.isEnvironmentShowNullable()) {
+                            return null;
+                        }
 
-                if (!bracketUsed) {
-                    event.append('[');
-                    bracketUsed = true;
-                } else {
-                    event.append(", ");
-                }
+                        return (configuration.isEnvironmentShowName())
+                                ? "\"" + envName + "\": \"" + envValue + "\""
+                                : "\"" + envValue + "\"";
+                    })
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.joining(","));
 
-                if (configuration.isEnvironmentShowName()) {
-                    event.append(envName);
-                    event.append('=');
-                }
-
-                event.append(envValue);
-            }
-
-            if (bracketUsed) {
-                event.append("] ");
+            if (configuration.isEnvironmentShowName()) {
+                event.append("\"environments\": {");
+                event.append(environments);
+                event.append("}");
+            } else {
+                event.append("\"environments\": [");
+                event.append(environments);
+                event.append("]");
             }
         }
 
@@ -288,9 +234,9 @@ final class SimpleLoggerLayouts {
 
         @Override
         public void print(SimpleLoggingEvent event) {
-            event.append('[');
+            event.append("\"thread\": \"");
             event.append(Thread.currentThread().getName());
-            event.append("] ");
+            event.append("\"");
         }
 
         @Override
@@ -303,8 +249,9 @@ final class SimpleLoggerLayouts {
 
         @Override
         public void print(SimpleLoggingEvent event) {
+            event.append("\"logger\": \"");
             event.append(event.logger());
-            event.append(" - ");
+            event.append("\"");
         }
 
         @Override
@@ -317,7 +264,9 @@ final class SimpleLoggerLayouts {
 
         @Override
         public void print(SimpleLoggingEvent event) {
+            event.append("\"message\": \"");
             event.append(event.message());
+            event.append("\"");
         }
 
         @Override
@@ -326,11 +275,37 @@ final class SimpleLoggerLayouts {
         }
     }
 
-    static final class SeparatorLayout implements Layout {
+    static final class JsonStartTokenLayout implements Layout {
 
         @Override
         public void print(SimpleLoggingEvent event) {
-            event.append(System.lineSeparator());
+            event.append("{");
+        }
+
+        @Override
+        public int order() {
+            return LayoutOrder.EVENT_SEPARATOR.ordinal();
+        }
+    }
+
+    static final class JsonEndTokenLayout implements Layout {
+
+        @Override
+        public void print(SimpleLoggingEvent event) {
+            event.append("}");
+        }
+
+        @Override
+        public int order() {
+            return LayoutOrder.EVENT_SEPARATOR.ordinal();
+        }
+    }
+
+    static final class JsonSeparatorLayout implements Layout {
+
+        @Override
+        public void print(SimpleLoggingEvent event) {
+            event.append(",");
         }
 
         @Override
@@ -345,7 +320,9 @@ final class SimpleLoggerLayouts {
         public void print(SimpleLoggingEvent event) {
             final Throwable throwable = event.throwable();
             if (throwable != null) {
+                event.append("\"throwable\": \"");
                 event.append(throwable);
+                event.append("\"");
             }
         }
 
