@@ -22,7 +22,7 @@ Java 11+ compatible.
 
 [**Gradle**](https://mvnrepository.com/artifact/io.goodforgod/slf4j-simple-logger)
 ```groovy
-implementation "io.goodforgod:slf4j-simple-logger:0.14.0"
+implementation "io.goodforgod:slf4j-simple-logger:0.14.1"
 ```
 
 [**Maven**](https://mvnrepository.com/artifact/io.goodforgod/slf4j-simple-logger)
@@ -30,7 +30,7 @@ implementation "io.goodforgod:slf4j-simple-logger:0.14.0"
 <dependency>
     <groupId>io.goodforgod</groupId>
     <artifactId>slf4j-simple-logger</artifactId>
-    <version>0.14.0</version>
+    <version>0.14.1</version>
 </dependency>
 ```
 
