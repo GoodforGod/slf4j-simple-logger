@@ -2,10 +2,17 @@ package io.goodforgod.slf4j.simplelogger;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import org.junit.jupiter.api.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.skyscreamer.jsonassert.JSONParser;
 import org.slf4j.event.Level;
 
-class SimpleLoggerTests extends Assertions {
+class JsonLoggerLayoutTests extends Assertions {
 
     String A_KEY = SimpleLoggerProperties.PREFIX_LOG + "a";
     PrintStream original = System.out;
@@ -15,7 +22,8 @@ class SimpleLoggerTests extends Assertions {
     @BeforeEach
     public void before() {
         clearProperties();
-        System.clearProperty(A_KEY);
+        System.setProperty(A_KEY, "info");
+        System.setProperty(SimpleLoggerProperties.FORMAT, SimpleLoggerProperties.OutputFormat.JSON.name());
     }
 
     @AfterEach
@@ -78,7 +86,7 @@ class SimpleLoggerTests extends Assertions {
 
     @Test
     void offLevelNonExistEnvDefaultValue() {
-        System.setProperty(A_KEY, "${A_KEY_LOG_LEVEL_NON_EXIST:OFF}");
+        System.setProperty(A_KEY, "${A_KEY_LOG_LEVEL_NON_EXIST:off}");
         SimpleLogger.init();
         SimpleLogger simpleLogger = new SimpleLogger("a");
         assertEquals(SimpleLogger.LOG_LEVEL_OFF, simpleLogger.currentLogLevel);
@@ -131,11 +139,16 @@ class SimpleLoggerTests extends Assertions {
         simpleLogger.info("hello");
         replacement.flush();
         final String res = bout.toString().strip();
-        final int dateTimeAfter = res.indexOf(' ');
-        final String allExceptDateTime = res.substring(dateTimeAfter + 1);
-        final String dateTime = res.substring(0, dateTimeAfter);
-        assertTrue(dateTime.matches("\\d\\d\\d\\d"));
-        assertEquals("[INFO] io.goodforgod.slf4j.simplelogger.SimpleLoggerTests - hello", allExceptDateTime);
+
+        final int dateTimeStart = res.indexOf("timestamp\":\"");
+        final int shift = "timestamp\":\"".length();
+        final int dateTimeEnd = res.indexOf('"', dateTimeStart + shift);
+        final String allExceptTime = res.substring(dateTimeEnd + 1);
+        final String time = res.substring(dateTimeStart + shift, dateTimeEnd);
+        assertTrue(time.matches("\\d\\d\\d\\d"));
+        assertEquals(
+                ",\"level\":\"INFO\",\"logger\":\"io.goodforgod.slf4j.simplelogger.JsonLoggerLayoutTests\",\"message\":\"hello\"}",
+                allExceptTime);
     }
 
     @Test
@@ -151,11 +164,16 @@ class SimpleLoggerTests extends Assertions {
         simpleLogger.info("hello");
         replacement.flush();
         final String res = bout.toString().strip();
-        final int dateTimeAfter = res.indexOf(' ');
-        final String allExceptTime = res.substring(dateTimeAfter + 1);
-        final String unixTime = res.substring(0, dateTimeAfter);
-        assertNotEquals(0L, Long.parseLong(unixTime));
-        assertEquals("[INFO] io.goodforgod.slf4j.simplelogger.SimpleLoggerTests - hello", allExceptTime);
+
+        final int dateTimeStart = res.indexOf("timestamp\":\"");
+        final int shift = "timestamp\":\"".length();
+        final int dateTimeEnd = res.indexOf('"', dateTimeStart + shift);
+        final String allExceptTime = res.substring(dateTimeEnd + 1);
+        final String time = res.substring(dateTimeStart + shift, dateTimeEnd);
+        assertNotEquals(0L, Long.parseLong(time));
+        assertEquals(
+                ",\"level\":\"INFO\",\"logger\":\"io.goodforgod.slf4j.simplelogger.JsonLoggerLayoutTests\",\"message\":\"hello\"}",
+                allExceptTime);
     }
 
     @Test
@@ -172,11 +190,16 @@ class SimpleLoggerTests extends Assertions {
         simpleLogger.info("hello");
         replacement.flush();
         final String res = bout.toString().strip();
-        final int dateTimeAfter = res.indexOf(' ');
-        final String allExceptTime = res.substring(dateTimeAfter + 1);
-        final String time = res.substring(0, dateTimeAfter);
+
+        final int dateTimeStart = res.indexOf("timestamp\":\"");
+        final int shift = "timestamp\":\"".length();
+        final int dateTimeEnd = res.indexOf('"', dateTimeStart + shift);
+        final String allExceptTime = res.substring(dateTimeEnd + 1);
+        final String time = res.substring(dateTimeStart + shift, dateTimeEnd);
         assertTrue(time.matches("\\d\\d:\\d\\d:\\d\\d"));
-        assertEquals("[INFO] io.goodforgod.slf4j.simplelogger.SimpleLoggerTests - hello", allExceptTime);
+        assertEquals(
+                ",\"level\":\"INFO\",\"logger\":\"io.goodforgod.slf4j.simplelogger.JsonLoggerLayoutTests\",\"message\":\"hello\"}",
+                allExceptTime);
     }
 
     @Test
@@ -195,12 +218,17 @@ class SimpleLoggerTests extends Assertions {
         simpleLogger.info("hello");
         replacement.flush();
         final String res = bout.toString().strip();
-        final int dateTimeAfter = res.indexOf(' ');
-        final String allExceptTime = res.substring(dateTimeAfter + 1);
-        final String unixTime = res.substring(0, dateTimeAfter);
+
+        final int dateTimeStart = res.indexOf("timestamp\":\"");
+        final int shift = "timestamp\":\"".length();
+        final int dateTimeEnd = res.indexOf('"', dateTimeStart + shift);
+        final String allExceptTime = res.substring(dateTimeEnd + 1);
+        final String unixTime = res.substring(dateTimeStart + shift, dateTimeEnd);
         assertNotEquals(0L, Long.parseLong(unixTime));
         assertTrue(Long.parseLong(unixTime) < 1_000_000);
-        assertEquals("[INFO] io.goodforgod.slf4j.simplelogger.SimpleLoggerTests - hello", allExceptTime);
+        assertEquals(
+                ",\"level\":\"INFO\",\"logger\":\"io.goodforgod.slf4j.simplelogger.JsonLoggerLayoutTests\",\"message\":\"hello\"}",
+                allExceptTime);
     }
 
     @Test
@@ -217,7 +245,7 @@ class SimpleLoggerTests extends Assertions {
         replacement.flush();
         final String res = bout.toString().strip();
 
-        assertEquals("[WARN] i.g.s.simplelogger.SimpleLoggerTests - hello", res);
+        assertEquals("{\"level\":\"WARN\",\"logger\":\"i.g.s.s.JsonLoggerLayoutTests\",\"message\":\"hello\"}", res);
     }
 
     @Test
@@ -236,11 +264,13 @@ class SimpleLoggerTests extends Assertions {
         replacement.flush();
         final String res = bout.toString().strip();
 
-        assertEquals("INFO [Test worker] io.goodforgod.slf4j.simplelogger.SimpleLoggerTests - hello", res);
+        assertEquals(
+                "{\"level\":\"INFO\",\"thread\":\"Test worker\",\"logger\":\"io.goodforgod.slf4j.simplelogger.JsonLoggerLayoutTests\",\"message\":\"hello\"}",
+                res);
     }
 
     @Test
-    void throwableOutput() {
+    void throwableOutput() throws JSONException {
         System.setOut(replacement);
         System.setProperty(SimpleLoggerProperties.SHOW_THREAD_NAME, "true");
         System.setProperty(SimpleLoggerProperties.SHOW_DATE_TIME, "false");
@@ -250,13 +280,15 @@ class SimpleLoggerTests extends Assertions {
         SimpleLogger simpleLogger = new SimpleLogger(this.getClass().getName());
         // change reference to original before logging
 
-        simpleLogger.error("hello", new RuntimeException("Ops"));
+        simpleLogger.error("hello", new RuntimeException(new IllegalStateException("Ops")));
         replacement.flush();
         final String res = bout.toString().strip();
 
-        final String[] splitted = res.split(System.lineSeparator());
-        assertEquals("ERROR [Test worker] io.goodforgod.slf4j.simplelogger.SimpleLoggerTests - hello", splitted[0]);
-        assertEquals("java.lang.RuntimeException: Ops", splitted[1]);
-        assertTrue(splitted[2].trim().startsWith("at io.goodforgod.slf4j.simplelogger.SimpleLoggerTests.throwableOutput"));
+        final JSONObject o = (JSONObject) JSONParser.parseJSON(res);
+        assertEquals("java.lang.IllegalStateException: Ops", o.getString("exception"));
+        final JSONArray stacktrace = o.getJSONArray("stacktrace");
+        assertEquals("java.lang.IllegalStateException: Ops", stacktrace.getJSONObject(0).getString("message"));
+        assertEquals("io.goodforgod.slf4j.simplelogger.JsonLoggerLayoutTests", stacktrace.getJSONObject(0).getString("clazz"));
+        assertTrue(stacktrace.getJSONObject(0).getString("method").startsWith("throwableOutput"));
     }
 }

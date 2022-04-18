@@ -25,6 +25,7 @@ dependencies {
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.8.2"
     testImplementation "org.junit.jupiter:junit-jupiter-api:5.8.2"
     testImplementation "org.junit.jupiter:junit-jupiter-params:5.8.2"
+    testImplementation "org.skyscreamer:jsonassert:1.5.0"
 }
 
 test {
@@ -39,6 +40,10 @@ test {
         html.enabled(false)
         junitXml.enabled(false)
     }
+
+    environment([
+            "A_KEY_LOG_LEVEL": "off",
+    ])
 }
 
 spotless {
