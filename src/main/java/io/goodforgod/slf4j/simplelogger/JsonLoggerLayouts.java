@@ -1,6 +1,9 @@
 package io.goodforgod.slf4j.simplelogger;
 
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.slf4j.event.Level;
 
@@ -37,7 +40,7 @@ final class JsonLoggerLayouts {
 
         @Override
         public void print(SimpleLoggingEvent event) {
-            event.append("\"timestamp\": \"");
+            event.append("\"timestamp\":\"");
             event.append(getEventTime(event));
             event.append("\"");
         }
@@ -56,7 +59,7 @@ final class JsonLoggerLayouts {
 
         @Override
         public void print(SimpleLoggingEvent event) {
-            event.append("\"timestamp\": \"");
+            event.append("\"timestamp\":\"");
             event.append(getEventTime(event));
             event.append("\"");
         }
@@ -71,7 +74,7 @@ final class JsonLoggerLayouts {
 
         @Override
         public void print(SimpleLoggingEvent event) {
-            event.append("\"timestamp\": \"");
+            event.append("\"timestamp\":\"");
             event.append(System.currentTimeMillis());
             event.append("\"");
         }
@@ -92,7 +95,7 @@ final class JsonLoggerLayouts {
 
         @Override
         public void print(SimpleLoggingEvent event) {
-            event.append("\"timestamp\": \"");
+            event.append("\"timestamp\":\"");
             event.append(System.currentTimeMillis() - configuration.getInitializeTime());
             event.append("\"");
         }
@@ -113,7 +116,7 @@ final class JsonLoggerLayouts {
 
         @Override
         public void print(SimpleLoggingEvent event) {
-            event.append("\"implementation\": \"");
+            event.append("\"implementation\":\"");
             event.append(configuration.getImplementationVersion());
             event.append("\"");
         }
@@ -142,7 +145,7 @@ final class JsonLoggerLayouts {
 
         @Override
         public void print(SimpleLoggingEvent event) {
-            event.append("\"level\": \"");
+            event.append("\"level\":\"");
             event.append(renderLevel(event.level()));
             event.append("\"");
         }
@@ -207,7 +210,7 @@ final class JsonLoggerLayouts {
                         }
 
                         return (configuration.isEnvironmentShowName())
-                                ? "\"" + envName + "\": \"" + envValue + "\""
+                                ? "\"" + envName + "\":\"" + envValue + "\""
                                 : "\"" + envValue + "\"";
                     })
                     .filter(Objects::nonNull)
@@ -234,7 +237,7 @@ final class JsonLoggerLayouts {
 
         @Override
         public void print(SimpleLoggingEvent event) {
-            event.append("\"thread\": \"");
+            event.append("\"thread\":\"");
             event.append(Thread.currentThread().getName());
             event.append("\"");
         }
@@ -249,7 +252,7 @@ final class JsonLoggerLayouts {
 
         @Override
         public void print(SimpleLoggingEvent event) {
-            event.append("\"logger\": \"");
+            event.append("\"logger\":\"");
             event.append(event.logger());
             event.append("\"");
         }
@@ -264,7 +267,7 @@ final class JsonLoggerLayouts {
 
         @Override
         public void print(SimpleLoggingEvent event) {
-            event.append("\"message\": \"");
+            event.append("\"message\":\"");
             event.append(event.message());
             event.append("\"");
         }
@@ -320,9 +323,115 @@ final class JsonLoggerLayouts {
         public void print(SimpleLoggingEvent event) {
             final Throwable throwable = event.throwable();
             if (throwable != null) {
-                event.append("\"throwable\": \"");
-                event.append(throwable);
-                event.append("\"");
+                event.append(",\"exception\":\"");
+                event.append(throwable.getMessage());
+                event.append("\",\"stacktrace\":[");
+                printThrowable(throwable, event.getBuilder());
+                event.append("]");
+            }
+        }
+
+        private void printThrowable(Throwable throwable, StringBuilder builder) {
+            // Guard against malicious overrides of Throwable.equals by using a Set with identity equality
+            // semantics.
+            final Set<Throwable> visited = Collections.newSetFromMap(new IdentityHashMap<>());
+            visited.add(throwable);
+
+            final StackTraceElement[] traces = throwable.getStackTrace();
+            final int last = traces.length - 1;
+            for (int i = 0; i < traces.length; i++) {
+                final StackTraceElement trace = traces[i];
+                final String message = (i == 0)
+                        ? throwable.getMessage()
+                        : null;
+                printTrace(trace, message, builder);
+
+                if (i != last) {
+                    builder.append(',');
+                }
+            }
+
+            for (Throwable suppressed : throwable.getSuppressed()) {
+                printEnclosedStackTrace(suppressed, builder, traces, visited);
+            }
+
+            final Throwable cause = throwable.getCause();
+            if (cause != null) {
+                printEnclosedStackTrace(cause, builder, traces, visited);
+            }
+        }
+
+        /**
+         * Print our stack trace as an enclosed exception for the specified stack trace.
+         */
+        private void printEnclosedStackTrace(Throwable throwable,
+                                             StringBuilder builder,
+                                             StackTraceElement[] enclosingTrace,
+                                             Set<Throwable> visited) {
+            if (visited.contains(throwable)) {
+                builder.append("[CIRCULAR REFERENCE: ").append(throwable).append("]");
+            } else {
+                visited.add(throwable);
+                // Compute number of frames in common between this and enclosing trace
+                final StackTraceElement[] traces = throwable.getStackTrace();
+
+                int m = traces.length - 1;
+                int n = enclosingTrace.length - 1;
+                while (m >= 0 && n >= 0 && traces[m].equals(enclosingTrace[n])) {
+                    m--;
+                    n--;
+                }
+
+                if (builder.length() != 0) {
+                    builder.append(",");
+                }
+
+                for (int i = 0; i <= m; i++) {
+                    final StackTraceElement trace = traces[i];
+                    final String message = (i == 0)
+                            ? throwable.getMessage()
+                            : null;
+                    printTrace(trace, message, builder);
+
+                    if (i != m) {
+                        builder.append(',');
+                    }
+                }
+
+                for (Throwable suppressed : throwable.getSuppressed()) {
+                    printEnclosedStackTrace(suppressed, builder, traces, visited);
+                }
+
+                final Throwable cause = throwable.getCause();
+                if (cause != null) {
+                    printEnclosedStackTrace(cause, builder, traces, visited);
+                }
+            }
+        }
+
+        private void printTrace(StackTraceElement trace, String message, StringBuilder builder) {
+            final String methodName = trace.isNativeMethod()
+                    ? "native " + trace.getMethodName()
+                    : trace.getMethodName();
+
+            if (message != null) {
+                builder.append("{\"clazz\":\"")
+                        .append(trace.getClassName())
+                        .append("\",\"message\":\"")
+                        .append(message)
+                        .append("\",\"method\":\"")
+                        .append(methodName)
+                        .append(":")
+                        .append(trace.getLineNumber())
+                        .append("\"}");
+            } else {
+                builder.append("{\"clazz\":\"")
+                        .append(trace.getClassName())
+                        .append("\",\"method\":\"")
+                        .append(methodName)
+                        .append(":")
+                        .append(trace.getLineNumber())
+                        .append("\"}");
             }
         }
 

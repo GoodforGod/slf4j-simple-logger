@@ -30,6 +30,10 @@ final class SimpleLoggingEvent {
         throwable.printStackTrace(printWriter);
     }
 
+    StringBuilder getBuilder() {
+        return builder;
+    }
+
     void append(CharSequence text) {
         builder.append(text);
     }

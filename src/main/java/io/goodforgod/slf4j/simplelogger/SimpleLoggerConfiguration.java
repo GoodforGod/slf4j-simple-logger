@@ -276,7 +276,7 @@ final class SimpleLoggerConfiguration {
                         }
 
                         return (environmentShowName)
-                                ? "\"" + envName + "\": \"" + envValue + "\""
+                                ? "\"" + envName + "\":\"" + envValue + "\""
                                 : "\"" + envValue + "\"";
                     })
                     .filter(Objects::nonNull)
@@ -407,10 +407,12 @@ final class SimpleLoggerConfiguration {
         jsonLayouts.add(new JsonLoggerLayouts.JsonStartTokenLayout());
         for (int i = 0; i < loggerLayouts.size(); i++) {
             jsonLayouts.add(loggerLayouts.get(i));
-            if (i + 1 != loggerLayouts.size()) {
-                jsonLayouts.add(new JsonLoggerLayouts.JsonSeparatorLayout());
-            } else {
+
+            // skip separate token before JsonLoggerLayouts.ThrowableLayout
+            if (i + 1 == loggerLayouts.size()) {
                 jsonLayouts.add(new JsonLoggerLayouts.JsonEndTokenLayout());
+            } else if (i + 2 < loggerLayouts.size()) {
+                jsonLayouts.add(new JsonLoggerLayouts.JsonSeparatorLayout());
             }
         }
 
@@ -511,24 +513,24 @@ final class SimpleLoggerConfiguration {
                 : prop;
 
         if (isEnvironmentValue(value)) {
-            final String property = value.substring(2, value.length() - 2);
-            final String[] propertyAndDefault = property.split(":");
+            final String envProperty = value.substring(2, value.length() - 1);
+            final String[] environmentAndDefault = envProperty.split(":");
 
-            if (propertyAndDefault.length > 2) {
+            if (environmentAndDefault.length > 2) {
                 throw new IllegalArgumentException(
-                        "System Environment property can't contain only 1 ':' symbol but had: " + property);
-            } else if (propertyAndDefault.length == 2) {
-                final String envValue = System.getenv(propertyAndDefault[0]);
+                        "System Environment property can't contain only 1 ':' symbol but had: " + envProperty);
+            } else if (environmentAndDefault.length == 2) {
+                final String envValue = System.getenv(environmentAndDefault[0]);
                 if (envValue == null) {
-                    return (propertyAndDefault[1].isBlank())
+                    return (environmentAndDefault[1].isBlank())
                             ? null
-                            : propertyAndDefault[1];
+                            : environmentAndDefault[1];
                 }
 
                 return envValue;
             }
 
-            return System.getenv(propertyAndDefault[0]);
+            return System.getenv(environmentAndDefault[0]);
         } else {
             return value;
         }
