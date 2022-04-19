@@ -17,6 +17,11 @@ public final class SimpleLoggerProperties {
         MILLIS_FROM_START
     }
 
+    public enum OutputFormat {
+        TEXT,
+        JSON
+    }
+
     private static final String PREFIX = "org.slf4j.simpleLogger.";
 
     public static final String PREFIX_LOG = PREFIX + "log.";
@@ -26,6 +31,7 @@ public final class SimpleLoggerProperties {
     public static final String LOG_FILE_WARN = PREFIX + "logFileWarn";
     public static final String LOG_FILE_ERROR = PREFIX + "logFileError";
 
+    public static final String FORMAT = PREFIX + "format";
     public static final String CHARSET = PREFIX + "charset";
 
     public static final String LEVEL_IN_BRACKETS = PREFIX + "levelInBrackets";

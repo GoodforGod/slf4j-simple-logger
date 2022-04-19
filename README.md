@@ -13,8 +13,11 @@ This logger is great for applications that use synchronous output or run in sing
 Features:
 - Performance optimizations.
 - GraalVM friendly.
+- JSON format support.
 - Environment variables logging.
 - [slf4j-simple-logger](https://www.slf4j.org/api/org/slf4j/impl/SimpleLogger.html) compatible configuration.
+
+And more...
 
 ## Dependency :rocket:
 
@@ -22,7 +25,7 @@ Java 11+ compatible.
 
 [**Gradle**](https://mvnrepository.com/artifact/io.goodforgod/slf4j-simple-logger)
 ```groovy
-implementation "io.goodforgod:slf4j-simple-logger:0.14.1"
+implementation "io.goodforgod:slf4j-simple-logger:0.15.0"
 ```
 
 [**Maven**](https://mvnrepository.com/artifact/io.goodforgod/slf4j-simple-logger)
@@ -30,7 +33,7 @@ implementation "io.goodforgod:slf4j-simple-logger:0.14.1"
 <dependency>
     <groupId>io.goodforgod</groupId>
     <artifactId>slf4j-simple-logger</artifactId>
-    <version>0.14.1</version>
+    <version>0.15.0</version>
 </dependency>
 ```
 
@@ -39,8 +42,11 @@ Based on SLF4J 1.7.36
 ## Content
 
 - [Logging example](#logging-example)
+  - [Text format](#text-format)
+  - [Json format](#json-format)
 - [Features](#features)
   - [Performance Optimizations](#performance-optimizations)
+  - [Output format](#output-format)
   - [DateTime output](#datetime-output)
   - [Logger name abbreviation](#logger-name-abbreviation)
   - [Environment logging](#environment-logging)
@@ -53,12 +59,14 @@ Based on SLF4J 1.7.36
 
 ## Logging example
 
-Below is example of logged message:
+### Text format
+
+Below is example of logged message in text format:
 ```java
 logger.debug("Message is printed for this logger");
 ```
 
-And the detailed result:
+Result logged message:
 ```text
        Date Time        Implementation  Log Level         Environment variables       Thread         Logger Name                     Log Message
            |                   |            |                        |                  |                |                               |
@@ -68,6 +76,48 @@ ___________|__________   ______|_______   __|__   ___________________|__________
 2022-02-23T15:43:40.331 [0.9.0-SNAPSHOT] [DEBUG] [SESSION=Console, PROCESSOR_LEVEL=6] [main] io.goodforgod.Application - Message is printed for this logger
 ```
 
+### Json format
+
+Below is example of logged message in json format:
+```java
+Exception e = new RuntimeException();
+logger.debug("Message is printed for this logger", e);
+```
+
+Result logged message:
+```json
+{
+  "timestamp": "2022-02-23T15:43:40.331",
+  "implementation": "0.9.0-SNAPSHOT",
+  "level": "DEBUG",
+  "thread": "main",
+  "logger": "io.goodforgod.Application",
+  "environment": [
+    {
+      "name": "SESSION",
+      "value": "Console"
+    },
+    {
+      "name": "PROCESSOR_LEVEL",
+      "value": "6"
+    }
+  ],
+  "message": "Message is printed for this logger",
+  "exception": "Ops",
+  "stacktrace": [
+    {
+      "clazz": "io.goodforgod.slf4j.simplelogger.JsonLoggerLayoutTests",
+      "message": "Ops",
+      "method": "throwableOutput:279"
+    },
+    {
+      "clazz": "jdk.internal.reflect.NativeMethodAccessorImpl",
+      "method": "invoke0:-2"
+    }
+  ]
+}
+```
+
 ## Features
 
 ### Performance optimizations
@@ -75,6 +125,24 @@ ___________|__________   ______|_______   __|__   ___________________|__________
 This implementation is based on default *slf4j-simple-logger*, but there are plenty of performance and feature improvements.
 
 Some cases are 200% faster others are 800% faster, you can read more about here in my [JVM benchmark](https://github.com/GoodforGod/java-logger-benchmark).
+
+### Output format
+
+There is option to output logged messages in different formats, currently supported formats:
+- TEXT
+- JSON
+
+You can check example of each format [here](#logging-example).
+
+Configuration for format is below for TEXT (default value).
+```properties
+org.slf4j.simpleLogger.format=TEXT
+```
+
+And same for JSON:
+```properties
+org.slf4j.simpleLogger.format=JSON
+```
 
 ### DateTime output
 
@@ -170,6 +238,8 @@ Only these properties can be changed in runtime:
 ```properties
 # Default logging level for all loggers. Must be one of ("TRACE", "DEBUG", "INFO", "WARN", or "ERROR"). (default INFO)
 org.slf4j.simpleLogger.defaultLogLevel=INFO
+# Set logging message output format. Must be one of ("TEXT", "JSON"). (default TEXT)
+org.slf4j.simpleLogger.format=TEXT
 # Set to true to show current datetime in output. (default true)
 org.slf4j.simpleLogger.showDateTime=true
 # Set datetime output type. Must be one of ("TIME", "DATE_TIME", "UNIX_TIME", "MILLIS_FROM_START"). (default DATE_TIME)
@@ -248,6 +318,8 @@ Example of full *simplelogger.properties* file:
 ```properties
 # Default logging level for all loggers. Must be one of ("TRACE", "DEBUG", "INFO", "WARN", or "ERROR"). (default INFO)
 org.slf4j.simpleLogger.defaultLogLevel=INFO
+# Set logging message output format. Must be one of ("TEXT", "JSON"). (default TEXT)
+org.slf4j.simpleLogger.format=TEXT
 # Set to true to show current datetime in output. (default true)
 org.slf4j.simpleLogger.showDateTime=true
 # Set datetime output type. Must be one of ("TIME", "DATE_TIME", "UNIX_TIME", "MILLIS_FROM_START"). (default DATE_TIME)

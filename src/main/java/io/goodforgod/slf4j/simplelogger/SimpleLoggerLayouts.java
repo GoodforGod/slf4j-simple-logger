@@ -16,7 +16,7 @@ final class SimpleLoggerLayouts {
     /**
      * Uses {@link LayoutOrder#ordinal()} for ordering layouts between each other
      */
-    private enum LayoutOrder {
+    enum LayoutOrder {
         DATE_TIME,
         IMPLEMENTATION,
         LEVEL,
@@ -57,11 +57,11 @@ final class SimpleLoggerLayouts {
         }
     }
 
-    static final class DateTimeLayout extends AbstractTimeLayout {
+    static class DateTimeLayout extends AbstractTimeLayout {
 
         private final SimpleLoggerConfiguration configuration;
 
-        DateTimeLayout(SimpleLoggerConfiguration configuration) {
+        protected DateTimeLayout(SimpleLoggerConfiguration configuration) {
             this.configuration = configuration;
         }
 
@@ -90,11 +90,11 @@ final class SimpleLoggerLayouts {
         }
     }
 
-    static final class TimeLayout extends AbstractTimeLayout {
+    static class TimeLayout extends AbstractTimeLayout {
 
         private final SimpleLoggerConfiguration configuration;
 
-        TimeLayout(SimpleLoggerConfiguration configuration) {
+        protected TimeLayout(SimpleLoggerConfiguration configuration) {
             this.configuration = configuration;
         }
 
@@ -178,7 +178,7 @@ final class SimpleLoggerLayouts {
         }
     }
 
-    static final class LevelLayout implements Layout {
+    static class LevelLayout implements Layout {
 
         private final String trace;
         private final String debug;
@@ -199,7 +199,7 @@ final class SimpleLoggerLayouts {
             event.append(renderLevel(event.level()));
         }
 
-        private String renderLevel(Level level) {
+        protected String renderLevel(Level level) {
             switch (level) {
                 case INFO:
                     return info;
@@ -232,7 +232,7 @@ final class SimpleLoggerLayouts {
 
         @Override
         public void print(SimpleLoggingEvent event) {
-            event.append(configuration.getEnvironmentsOnStart());
+            event.append(configuration.getEnvironmentsOnStartText());
         }
 
         @Override
