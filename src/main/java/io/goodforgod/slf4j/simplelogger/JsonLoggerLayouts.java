@@ -5,7 +5,6 @@ import java.util.IdentityHashMap;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.slf4j.event.Level;
 
 /**
  * JSON logger layout implementations
@@ -16,21 +15,6 @@ import org.slf4j.event.Level;
 final class JsonLoggerLayouts {
 
     private JsonLoggerLayouts() {}
-
-    /**
-     * Uses {@link LayoutOrder#ordinal()} for ordering layouts between each other
-     */
-    private enum LayoutOrder {
-        DATE_TIME,
-        IMPLEMENTATION,
-        LEVEL,
-        ENVIRONMENT,
-        THREAD,
-        LOGGER_NAME,
-        MESSAGE,
-        EVENT_SEPARATOR,
-        THROWABLE
-    }
 
     static final class DateTimeLayout extends SimpleLoggerLayouts.DateTimeLayout {
 
@@ -47,7 +31,7 @@ final class JsonLoggerLayouts {
 
         @Override
         public int order() {
-            return LayoutOrder.DATE_TIME.ordinal();
+            return SimpleLoggerLayouts.LayoutOrder.DATE_TIME.ordinal();
         }
     }
 
@@ -66,7 +50,7 @@ final class JsonLoggerLayouts {
 
         @Override
         public int order() {
-            return LayoutOrder.DATE_TIME.ordinal();
+            return SimpleLoggerLayouts.LayoutOrder.DATE_TIME.ordinal();
         }
     }
 
@@ -81,7 +65,7 @@ final class JsonLoggerLayouts {
 
         @Override
         public int order() {
-            return LayoutOrder.DATE_TIME.ordinal();
+            return SimpleLoggerLayouts.LayoutOrder.DATE_TIME.ordinal();
         }
     }
 
@@ -102,7 +86,7 @@ final class JsonLoggerLayouts {
 
         @Override
         public int order() {
-            return LayoutOrder.DATE_TIME.ordinal();
+            return SimpleLoggerLayouts.LayoutOrder.DATE_TIME.ordinal();
         }
     }
 
@@ -123,24 +107,14 @@ final class JsonLoggerLayouts {
 
         @Override
         public int order() {
-            return LayoutOrder.IMPLEMENTATION.ordinal();
+            return SimpleLoggerLayouts.LayoutOrder.IMPLEMENTATION.ordinal();
         }
     }
 
-    static final class LevelLayout implements Layout {
-
-        private final String trace;
-        private final String debug;
-        private final String info;
-        private final String warn;
-        private final String error;
+    static final class LevelLayout extends SimpleLoggerLayouts.LevelLayout {
 
         LevelLayout(String trace, String debug, String info, String warn, String error) {
-            this.trace = trace;
-            this.debug = debug;
-            this.info = info;
-            this.warn = warn;
-            this.error = error;
+            super(trace, debug, info, warn, error);
         }
 
         @Override
@@ -150,26 +124,9 @@ final class JsonLoggerLayouts {
             event.append("\"");
         }
 
-        private String renderLevel(Level level) {
-            switch (level) {
-                case INFO:
-                    return info;
-                case WARN:
-                    return warn;
-                case ERROR:
-                    return error;
-                case DEBUG:
-                    return debug;
-                case TRACE:
-                    return trace;
-                default:
-                    throw new IllegalStateException("Unrecognized level [" + level + "]");
-            }
-        }
-
         @Override
         public int order() {
-            return LayoutOrder.LEVEL.ordinal();
+            return SimpleLoggerLayouts.LayoutOrder.LEVEL.ordinal();
         }
     }
 
@@ -188,7 +145,7 @@ final class JsonLoggerLayouts {
 
         @Override
         public int order() {
-            return LayoutOrder.ENVIRONMENT.ordinal();
+            return SimpleLoggerLayouts.LayoutOrder.ENVIRONMENT.ordinal();
         }
     }
 
@@ -223,7 +180,7 @@ final class JsonLoggerLayouts {
 
         @Override
         public int order() {
-            return LayoutOrder.ENVIRONMENT.ordinal();
+            return SimpleLoggerLayouts.LayoutOrder.ENVIRONMENT.ordinal();
         }
     }
 
@@ -238,7 +195,7 @@ final class JsonLoggerLayouts {
 
         @Override
         public int order() {
-            return LayoutOrder.THREAD.ordinal();
+            return SimpleLoggerLayouts.LayoutOrder.THREAD.ordinal();
         }
     }
 
@@ -253,7 +210,7 @@ final class JsonLoggerLayouts {
 
         @Override
         public int order() {
-            return LayoutOrder.LOGGER_NAME.ordinal();
+            return SimpleLoggerLayouts.LayoutOrder.LOGGER_NAME.ordinal();
         }
     }
 
@@ -268,7 +225,7 @@ final class JsonLoggerLayouts {
 
         @Override
         public int order() {
-            return LayoutOrder.MESSAGE.ordinal();
+            return SimpleLoggerLayouts.LayoutOrder.MESSAGE.ordinal();
         }
     }
 
@@ -281,7 +238,7 @@ final class JsonLoggerLayouts {
 
         @Override
         public int order() {
-            return LayoutOrder.EVENT_SEPARATOR.ordinal();
+            return SimpleLoggerLayouts.LayoutOrder.EVENT_SEPARATOR.ordinal();
         }
     }
 
@@ -294,7 +251,7 @@ final class JsonLoggerLayouts {
 
         @Override
         public int order() {
-            return LayoutOrder.EVENT_SEPARATOR.ordinal();
+            return SimpleLoggerLayouts.LayoutOrder.EVENT_SEPARATOR.ordinal();
         }
     }
 
@@ -307,7 +264,7 @@ final class JsonLoggerLayouts {
 
         @Override
         public int order() {
-            return LayoutOrder.EVENT_SEPARATOR.ordinal();
+            return SimpleLoggerLayouts.LayoutOrder.EVENT_SEPARATOR.ordinal();
         }
     }
 
@@ -431,7 +388,7 @@ final class JsonLoggerLayouts {
 
         @Override
         public int order() {
-            return LayoutOrder.THROWABLE.ordinal();
+            return SimpleLoggerLayouts.LayoutOrder.THROWABLE.ordinal();
         }
     }
 }

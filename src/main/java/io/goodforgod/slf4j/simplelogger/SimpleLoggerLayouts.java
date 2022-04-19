@@ -16,7 +16,7 @@ final class SimpleLoggerLayouts {
     /**
      * Uses {@link LayoutOrder#ordinal()} for ordering layouts between each other
      */
-    private enum LayoutOrder {
+    enum LayoutOrder {
         DATE_TIME,
         IMPLEMENTATION,
         LEVEL,
@@ -178,7 +178,7 @@ final class SimpleLoggerLayouts {
         }
     }
 
-    static final class LevelLayout implements Layout {
+    static class LevelLayout implements Layout {
 
         private final String trace;
         private final String debug;
@@ -199,7 +199,7 @@ final class SimpleLoggerLayouts {
             event.append(renderLevel(event.level()));
         }
 
-        private String renderLevel(Level level) {
+        protected String renderLevel(Level level) {
             switch (level) {
                 case INFO:
                     return info;
