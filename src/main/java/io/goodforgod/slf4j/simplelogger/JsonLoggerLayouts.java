@@ -210,21 +210,15 @@ final class JsonLoggerLayouts {
                         }
 
                         return (configuration.isEnvironmentShowName())
-                                ? "\"" + envName + "\":\"" + envValue + "\""
+                                ? "{\"name\":\"" + envName + "\",\"value\":\"" + envValue + "\"}"
                                 : "\"" + envValue + "\"";
                     })
                     .filter(Objects::nonNull)
                     .collect(Collectors.joining(","));
 
-            if (configuration.isEnvironmentShowName()) {
-                event.append("\"environments\": {");
-                event.append(environments);
-                event.append("}");
-            } else {
-                event.append("\"environments\": [");
-                event.append(environments);
-                event.append("]");
-            }
+            event.append("\"environment\": [");
+            event.append(environments);
+            event.append("]");
         }
 
         @Override

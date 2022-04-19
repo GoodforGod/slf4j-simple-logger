@@ -276,7 +276,7 @@ final class SimpleLoggerConfiguration {
                         }
 
                         return (environmentShowName)
-                                ? "\"" + envName + "\":\"" + envValue + "\""
+                                ? "{\"name\":\"" + envName + "\",\"value\":\"" + envValue + "\"}"
                                 : "\"" + envValue + "\"";
                     })
                     .filter(Objects::nonNull)
@@ -284,10 +284,8 @@ final class SimpleLoggerConfiguration {
 
             if (envsOnStart.isEmpty()) {
                 return null;
-            } else if (environmentShowName) {
-                return envsOnStart.stream().collect(Collectors.joining(",", "\"environments\": {", "}"));
             } else {
-                return envsOnStart.stream().collect(Collectors.joining(",", "\"environments\": [", "]"));
+                return envsOnStart.stream().collect(Collectors.joining(",", "\"environment\": [", "]"));
             }
         } else {
             return null;
