@@ -238,6 +238,8 @@ Only these properties can be changed in runtime:
 ```properties
 # Default logging level for all loggers. Must be one of ("TRACE", "DEBUG", "INFO", "WARN", or "ERROR"). (default INFO)
 org.slf4j.simpleLogger.defaultLogLevel=INFO
+# Set logging message output format. Must be one of ("TEXT", "JSON"). (default TEXT)
+org.slf4j.simpleLogger.format=TEXT
 # Set to true to show current datetime in output. (default true)
 org.slf4j.simpleLogger.showDateTime=true
 # Set datetime output type. Must be one of ("TIME", "DATE_TIME", "UNIX_TIME", "MILLIS_FROM_START"). (default DATE_TIME)
