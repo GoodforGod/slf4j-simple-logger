@@ -23,8 +23,6 @@ And more...
 
 ## Dependency :rocket:
 
-Java 11+ compatible.
-
 [**Gradle**](https://mvnrepository.com/artifact/io.goodforgod/slf4j-simple-logger)
 ```groovy
 implementation "io.goodforgod:slf4j-simple-logger:1.0.0"
