@@ -1,7 +1,9 @@
 # SLF4J Simple Logger
 
 ![GraalVM Enabled](https://img.shields.io/badge/GraalVM-Ready-orange?style=plastic)
-[![GitHub Action](https://github.com/goodforgod/slf4j-simple-logger/workflows/Java%20CI/badge.svg)](https://github.com/GoodforGod/slf4j-simple-logger/actions?query=workflow%3A%22Java+CI%22)
+[![Minimum required Java version](https://img.shields.io/badge/Java-11%2B-blue?logo=openjdk)](https://openjdk.org/projects/jdk/11/)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.goodforgod/slf4j-simple-logger/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.goodforgod/slf4j-simple-logger)
+![Java CI](https://github.com/GoodforGod/slf4j-simple-logger/workflows/CI%20Master/badge.svg)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=GoodforGod_slf4j-simple-logger&metric=coverage)](https://sonarcloud.io/dashboard?id=GoodforGod_slf4j-simple-logger)
 [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=GoodforGod_slf4j-simple-logger&metric=sqale_rating)](https://sonarcloud.io/dashboard?id=GoodforGod_slf4j-simple-logger)
 [![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=GoodforGod_slf4j-simple-logger&metric=ncloc)](https://sonarcloud.io/dashboard?id=GoodforGod_slf4j-simple-logger)
@@ -25,7 +27,7 @@ Java 11+ compatible.
 
 [**Gradle**](https://mvnrepository.com/artifact/io.goodforgod/slf4j-simple-logger)
 ```groovy
-implementation "io.goodforgod:slf4j-simple-logger:0.16.0"
+implementation "io.goodforgod:slf4j-simple-logger:1.0.0"
 ```
 
 [**Maven**](https://mvnrepository.com/artifact/io.goodforgod/slf4j-simple-logger)
@@ -33,7 +35,7 @@ implementation "io.goodforgod:slf4j-simple-logger:0.16.0"
 <dependency>
     <groupId>io.goodforgod</groupId>
     <artifactId>slf4j-simple-logger</artifactId>
-    <version>0.16.0</version>
+    <version>1.0.0</version>
 </dependency>
 ```
 

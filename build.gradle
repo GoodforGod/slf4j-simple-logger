@@ -3,14 +3,14 @@ plugins {
     id "java-library"
     id "maven-publish"
 
-    id "org.sonarqube" version "3.3"
-    id "com.diffplug.spotless" version "6.1.0"
+    id "org.sonarqube" version "4.3.0.3225"
+    id "com.diffplug.spotless" version "6.19.0"
+    id "io.github.gradle-nexus.publish-plugin" version "1.3.0"
 }
 
 repositories {
     mavenLocal()
     mavenCentral()
-    maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
 }
 
 group = groupId
@@ -20,14 +20,14 @@ sourceCompatibility = JavaVersion.VERSION_11
 targetCompatibility = JavaVersion.VERSION_11
 
 dependencies {
-    annotationProcessor "io.goodforgod:graalvm-hint-processor:0.19.0"
-    compileOnly "io.goodforgod:graalvm-hint-annotations:0.19.0"
+    annotationProcessor "io.goodforgod:graalvm-hint-processor:1.0.0"
+    compileOnly "io.goodforgod:graalvm-hint-annotations:1.0.0"
 
     api "org.slf4j:slf4j-api:1.7.36"
 
-    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.8.2"
-    testImplementation "org.junit.jupiter:junit-jupiter-api:5.8.2"
-    testImplementation "org.junit.jupiter:junit-jupiter-params:5.8.2"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.9.3"
+    testImplementation "org.junit.jupiter:junit-jupiter-api:5.9.3"
+    testImplementation "org.junit.jupiter:junit-jupiter-params:5.9.3"
     testImplementation "org.skyscreamer:jsonassert:1.5.0"
 }
 
@@ -40,8 +40,8 @@ test {
     }
 
     reports {
-        html.enabled(false)
-        junitXml.enabled(false)
+        html.required = false
+        junitXml.required = false
     }
 
     environment([
@@ -54,7 +54,7 @@ spotless {
         encoding("UTF-8")
         importOrder()
         removeUnusedImports()
-        eclipse("4.21.0").configFile("${rootDir}/config/codestyle.xml")
+        eclipse("4.21").configFile("${rootDir}/config/codestyle.xml")
     }
 }
 
@@ -63,6 +63,18 @@ sonarqube {
         property "sonar.host.url", "https://sonarcloud.io"
         property "sonar.organization", "goodforgod"
         property "sonar.projectKey", "GoodforGod_$artifactId"
+    }
+}
+
+nexusPublishing {
+    packageGroup = groupId
+    repositories {
+        sonatype {
+            username = System.getenv("OSS_USERNAME")
+            password = System.getenv("OSS_PASSWORD")
+            nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
+            snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
+        }
     }
 }
 
@@ -107,6 +119,16 @@ publishing {
                 password System.getenv("OSS_PASSWORD")
             }
         }
+        if (!version.endsWith("SNAPSHOT")) {
+            maven {
+                name = "GitHubPackages"
+                url = "https://maven.pkg.github.com/GoodforGod/$artifactId"
+                credentials {
+                    username = System.getenv("GITHUB_ACTOR")
+                    password = System.getenv("GITHUB_TOKEN")
+                }
+            }
+        }
     }
 }
 
@@ -124,7 +146,7 @@ tasks.withType(JavaCompile) {
 check.dependsOn jacocoTestReport
 jacocoTestReport {
     reports {
-        xml.enabled true
+        xml.required = true
         html.destination file("${buildDir}/jacocoHtml")
     }
 }
@@ -136,9 +158,12 @@ javadoc {
     }
 }
 
-if (project.hasProperty("signing.keyId")) {
+if (project.hasProperty("signingKey")) {
     apply plugin: "signing"
     signing {
+        def signingKey = findProperty("signingKey")
+        def signingPassword = findProperty("signingPassword")
+        useInMemoryPgpKeys(signingKey, signingPassword)
         sign publishing.publications.mavenJava
     }
 }
