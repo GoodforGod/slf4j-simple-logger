@@ -3,7 +3,7 @@
 ![GraalVM Enabled](https://img.shields.io/badge/GraalVM-Ready-orange?style=plastic)
 [![Minimum required Java version](https://img.shields.io/badge/Java-11%2B-blue?logo=openjdk)](https://openjdk.org/projects/jdk/11/)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.goodforgod/slf4j-simple-logger/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.goodforgod/slf4j-simple-logger)
-![Java CI](https://github.com/GoodforGod/slf4j-simple-logger/workflows/CI%20Master/badge.svg)
+[![Java CI](https://github.com/GoodforGod/slf4j-simple-logger/workflows/CI%20Master/badge.svg)](https://github.com/GoodforGod/slf4j-simple-logger/actions?query=workflow%3ACI+Master)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=GoodforGod_slf4j-simple-logger&metric=coverage)](https://sonarcloud.io/dashboard?id=GoodforGod_slf4j-simple-logger)
 [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=GoodforGod_slf4j-simple-logger&metric=sqale_rating)](https://sonarcloud.io/dashboard?id=GoodforGod_slf4j-simple-logger)
 [![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=GoodforGod_slf4j-simple-logger&metric=ncloc)](https://sonarcloud.io/dashboard?id=GoodforGod_slf4j-simple-logger)
