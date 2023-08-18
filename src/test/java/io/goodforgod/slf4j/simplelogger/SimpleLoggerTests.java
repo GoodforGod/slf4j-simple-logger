@@ -227,6 +227,7 @@ class SimpleLoggerTests extends Assertions {
         System.setOut(replacement);
         System.setProperty(SimpleLoggerProperties.SHOW_DATE_TIME, "false");
         System.setProperty(SimpleLoggerProperties.LEVEL_IN_BRACKETS, "true");
+        System.setProperty(SimpleLoggerProperties.SHOW_MARKERS, "true");
         System.setProperty(SimpleLoggerProperties.SHOW_LOG_NAME_LENGTH, "36");
 
         SimpleLogger.init();
