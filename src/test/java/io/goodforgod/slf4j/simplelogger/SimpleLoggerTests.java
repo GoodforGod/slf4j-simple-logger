@@ -3,6 +3,8 @@ package io.goodforgod.slf4j.simplelogger;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import org.junit.jupiter.api.*;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 import org.slf4j.event.Level;
 
 class SimpleLoggerTests extends Assertions {
@@ -218,6 +220,25 @@ class SimpleLoggerTests extends Assertions {
         final String res = bout.toString().strip();
 
         assertEquals("[WARN] i.g.s.simplelogger.SimpleLoggerTests - hello", res);
+    }
+
+    @Test
+    void markersShown() {
+        System.setOut(replacement);
+        System.setProperty(SimpleLoggerProperties.SHOW_DATE_TIME, "false");
+        System.setProperty(SimpleLoggerProperties.LEVEL_IN_BRACKETS, "true");
+        System.setProperty(SimpleLoggerProperties.SHOW_LOG_NAME_LENGTH, "36");
+
+        SimpleLogger.init();
+        SimpleLogger simpleLogger = new SimpleLogger(this.getClass().getName());
+
+        Marker myMarker = MarkerFactory.getMarker("MY_MARKER");
+        myMarker.add(MarkerFactory.getMarker("MY_INNER_MARKER"));
+        simpleLogger.warn(myMarker, "hello");
+        replacement.flush();
+        final String res = bout.toString().strip();
+
+        assertEquals("[WARN] [markers=MY_MARKER,MY_INNER_MARKER] i.g.s.simplelogger.SimpleLoggerTests - hello", res);
     }
 
     @Test

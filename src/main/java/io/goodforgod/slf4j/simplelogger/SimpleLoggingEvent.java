@@ -1,6 +1,7 @@
 package io.goodforgod.slf4j.simplelogger;
 
 import java.io.PrintWriter;
+import org.slf4j.Marker;
 import org.slf4j.event.Level;
 
 /**
@@ -15,12 +16,14 @@ final class SimpleLoggingEvent {
     private final String loggerName;
     private final Level level;
     private final String message;
+    private final Marker marker;
     private final Throwable throwable;
 
-    SimpleLoggingEvent(String loggerName, Level level, String message, Throwable throwable) {
+    SimpleLoggingEvent(String loggerName, Level level, String message, Marker marker, Throwable throwable) {
         this.loggerName = loggerName;
         this.level = level;
         this.message = message;
+        this.marker = marker;
         this.throwable = throwable;
     }
 
@@ -60,6 +63,10 @@ final class SimpleLoggingEvent {
 
     String message() {
         return message;
+    }
+
+    Marker marker() {
+        return marker;
     }
 
     Throwable throwable() {

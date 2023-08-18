@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONParser;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 import org.slf4j.event.Level;
 
 class JsonLoggerLayoutTests extends Assertions {
@@ -147,7 +149,7 @@ class JsonLoggerLayoutTests extends Assertions {
         final String time = res.substring(dateTimeStart + shift, dateTimeEnd);
         assertTrue(time.matches("\\d\\d\\d\\d"));
         assertEquals(
-                ",\"level\":\"INFO\",\"logger\":\"io.goodforgod.slf4j.simplelogger.JsonLoggerLayoutTests\",\"message\":\"hello\"}",
+                ",\"level\":\"INFO\",\"markers\":[],\"logger\":\"io.goodforgod.slf4j.simplelogger.JsonLoggerLayoutTests\",\"message\":\"hello\"}",
                 allExceptTime);
     }
 
@@ -172,7 +174,7 @@ class JsonLoggerLayoutTests extends Assertions {
         final String time = res.substring(dateTimeStart + shift, dateTimeEnd);
         assertNotEquals(0L, Long.parseLong(time));
         assertEquals(
-                ",\"level\":\"INFO\",\"logger\":\"io.goodforgod.slf4j.simplelogger.JsonLoggerLayoutTests\",\"message\":\"hello\"}",
+                ",\"level\":\"INFO\",\"markers\":[],\"logger\":\"io.goodforgod.slf4j.simplelogger.JsonLoggerLayoutTests\",\"message\":\"hello\"}",
                 allExceptTime);
     }
 
@@ -198,7 +200,7 @@ class JsonLoggerLayoutTests extends Assertions {
         final String time = res.substring(dateTimeStart + shift, dateTimeEnd);
         assertTrue(time.matches("\\d\\d:\\d\\d:\\d\\d"));
         assertEquals(
-                ",\"level\":\"INFO\",\"logger\":\"io.goodforgod.slf4j.simplelogger.JsonLoggerLayoutTests\",\"message\":\"hello\"}",
+                ",\"level\":\"INFO\",\"markers\":[],\"logger\":\"io.goodforgod.slf4j.simplelogger.JsonLoggerLayoutTests\",\"message\":\"hello\"}",
                 allExceptTime);
     }
 
@@ -227,7 +229,7 @@ class JsonLoggerLayoutTests extends Assertions {
         assertNotEquals(0L, Long.parseLong(unixTime));
         assertTrue(Long.parseLong(unixTime) < 1_000_000);
         assertEquals(
-                ",\"level\":\"INFO\",\"logger\":\"io.goodforgod.slf4j.simplelogger.JsonLoggerLayoutTests\",\"message\":\"hello\"}",
+                ",\"level\":\"INFO\",\"markers\":[],\"logger\":\"io.goodforgod.slf4j.simplelogger.JsonLoggerLayoutTests\",\"message\":\"hello\"}",
                 allExceptTime);
     }
 
@@ -245,7 +247,29 @@ class JsonLoggerLayoutTests extends Assertions {
         replacement.flush();
         final String res = bout.toString().strip();
 
-        assertEquals("{\"level\":\"WARN\",\"logger\":\"i.g.s.s.JsonLoggerLayoutTests\",\"message\":\"hello\"}", res);
+        assertEquals("{\"level\":\"WARN\",\"markers\":[],\"logger\":\"i.g.s.s.JsonLoggerLayoutTests\",\"message\":\"hello\"}",
+                res);
+    }
+
+    @Test
+    void checkMarkers() {
+        System.setOut(replacement);
+        System.setProperty(SimpleLoggerProperties.SHOW_DATE_TIME, "false");
+        System.setProperty(SimpleLoggerProperties.LEVEL_IN_BRACKETS, "true");
+        System.setProperty(SimpleLoggerProperties.SHOW_LOG_NAME_LENGTH, "36");
+
+        SimpleLogger.init();
+        SimpleLogger simpleLogger = new SimpleLogger(this.getClass().getName());
+
+        Marker myMarker = MarkerFactory.getMarker("MY_MARKER");
+        myMarker.add(MarkerFactory.getMarker("MY_INNER_MARKER"));
+        simpleLogger.warn(myMarker, "hello");
+        replacement.flush();
+        final String res = bout.toString().strip();
+
+        assertEquals(
+                "{\"level\":\"WARN\",\"markers\":[\"MY_MARKER\",\"MY_INNER_MARKER\"],\"logger\":\"i.g.s.s.JsonLoggerLayoutTests\",\"message\":\"hello\"}",
+                res);
     }
 
     @Test
@@ -265,7 +289,7 @@ class JsonLoggerLayoutTests extends Assertions {
         final String res = bout.toString().strip();
 
         assertEquals(
-                "{\"level\":\"INFO\",\"thread\":\"Test worker\",\"logger\":\"io.goodforgod.slf4j.simplelogger.JsonLoggerLayoutTests\",\"message\":\"hello\"}",
+                "{\"level\":\"INFO\",\"markers\":[],\"thread\":\"Test worker\",\"logger\":\"io.goodforgod.slf4j.simplelogger.JsonLoggerLayoutTests\",\"message\":\"hello\"}",
                 res);
     }
 

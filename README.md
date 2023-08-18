@@ -37,8 +37,6 @@ implementation "io.goodforgod:slf4j-simple-logger:2.0.0"
 </dependency>
 ```
 
-Based on SLF4J 1.7.36
-
 ## Content
 
 - [Logging example](#logging-example)
@@ -56,6 +54,7 @@ Based on SLF4J 1.7.36
   - [Callable and Supplier](#callable-and-supplier)
   - [Logger level change](#logger-level-change)
 - [Configuration](#configuration)
+- [Compatability](#slf4j-compatability)
 
 ## Logging example
 
@@ -63,17 +62,19 @@ Based on SLF4J 1.7.36
 
 Below is example of logged message in text format:
 ```java
-logger.debug("Message is printed for this logger");
+Marker myMarker = MarkerFactory.getMarker("my_marker");
+myMarker.add(MarkerFactory.getMarker("my_marker_ref"));
+logger.debug(myMarker, "Message is printed for this logger");
 ```
 
 Result logged message:
 ```text
-       Date Time        Implementation  Log Level         Environment variables       Thread         Logger Name                     Log Message
-           |                   |            |                        |                  |                |                               |
-___________|__________   ______|_______   __|__   ___________________|______________  __|__   ___________|___________    ________________|________________
-|                     | |              | |     | |                                  | |    | |                       |  |                                |
-|                     | |              | |     | |                                  | |    | |                       |  |                                |
-2022-02-23T15:43:40.331 [0.9.0-SNAPSHOT] [DEBUG] [SESSION=Console, PROCESSOR_LEVEL=6] [main] io.goodforgod.Application - Message is printed for this logger
+       Date Time        Implementation  Log Level              Markers                     Environment variables       Thread         Logger Name                     Log Message
+           |                   |            |                     |                                   |                   |                |                               |
+___________|__________   ______|_______   __|__   ________________|______________   __________________|_______________  __|__   ___________|___________    ________________|________________
+|                     | |              | |     | |                                |                                   | |    | |                       |  |                                |
+|                     | |              | |     | |                                |                                   | |    | |                       |  |                                |
+2022-02-23T15:43:40.331 [0.9.0-SNAPSHOT] [DEBUG] [markers=my_marker,my_marker_ref] [SESSION=Console, PROCESSOR_LEVEL=6] [main] io.goodforgod.Application - Message is printed for this logger
 ```
 
 ### Json format
@@ -81,7 +82,9 @@ ___________|__________   ______|_______   __|__   ___________________|__________
 Below is example of logged message in json format:
 ```java
 Exception e = new RuntimeException();
-logger.debug("Message is printed for this logger", e);
+Marker myMarker = MarkerFactory.getMarker("my_marker");
+myMarker.add(MarkerFactory.getMarker("my_marker_ref"));
+logger.debug(myMarker, "Message is printed for this logger", e);
 ```
 
 Result logged message:
@@ -92,6 +95,7 @@ Result logged message:
   "level": "DEBUG",
   "thread": "main",
   "logger": "io.goodforgod.Application",
+  "markers": ["my_marker", "my_marker_ref"],
   "environment": [
     {
       "name": "SESSION",
@@ -254,6 +258,8 @@ org.slf4j.simpleLogger.showImplementationVersion=false
 org.slf4j.simpleLogger.levelInBrackets=true
 # Set to true if to show current thread in output. (default false)
 org.slf4j.simpleLogger.showThreadName=false
+# Set to true if to show marker parameter values. (default false)
+org.slf4j.simpleLogger.showMarkers=false
 # Set to true to show only class name in output. (default false)
 org.slf4j.simpleLogger.showShortLogName=false
 # Set to true if to show full class name in output (package + class name). (default true)
@@ -334,6 +340,8 @@ org.slf4j.simpleLogger.showImplementationVersion=false
 org.slf4j.simpleLogger.levelInBrackets=true
 # Set to true if to show current thread in output. (default false)
 org.slf4j.simpleLogger.showThreadName=false
+# Set to true if to show marker parameter values. (default false)
+org.slf4j.simpleLogger.showMarkers=false
 # Set to true to show only class name in output. (default false)
 org.slf4j.simpleLogger.showShortLogName=false
 # Set to true if to show full class name in output (package + class name). (default true)
@@ -362,11 +370,11 @@ org.slf4j.simpleLogger.logFileError=System.out
 org.slf4j.simpleLogger.log.path.to.class=WARN
 ```
 
-## SFL4J Compatability
+## SLF4J Compatability
 
-Starting from version *2.0.0* library ships for [SLF4J 2.0.0+](https://www.slf4j.org/manual.html).
+Starting from version *2.0.0* library ships for [SLF4J 2.0.0+](https://www.slf4j.org/manual.html). (Based on SLF4J 2.0.7+)
 
-Starting from version *1.0.0* library ships for [SLF4J 1.7.5+](https://www.slf4j.org/manual.html).
+Starting from version *1.0.0* library ships for [SLF4J 1.7.5+](https://www.slf4j.org/manual.html). (Based on SLF4J 1.7.36+)
 
 ## License
 

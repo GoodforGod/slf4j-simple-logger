@@ -5,6 +5,7 @@ import java.util.IdentityHashMap;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.slf4j.Marker;
 
 /**
  * JSON logger layout implementations
@@ -127,6 +128,35 @@ final class JsonLoggerLayouts {
         @Override
         public int order() {
             return SimpleLoggerLayouts.LayoutOrder.LEVEL.ordinal();
+        }
+    }
+
+    static final class MarkerLayout implements Layout {
+
+        @Override
+        public void print(SimpleLoggingEvent event) {
+            event.append("\"markers\":[");
+            if (event.marker() != null) {
+                event.append('\"');
+                event.append(event.marker().getName());
+                event.append('\"');
+                renderMarkers(event, event.marker());
+            }
+            event.append(']');
+        }
+
+        private static void renderMarkers(SimpleLoggingEvent event, Marker marker) {
+            marker.iterator().forEachRemaining(m -> {
+                event.append(",\"");
+                event.append(m.getName());
+                event.append("\"");
+                renderMarkers(event, m);
+            });
+        }
+
+        @Override
+        public int order() {
+            return SimpleLoggerLayouts.LayoutOrder.MARKER.ordinal();
         }
     }
 

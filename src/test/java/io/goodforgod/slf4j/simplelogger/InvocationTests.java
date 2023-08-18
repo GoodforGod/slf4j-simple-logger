@@ -163,7 +163,7 @@ class InvocationTests extends Assertions {
         replacement.flush();
 
         final String res = bout.toString().strip();
-        assertTrue(res.startsWith("[INFO] testMarker - hello"), res);
+        assertTrue(res.startsWith("[INFO] [markers=BLUE] testMarker - hello"), res);
     }
 
     @Test
