@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONParser;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 import org.slf4j.event.Level;
 
 class JsonLoggerLayoutTests extends Assertions {
@@ -132,6 +134,7 @@ class JsonLoggerLayoutTests extends Assertions {
         System.setProperty(SimpleLoggerProperties.LEVEL_IN_BRACKETS, "true");
         System.setProperty(SimpleLoggerProperties.DATE_TIME_FORMAT, "uuuu");
         System.setProperty(SimpleLoggerProperties.DATE_TIME_OUTPUT_TYPE, "DATE_TIME");
+        System.setProperty(SimpleLoggerProperties.SHOW_MARKERS, "false");
 
         SimpleLogger.init();
         SimpleLogger simpleLogger = new SimpleLogger(this.getClass().getName());
@@ -157,6 +160,7 @@ class JsonLoggerLayoutTests extends Assertions {
         System.setProperty(SimpleLoggerProperties.SHOW_DATE_TIME, "true");
         System.setProperty(SimpleLoggerProperties.DATE_TIME_OUTPUT_TYPE, "UNIX_TIME");
         System.setProperty(SimpleLoggerProperties.LEVEL_IN_BRACKETS, "true");
+        System.setProperty(SimpleLoggerProperties.SHOW_MARKERS, "false");
 
         SimpleLogger.init();
         SimpleLogger simpleLogger = new SimpleLogger(this.getClass().getName());
@@ -183,6 +187,7 @@ class JsonLoggerLayoutTests extends Assertions {
         System.setProperty(SimpleLoggerProperties.DATE_TIME_OUTPUT_TYPE, "TIME");
         System.setProperty(SimpleLoggerProperties.DATE_TIME_FORMAT, "HH:mm:ss");
         System.setProperty(SimpleLoggerProperties.LEVEL_IN_BRACKETS, "true");
+        System.setProperty(SimpleLoggerProperties.SHOW_MARKERS, "false");
 
         SimpleLogger.init();
         SimpleLogger simpleLogger = new SimpleLogger(this.getClass().getName());
@@ -209,6 +214,7 @@ class JsonLoggerLayoutTests extends Assertions {
         System.setProperty(SimpleLoggerProperties.DATE_TIME_OUTPUT_TYPE, "MILLIS_FROM_START");
         System.setProperty(SimpleLoggerProperties.LEVEL_IN_BRACKETS, "true");
         System.setProperty(SimpleLoggerProperties.DEFAULT_LOG_LEVEL, "INFO");
+        System.setProperty(SimpleLoggerProperties.SHOW_MARKERS, "false");
 
         SimpleLogger.init();
         SimpleLogger simpleLogger = new SimpleLogger(this.getClass().getName());
@@ -237,6 +243,7 @@ class JsonLoggerLayoutTests extends Assertions {
         System.setProperty(SimpleLoggerProperties.SHOW_DATE_TIME, "false");
         System.setProperty(SimpleLoggerProperties.LEVEL_IN_BRACKETS, "true");
         System.setProperty(SimpleLoggerProperties.SHOW_LOG_NAME_LENGTH, "36");
+        System.setProperty(SimpleLoggerProperties.SHOW_MARKERS, "false");
 
         SimpleLogger.init();
         SimpleLogger simpleLogger = new SimpleLogger(this.getClass().getName());
@@ -245,7 +252,30 @@ class JsonLoggerLayoutTests extends Assertions {
         replacement.flush();
         final String res = bout.toString().strip();
 
-        assertEquals("{\"level\":\"WARN\",\"logger\":\"i.g.s.s.JsonLoggerLayoutTests\",\"message\":\"hello\"}", res);
+        assertEquals("{\"level\":\"WARN\",\"logger\":\"i.g.s.s.JsonLoggerLayoutTests\",\"message\":\"hello\"}",
+                res);
+    }
+
+    @Test
+    void checkMarkers() {
+        System.setOut(replacement);
+        System.setProperty(SimpleLoggerProperties.SHOW_DATE_TIME, "false");
+        System.setProperty(SimpleLoggerProperties.LEVEL_IN_BRACKETS, "true");
+        System.setProperty(SimpleLoggerProperties.SHOW_MARKERS, "true");
+        System.setProperty(SimpleLoggerProperties.SHOW_LOG_NAME_LENGTH, "36");
+
+        SimpleLogger.init();
+        SimpleLogger simpleLogger = new SimpleLogger(this.getClass().getName());
+
+        Marker myMarker = MarkerFactory.getMarker("MY_MARKER");
+        myMarker.add(MarkerFactory.getMarker("MY_INNER_MARKER"));
+        simpleLogger.warn(myMarker, "hello");
+        replacement.flush();
+        final String res = bout.toString().strip();
+
+        assertEquals(
+                "{\"level\":\"WARN\",\"markers\":[\"MY_MARKER\",\"MY_INNER_MARKER\"],\"logger\":\"i.g.s.s.JsonLoggerLayoutTests\",\"message\":\"hello\"}",
+                res);
     }
 
     @Test
@@ -255,6 +285,7 @@ class JsonLoggerLayoutTests extends Assertions {
         System.setProperty(SimpleLoggerProperties.SHOW_THREAD_NAME, "true");
         System.setProperty(SimpleLoggerProperties.SHOW_DATE_TIME, "false");
         System.setProperty(SimpleLoggerProperties.LEVEL_IN_BRACKETS, "false");
+        System.setProperty(SimpleLoggerProperties.SHOW_MARKERS, "false");
         SimpleLogger.init();
         SimpleLogger simpleLogger = new SimpleLogger(this.getClass().getName());
         // change reference to original before logging
@@ -275,6 +306,7 @@ class JsonLoggerLayoutTests extends Assertions {
         System.setProperty(SimpleLoggerProperties.SHOW_THREAD_NAME, "true");
         System.setProperty(SimpleLoggerProperties.SHOW_DATE_TIME, "false");
         System.setProperty(SimpleLoggerProperties.LEVEL_IN_BRACKETS, "false");
+        System.setProperty(SimpleLoggerProperties.SHOW_MARKERS, "false");
 
         SimpleLogger.init();
         SimpleLogger simpleLogger = new SimpleLogger(this.getClass().getName());

@@ -4,10 +4,11 @@ import static io.goodforgod.slf4j.simplelogger.SimpleLoggerProperties.PREFIX_LOG
 
 import java.util.List;
 import org.slf4j.Logger;
+import org.slf4j.Marker;
 import org.slf4j.event.Level;
 import org.slf4j.event.LoggingEvent;
 import org.slf4j.helpers.FormattingTuple;
-import org.slf4j.helpers.MarkerIgnoringBase;
+import org.slf4j.helpers.LegacyAbstractLogger;
 
 /**
  * <p>
@@ -116,7 +117,7 @@ import org.slf4j.helpers.MarkerIgnoringBase;
  * @author Anton Kurako (GoodforGod)
  * @since 09.10.2021
  */
-public final class SimpleLogger extends MarkerIgnoringBase {
+public final class SimpleLogger extends LegacyAbstractLogger {
 
     static final int LOG_LEVEL_OFF = Level.ERROR.toInt() + 10;
 
@@ -187,6 +188,10 @@ public final class SimpleLogger extends MarkerIgnoringBase {
         return levelString;
     }
 
+    private void log(Level level, String message, Throwable throwable) {
+        log(level, message, null, throwable);
+    }
+
     /**
      * This is our internal implementation for logging regular (non-parameterized) log messages.
      *
@@ -194,10 +199,10 @@ public final class SimpleLogger extends MarkerIgnoringBase {
      * @param message   The message itself
      * @param throwable The exception whose stack trace should be logged
      */
-    private void log(Level level, String message, Throwable throwable) {
+    private void log(Level level, String message, Marker marker, Throwable throwable) {
         final SimpleLoggingEvent event = (CONFIG.isShowShortLogName())
-                ? new SimpleLoggingEvent(logNameShort, level, message, throwable)
-                : new SimpleLoggingEvent(logName, level, message, throwable);
+                ? new SimpleLoggingEvent(logNameShort, level, message, marker, throwable)
+                : new SimpleLoggingEvent(logName, level, message, marker, throwable);
 
         final List<Layout> layouts = CONFIG.getLayouts();
         for (Layout layout : layouts) {
@@ -253,7 +258,7 @@ public final class SimpleLogger extends MarkerIgnoringBase {
             return;
         }
 
-        FormattingTuple tp = MessageFormatter.formatArray(format, arguments);
+        final FormattingTuple tp = MessageFormatter.formatArray(format, arguments);
         log(level, tp.getMessage(), tp.getThrowable());
     }
 
@@ -266,6 +271,21 @@ public final class SimpleLogger extends MarkerIgnoringBase {
      */
     private boolean isLevelEnabled(Level logLevel) {
         return (logLevel.toInt() >= currentLogLevel);
+    }
+
+    @Override
+    protected String getFullyQualifiedCallerName() {
+        return SimpleLogger.class.getName();
+    }
+
+    @Override
+    protected void handleNormalizedLoggingCall(Level level,
+                                               Marker marker,
+                                               String messagePattern,
+                                               Object[] arguments,
+                                               Throwable throwable) {
+        final FormattingTuple tp = MessageFormatter.formatArray(messagePattern, arguments);
+        log(level, tp.getMessage(), marker, throwable);
     }
 
     /**

@@ -1,6 +1,7 @@
 package io.goodforgod.slf4j.simplelogger;
 
 import java.time.*;
+import org.slf4j.Marker;
 import org.slf4j.event.Level;
 
 /**
@@ -20,6 +21,7 @@ final class SimpleLoggerLayouts {
         DATE_TIME,
         IMPLEMENTATION,
         LEVEL,
+        MARKER,
         ENVIRONMENT,
         THREAD,
         LOGGER_NAME,
@@ -219,6 +221,32 @@ final class SimpleLoggerLayouts {
         @Override
         public int order() {
             return LayoutOrder.LEVEL.ordinal();
+        }
+    }
+
+    static class MarkerLayout implements Layout {
+
+        @Override
+        public void print(SimpleLoggingEvent event) {
+            if (event.marker() != null) {
+                event.append("[markers=");
+                event.append(event.marker().getName());
+                renderMarkers(event, event.marker());
+                event.append("] ");
+            }
+        }
+
+        private static void renderMarkers(SimpleLoggingEvent event, Marker marker) {
+            marker.iterator().forEachRemaining(m -> {
+                event.append(',');
+                event.append(m.getName());
+                renderMarkers(event, m);
+            });
+        }
+
+        @Override
+        public int order() {
+            return LayoutOrder.MARKER.ordinal();
         }
     }
 

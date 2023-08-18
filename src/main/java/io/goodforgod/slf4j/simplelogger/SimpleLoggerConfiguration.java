@@ -42,6 +42,7 @@ final class SimpleLoggerConfiguration {
     private static final boolean LEVEL_IN_BRACKETS_DEFAULT = true;
     private static final boolean SHOW_THREAD_NAME_DEFAULT = false;
     private static final boolean SHOW_LOG_NAME_DEFAULT = true;
+    private static final boolean SHOW_MARKERS_DEFAULT = false;
     private static final boolean SHOW_IMPLEMENTATION_VERSION_DEFAULT = false;
     private static final boolean SHOW_SHORT_LOG_NAME_DEFAULT = false;
     private static final boolean SHOW_DATE_TIME_DEFAULT = true;
@@ -64,8 +65,12 @@ final class SimpleLoggerConfiguration {
     private DateTimeOutputType dateTimeOutputType = DateTimeOutputType.DATE_TIME;
     private DateTimeFormatter dateTimeFormatter;
     private int defaultLogLevel = Level.INFO.toInt();
+    private boolean showDateTime = SHOW_DATE_TIME_DEFAULT;
     private boolean showShortLogName = SHOW_SHORT_LOG_NAME_DEFAULT;
     private boolean showLogName = SHOW_LOG_NAME_DEFAULT;
+    private boolean showThreadName = SHOW_THREAD_NAME_DEFAULT;
+    private boolean showLevelInBrackets = LEVEL_IN_BRACKETS_DEFAULT;
+    private boolean showMarker = SHOW_MARKERS_DEFAULT;
     private Integer logNameLength;
     private List<String> environments;
     private boolean environmentShowName;
@@ -131,7 +136,11 @@ final class SimpleLoggerConfiguration {
         }
 
         this.showShortLogName = getBooleanProperty(SHOW_SHORT_LOG_NAME, SHOW_SHORT_LOG_NAME_DEFAULT);
+        this.showDateTime = getBooleanProperty(SHOW_DATE_TIME, SHOW_DATE_TIME_DEFAULT);
         this.showLogName = getBooleanProperty(SHOW_LOG_NAME, SimpleLoggerConfiguration.SHOW_LOG_NAME_DEFAULT);
+        this.showThreadName = getBooleanProperty(SHOW_THREAD_NAME, SHOW_THREAD_NAME_DEFAULT);
+        this.showLevelInBrackets = getBooleanProperty(LEVEL_IN_BRACKETS, LEVEL_IN_BRACKETS_DEFAULT);
+        this.showMarker = getBooleanProperty(SHOW_MARKERS, SHOW_MARKERS_DEFAULT);
         this.logNameLength = getIntProperty(SHOW_LOG_NAME_LENGTH)
                 .filter(i -> i > 0)
                 .orElse(null);
@@ -322,7 +331,6 @@ final class SimpleLoggerConfiguration {
 
     private List<Layout> computeTextLayouts() {
         final List<Layout> loggerLayouts = new ArrayList<>();
-        final boolean showDateTime = getBooleanProperty(SHOW_DATE_TIME, SHOW_DATE_TIME_DEFAULT);
         if (showDateTime) {
             loggerLayouts.add(getDateTimeTextLayout(dateTimeOutputType));
         }
@@ -335,9 +343,12 @@ final class SimpleLoggerConfiguration {
             loggerLayouts.add(new SimpleLoggerLayouts.ImplementationLayout(this));
         }
 
-        final boolean showThreadName = getBooleanProperty(SHOW_THREAD_NAME, SHOW_THREAD_NAME_DEFAULT);
         if (showThreadName) {
             loggerLayouts.add(new SimpleLoggerLayouts.ThreadLayout());
+        }
+
+        if (showMarker) {
+            loggerLayouts.add(new SimpleLoggerLayouts.MarkerLayout());
         }
 
         if (environmentsOnStartText != null) {
@@ -346,8 +357,7 @@ final class SimpleLoggerConfiguration {
             loggerLayouts.add(new SimpleLoggerLayouts.EnvironmentLayout(this));
         }
 
-        final boolean levelInBrackets = getBooleanProperty(LEVEL_IN_BRACKETS, LEVEL_IN_BRACKETS_DEFAULT);
-        if (levelInBrackets) {
+        if (showLevelInBrackets) {
             loggerLayouts.add(new SimpleLoggerLayouts.LevelLayout("[TRACE] ", "[DEBUG] ", "[INFO] ", "[WARN] ", "[ERROR] "));
         } else {
             loggerLayouts.add(new SimpleLoggerLayouts.LevelLayout("TRACE ", "DEBUG ", "INFO ", "WARN ", "ERROR "));
@@ -367,7 +377,6 @@ final class SimpleLoggerConfiguration {
 
     private List<Layout> computeJsonLayouts() {
         final List<Layout> loggerLayouts = new ArrayList<>();
-        final boolean showDateTime = getBooleanProperty(SHOW_DATE_TIME, SHOW_DATE_TIME_DEFAULT);
         if (showDateTime) {
             loggerLayouts.add(getDateTimeJsonLayout(dateTimeOutputType));
         }
@@ -380,9 +389,12 @@ final class SimpleLoggerConfiguration {
             loggerLayouts.add(new JsonLoggerLayouts.ImplementationLayout(this));
         }
 
-        final boolean showThreadName = getBooleanProperty(SHOW_THREAD_NAME, SHOW_THREAD_NAME_DEFAULT);
         if (showThreadName) {
             loggerLayouts.add(new JsonLoggerLayouts.ThreadLayout());
+        }
+
+        if (showMarker) {
+            loggerLayouts.add(new JsonLoggerLayouts.MarkerLayout());
         }
 
         if (environmentsOnStartJson != null) {

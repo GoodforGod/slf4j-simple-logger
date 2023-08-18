@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.event.EventRecodingLogger;
+import org.slf4j.event.EventRecordingLogger;
 import org.slf4j.helpers.SubstituteLogger;
 
 abstract public class MultithreadedInitializationTests extends Assertions {
@@ -58,7 +58,7 @@ abstract public class MultithreadedInitializationTests extends Assertions {
 
                 try {
                     delegate.setAccessible(true);
-                    if (delegate.invoke(substLogger) instanceof EventRecodingLogger) {
+                    if (delegate.invoke(substLogger) instanceof EventRecordingLogger) {
                         fail("substLogger " + substLogger.getName() + " has a delegate of type EventRecodingLogger");
                     }
                 } catch (IllegalAccessException | InvocationTargetException e) {
