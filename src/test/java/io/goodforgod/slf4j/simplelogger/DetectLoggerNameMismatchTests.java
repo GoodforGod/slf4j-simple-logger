@@ -72,7 +72,7 @@ class DetectLoggerNameMismatchTests extends Assertions {
         assertEquals(
                 "SLF4J: Detected logger name mismatch. Given name: \"java.lang.String\"; computed name: \"io.goodforgod.slf4j.simplelogger.DetectLoggerNameMismatchTests\".",
                 lines[0].strip());
-        assertEquals("SLF4J: See http://www.slf4j.org/codes.html#loggerNameMismatch for an explanation", lines[1].strip());
+        assertEquals("SLF4J: See https://www.slf4j.org/codes.html#loggerNameMismatch for an explanation", lines[1].strip());
     }
 
     /*

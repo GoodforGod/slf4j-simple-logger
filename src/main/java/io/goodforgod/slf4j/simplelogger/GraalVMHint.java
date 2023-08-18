@@ -2,9 +2,9 @@ package io.goodforgod.slf4j.simplelogger;
 
 import io.goodforgod.graalvm.hint.annotation.InitializationHint;
 import org.slf4j.LoggerFactory;
-import org.slf4j.impl.StaticLoggerBinder;
-import org.slf4j.impl.StaticMDCBinder;
-import org.slf4j.impl.StaticMarkerBinder;
+import org.slf4j.LoggerFactoryFriend;
+import org.slf4j.MDC;
+import org.slf4j.MarkerFactory;
 
 /**
  * @author Anton Kurako (GoodforGod)
@@ -13,15 +13,16 @@ import org.slf4j.impl.StaticMarkerBinder;
 @InitializationHint(value = InitializationHint.InitPhase.BUILD,
         types = {
                 LoggerFactory.class,
-                StaticLoggerBinder.class,
-                StaticMarkerBinder.class,
-                StaticMDCBinder.class,
+                LoggerFactoryFriend.class,
+                MarkerFactory.class,
+                MDC.class,
+                MDC.MDCCloseable.class,
                 SimpleLoggerConfiguration.class,
                 SimpleLogger.class,
                 SimpleLoggerLayouts.class,
                 JsonLoggerLayouts.class,
         },
-        typeNames = "io.goodforgod.slf4j.simplelogger")
+        typeNames = { "io.goodforgod.slf4j.simplelogger", "org.slf4j.event", "org.slf4j.helpers", "org.slf4j.spi" })
 final class GraalVMHint {
 
     private GraalVMHint() {}

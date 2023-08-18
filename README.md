@@ -25,7 +25,7 @@ And more...
 
 [**Gradle**](https://mvnrepository.com/artifact/io.goodforgod/slf4j-simple-logger)
 ```groovy
-implementation "io.goodforgod:slf4j-simple-logger:1.0.0"
+implementation "io.goodforgod:slf4j-simple-logger:2.0.0"
 ```
 
 [**Maven**](https://mvnrepository.com/artifact/io.goodforgod/slf4j-simple-logger)
@@ -33,7 +33,7 @@ implementation "io.goodforgod:slf4j-simple-logger:1.0.0"
 <dependency>
     <groupId>io.goodforgod</groupId>
     <artifactId>slf4j-simple-logger</artifactId>
-    <version>1.0.0</version>
+    <version>2.0.0</version>
 </dependency>
 ```
 
@@ -361,6 +361,12 @@ org.slf4j.simpleLogger.logFileError=System.out
 # Set log level for custom loggers
 org.slf4j.simpleLogger.log.path.to.class=WARN
 ```
+
+## SFL4J Compatability
+
+Starting from version *2.0.0* library ships for [SLF4J 2.0.0+](https://www.slf4j.org/manual.html).
+
+Starting from version *1.0.0* library ships for [SLF4J 1.7.5+](https://www.slf4j.org/manual.html).
 
 ## License
 
