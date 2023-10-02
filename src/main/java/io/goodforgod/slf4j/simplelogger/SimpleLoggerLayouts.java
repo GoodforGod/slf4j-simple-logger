@@ -1,6 +1,11 @@
 package io.goodforgod.slf4j.simplelogger;
 
-import java.time.*;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.util.Map;
+import org.slf4j.MDC;
 import org.slf4j.event.Level;
 
 /**
@@ -21,6 +26,7 @@ final class SimpleLoggerLayouts {
         IMPLEMENTATION,
         LEVEL,
         ENVIRONMENT,
+        MDC,
         THREAD,
         LOGGER_NAME,
         MESSAGE,
@@ -73,8 +79,8 @@ final class SimpleLoggerLayouts {
 
         /**
          * @param eventCreatMillis from epoch
-         * @see LocalTime#ofNanoOfDay(long)
          * @return formatter date time
+         * @see LocalTime#ofNanoOfDay(long)
          */
         @Override
         String format(long eventCreatMillis) {
@@ -106,8 +112,8 @@ final class SimpleLoggerLayouts {
 
         /**
          * @param eventCreatMillis from epoch
-         * @see LocalTime#ofInstant(Instant, ZoneId)
          * @return formatter date time
+         * @see LocalTime#ofInstant(Instant, ZoneId)
          */
         @Override
         String format(long eventCreatMillis) {
@@ -281,6 +287,37 @@ final class SimpleLoggerLayouts {
         @Override
         public int order() {
             return LayoutOrder.ENVIRONMENT.ordinal();
+        }
+    }
+
+    static final class MDCLayout implements Layout {
+
+        @Override
+        public void print(SimpleLoggingEvent event) {
+            final Map<String, String> context = MDC.getCopyOfContextMap();
+            if (context != null && !context.isEmpty()) {
+                boolean bracketUsed = false;
+                for (var entry : context.entrySet()) {
+                    if (!bracketUsed) {
+                        event.append('[');
+                        bracketUsed = true;
+                    } else {
+                        event.append(", ");
+                    }
+
+                    event.append(entry.getKey());
+                    event.append('=');
+                    event.append(entry.getValue());
+                }
+                if (bracketUsed) {
+                    event.append("] ");
+                }
+            }
+        }
+
+        @Override
+        public int order() {
+            return LayoutOrder.MDC.ordinal();
         }
     }
 

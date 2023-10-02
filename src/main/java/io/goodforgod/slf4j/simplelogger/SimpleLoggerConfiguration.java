@@ -2,7 +2,10 @@ package io.goodforgod.slf4j.simplelogger;
 
 import static io.goodforgod.slf4j.simplelogger.SimpleLoggerProperties.*;
 
-import java.io.*;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.AccessController;
@@ -70,6 +73,7 @@ final class SimpleLoggerConfiguration {
     private List<String> environments;
     private boolean environmentShowName;
     private boolean environmentShowNullable;
+    private boolean showMDC;
 
     private List<Layout> layouts;
 
@@ -139,6 +143,7 @@ final class SimpleLoggerConfiguration {
         this.environments = computeEnvironments();
         this.environmentShowName = getBooleanProperty(ENVIRONMENT_SHOW_NAME, true);
         this.environmentShowNullable = getBooleanProperty(ENVIRONMENT_SHOW_NULLABLE, false);
+        this.showMDC = getBooleanProperty(SHOW_MDC, false);
     }
 
     /**
@@ -346,6 +351,10 @@ final class SimpleLoggerConfiguration {
             loggerLayouts.add(new SimpleLoggerLayouts.EnvironmentLayout(this));
         }
 
+        if (showMDC) {
+            loggerLayouts.add(new SimpleLoggerLayouts.MDCLayout());
+        }
+
         final boolean levelInBrackets = getBooleanProperty(LEVEL_IN_BRACKETS, LEVEL_IN_BRACKETS_DEFAULT);
         if (levelInBrackets) {
             loggerLayouts.add(new SimpleLoggerLayouts.LevelLayout("[TRACE] ", "[DEBUG] ", "[INFO] ", "[WARN] ", "[ERROR] "));
@@ -389,6 +398,10 @@ final class SimpleLoggerConfiguration {
             loggerLayouts.add(new JsonLoggerLayouts.EnvironmentOnStartLayout(this));
         } else if (!environments.isEmpty()) {
             loggerLayouts.add(new JsonLoggerLayouts.EnvironmentLayout(this));
+        }
+
+        if (showMDC) {
+            loggerLayouts.add(new JsonLoggerLayouts.MDCLayout());
         }
 
         loggerLayouts.add(new JsonLoggerLayouts.LevelLayout("TRACE", "DEBUG", "INFO", "WARN", "ERROR"));
@@ -441,6 +454,10 @@ final class SimpleLoggerConfiguration {
 
     boolean isEnvironmentShowName() {
         return environmentShowName;
+    }
+
+    boolean showMDC() {
+        return showMDC;
     }
 
     List<Layout> getLayouts() {

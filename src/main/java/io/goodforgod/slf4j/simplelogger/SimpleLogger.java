@@ -171,7 +171,7 @@ public final class SimpleLogger extends MarkerIgnoringBase {
     void computeCurrentLogLevel() {
         final String levelString = recursivelyComputeLevelString();
         this.currentLogLevel = (levelString != null)
-                ? SimpleLoggerConfiguration.tryStringToLevel(levelString).orElse(Level.INFO.toInt())
+                ? SimpleLoggerConfiguration.tryStringToLevel(levelString).orElse(CONFIG.getDefaultLogLevel())
                 : CONFIG.getDefaultLogLevel();
     }
 

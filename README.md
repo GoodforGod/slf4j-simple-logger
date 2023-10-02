@@ -25,7 +25,7 @@ And more...
 
 [**Gradle**](https://mvnrepository.com/artifact/io.goodforgod/slf4j-simple-logger)
 ```groovy
-implementation "io.goodforgod:slf4j-simple-logger:1.0.0"
+implementation "io.goodforgod:slf4j-simple-logger:1.1.0"
 ```
 
 [**Maven**](https://mvnrepository.com/artifact/io.goodforgod/slf4j-simple-logger)
@@ -33,7 +33,7 @@ implementation "io.goodforgod:slf4j-simple-logger:1.0.0"
 <dependency>
     <groupId>io.goodforgod</groupId>
     <artifactId>slf4j-simple-logger</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
 </dependency>
 ```
 
@@ -52,6 +52,7 @@ Based on SLF4J 1.7.36
   - [Environment logging](#environment-logging)
   - [Environment configuration](#environment-configuration)
     - [Runtime refresh](#runtime-refresh)
+  - [MDC](#MDC)
   - [Output split](#output-split)
   - [Callable and Supplier](#callable-and-supplier)
   - [Logger level change](#logger-level-change)
@@ -63,17 +64,18 @@ Based on SLF4J 1.7.36
 
 Below is example of logged message in text format:
 ```java
+MDC.put("userId", "12345");
 logger.debug("Message is printed for this logger");
 ```
 
 Result logged message:
 ```text
-       Date Time        Implementation  Log Level         Environment variables       Thread         Logger Name                     Log Message
-           |                   |            |                        |                  |                |                               |
-___________|__________   ______|_______   __|__   ___________________|______________  __|__   ___________|___________    ________________|________________
-|                     | |              | |     | |                                  | |    | |                       |  |                                |
-|                     | |              | |     | |                                  | |    | |                       |  |                                |
-2022-02-23T15:43:40.331 [0.9.0-SNAPSHOT] [DEBUG] [SESSION=Console, PROCESSOR_LEVEL=6] [main] io.goodforgod.Application - Message is printed for this logger
+       Date Time        Implementation  Log Level         Environment variables            MDC      Thread         Logger Name                     Log Message
+           |                   |            |                        |                      |          |                |                               |
+___________|__________   ______|_______   __|__   ___________________|______________  ______|______  __|__   ___________|___________    ________________|________________
+|                     | |              | |     | |                                  | |            | |    | |                       |  |                                |
+|                     | |              | |     | |                                  | |            | |    | |                       |  |                                |
+2022-02-23T15:43:40.331 [1.1.0-SNAPSHOT] [DEBUG] [SESSION=Console, PROCESSOR_LEVEL=6] [userId=12345] [main] io.goodforgod.Application - Message is printed for this logger
 ```
 
 ### Json format
@@ -81,6 +83,7 @@ ___________|__________   ______|_______   __|__   ___________________|__________
 Below is example of logged message in json format:
 ```java
 Exception e = new RuntimeException();
+MDC.put("userId", "12345");
 logger.debug("Message is printed for this logger", e);
 ```
 
@@ -88,7 +91,7 @@ Result logged message:
 ```json
 {
   "timestamp": "2022-02-23T15:43:40.331",
-  "implementation": "0.9.0-SNAPSHOT",
+  "implementation": "1.1.0-SNAPSHOT",
   "level": "DEBUG",
   "thread": "main",
   "logger": "io.goodforgod.Application",
@@ -102,6 +105,9 @@ Result logged message:
       "value": "6"
     }
   ],
+  "context": {
+    "userId": "12345"
+  },
   "message": "Message is printed for this logger",
   "exception": "Ops",
   "stacktrace": [
@@ -266,7 +272,21 @@ org.slf4j.simpleLogger.environments=SESSION_ID,ORIGIN,HOST
 org.slf4j.simpleLogger.environmentShowNullable=false
 # Set to true to show environment names. (default false)
 org.slf4j.simpleLogger.environmentShowName=false
+# Set to true to show MDC context. (default false)
+org.slf4j.simpleLogger.showMDC=false
 ```
+
+### MDC
+
+There is possibility to output [MDC context](https://www.slf4j.org/api/org/slf4j/MDC.html), is `false` by default
+
+If configuration is:
+```properties
+# Set to true to show MDC context. (default false)
+org.slf4j.simpleLogger.showMDC=false
+```
+
+Then all logs of TRACE, DEBUG, INFO will be forwarded to *System.out* and all WARN & ERROR logs will be forwarded to *System.error*.
 
 ### Output split
 
@@ -350,6 +370,8 @@ org.slf4j.simpleLogger.environmentShowNullable=false
 org.slf4j.simpleLogger.environmentShowName=false
 # Set to true to caches environment values on configuration initialization and then always uses them when logging. (default false)
 org.slf4j.simpleLogger.environmentRememberOnStart=false
+# Set to true to show MDC context. (default false)
+org.slf4j.simpleLogger.showMDC=false
 # Set default logger output file or System.out or System.error (default System.out)
 org.slf4j.simpleLogger.logFile=System.out
 # Set logger WARN logs output file or System.out or System.error (default System.out)
