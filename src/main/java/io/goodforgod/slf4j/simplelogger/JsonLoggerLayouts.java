@@ -1,9 +1,6 @@
 package io.goodforgod.slf4j.simplelogger;
 
-import java.util.Collections;
-import java.util.IdentityHashMap;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import org.slf4j.MDC;
 
@@ -17,6 +14,10 @@ final class JsonLoggerLayouts {
 
     private JsonLoggerLayouts() {}
 
+    interface SeparatorLayout extends Layout {
+
+    }
+
     static final class DateTimeLayout extends SimpleLoggerLayouts.DateTimeLayout {
 
         DateTimeLayout(SimpleLoggerConfiguration configuration) {
@@ -27,7 +28,7 @@ final class JsonLoggerLayouts {
         public void print(SimpleLoggingEvent event) {
             event.append("\"timestamp\":\"");
             event.append(getEventTime(event));
-            event.append("\"");
+            event.append('\"');
         }
 
         @Override
@@ -46,7 +47,7 @@ final class JsonLoggerLayouts {
         public void print(SimpleLoggingEvent event) {
             event.append("\"timestamp\":\"");
             event.append(getEventTime(event));
-            event.append("\"");
+            event.append('\"');
         }
 
         @Override
@@ -61,7 +62,7 @@ final class JsonLoggerLayouts {
         public void print(SimpleLoggingEvent event) {
             event.append("\"timestamp\":\"");
             event.append(System.currentTimeMillis());
-            event.append("\"");
+            event.append('\"');
         }
 
         @Override
@@ -82,7 +83,7 @@ final class JsonLoggerLayouts {
         public void print(SimpleLoggingEvent event) {
             event.append("\"timestamp\":\"");
             event.append(System.currentTimeMillis() - configuration.getInitializeTime());
-            event.append("\"");
+            event.append('\"');
         }
 
         @Override
@@ -103,7 +104,7 @@ final class JsonLoggerLayouts {
         public void print(SimpleLoggingEvent event) {
             event.append("\"implementation\":\"");
             event.append(configuration.getImplementationVersion());
-            event.append("\"");
+            event.append('\"');
         }
 
         @Override
@@ -122,7 +123,7 @@ final class JsonLoggerLayouts {
         public void print(SimpleLoggingEvent event) {
             event.append("\"level\":\"");
             event.append(renderLevel(event.level()));
-            event.append("\"");
+            event.append('\"');
         }
 
         @Override
@@ -174,9 +175,9 @@ final class JsonLoggerLayouts {
                     .filter(Objects::nonNull)
                     .collect(Collectors.joining(","));
 
-            event.append("\"environment\": [");
+            event.append("\"environment\":[");
             event.append(environments);
-            event.append("]");
+            event.append(']');
         }
 
         @Override
@@ -185,26 +186,29 @@ final class JsonLoggerLayouts {
         }
     }
 
-    static final class MDCLayout implements Layout {
+    static final class MDCLayout implements SeparatorLayout {
 
         @Override
         public void print(SimpleLoggingEvent event) {
-            event.append("\"context\": {");
-            boolean isNotFirst = false;
-            for (var entry : MDC.getCopyOfContextMap().entrySet()) {
-                if (isNotFirst) {
-                    event.append(',');
+            final Map<String, String> mdc = MDC.getCopyOfContextMap();
+            if (mdc != null && !mdc.isEmpty()) {
+                event.append("\"context\":{");
+                boolean isNotFirst = false;
+                for (var entry : mdc.entrySet()) {
+                    if (isNotFirst) {
+                        event.append(',');
+                    }
+                    event.append('\"');
+                    event.append(entry.getKey());
+                    event.append('\"');
+                    event.append(':');
+                    event.append('\"');
+                    event.append(entry.getValue());
+                    event.append('\"');
+                    isNotFirst = true;
                 }
-                event.append('\"');
-                event.append(entry.getKey());
-                event.append('\"');
-                event.append(':');
-                event.append('\"');
-                event.append(entry.getValue());
-                event.append('\"');
-                isNotFirst = true;
+                event.append("},");
             }
-            event.append("}");
         }
 
         @Override
@@ -219,7 +223,7 @@ final class JsonLoggerLayouts {
         public void print(SimpleLoggingEvent event) {
             event.append("\"thread\":\"");
             event.append(Thread.currentThread().getName());
-            event.append("\"");
+            event.append('\"');
         }
 
         @Override
@@ -234,7 +238,7 @@ final class JsonLoggerLayouts {
         public void print(SimpleLoggingEvent event) {
             event.append("\"logger\":\"");
             event.append(event.logger());
-            event.append("\"");
+            event.append('\"');
         }
 
         @Override
@@ -249,7 +253,7 @@ final class JsonLoggerLayouts {
         public void print(SimpleLoggingEvent event) {
             event.append("\"message\":\"");
             event.append(event.message());
-            event.append("\"");
+            event.append('\"');
         }
 
         @Override
@@ -262,7 +266,7 @@ final class JsonLoggerLayouts {
 
         @Override
         public void print(SimpleLoggingEvent event) {
-            event.append("{");
+            event.append('{');
         }
 
         @Override
@@ -275,7 +279,7 @@ final class JsonLoggerLayouts {
 
         @Override
         public void print(SimpleLoggingEvent event) {
-            event.append("}");
+            event.append('}');
         }
 
         @Override
@@ -288,7 +292,7 @@ final class JsonLoggerLayouts {
 
         @Override
         public void print(SimpleLoggingEvent event) {
-            event.append(",");
+            event.append(',');
         }
 
         @Override

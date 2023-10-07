@@ -169,7 +169,7 @@ class InvocationTests extends Assertions {
     @Test
     void testMDC() {
         MDC.put("k", "v");
-        assertNull(MDC.get("k"));
+        assertNotNull(MDC.get("k"));
         MDC.remove("k");
         assertNull(MDC.get("k"));
         MDC.clear();

@@ -173,7 +173,7 @@ final class SimpleLoggerLayouts {
 
         @Override
         public void print(SimpleLoggingEvent event) {
-            event.append("[");
+            event.append('[');
             event.append(configuration.getImplementationVersion());
             event.append("] ");
         }

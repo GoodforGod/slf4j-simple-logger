@@ -417,13 +417,16 @@ final class SimpleLoggerConfiguration {
         final List<Layout> jsonLayouts = new ArrayList<>();
         jsonLayouts.add(new JsonLoggerLayouts.JsonStartTokenLayout());
         for (int i = 0; i < loggerLayouts.size(); i++) {
-            jsonLayouts.add(loggerLayouts.get(i));
+            final Layout layout = loggerLayouts.get(i);
+            jsonLayouts.add(layout);
 
             // skip separate token before JsonLoggerLayouts.ThrowableLayout
             if (i + 1 == loggerLayouts.size()) {
                 jsonLayouts.add(new JsonLoggerLayouts.JsonEndTokenLayout());
             } else if (i + 2 < loggerLayouts.size()) {
-                jsonLayouts.add(new JsonLoggerLayouts.JsonSeparatorLayout());
+                if (!(layout instanceof JsonLoggerLayouts.SeparatorLayout)) {
+                    jsonLayouts.add(new JsonLoggerLayouts.JsonSeparatorLayout());
+                }
             }
         }
 
