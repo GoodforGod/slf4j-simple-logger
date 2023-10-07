@@ -10,6 +10,9 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.slf4j.event.Level;
 
 class JsonLoggerLayoutTests extends Assertions {
@@ -290,5 +293,26 @@ class JsonLoggerLayoutTests extends Assertions {
         assertEquals("java.lang.IllegalStateException: Ops", stacktrace.getJSONObject(0).getString("message"));
         assertEquals("io.goodforgod.slf4j.simplelogger.JsonLoggerLayoutTests", stacktrace.getJSONObject(0).getString("clazz"));
         assertTrue(stacktrace.getJSONObject(0).getString("method").startsWith("throwableOutput"));
+    }
+
+    @Test
+    void testMDClogging() throws JSONException {
+        System.setOut(replacement);
+        System.setProperty(SimpleLoggerProperties.SHOW_MDC, "true");
+        System.setProperty(SimpleLoggerProperties.SHOW_DATE_TIME, "false");
+        Logger logger = LoggerFactory.getLogger("testMarker");
+
+        SimpleLogger.init();
+
+        MDC.put("k", "v");
+        logger.info("hello {}", "world");
+        MDC.clear();
+
+        replacement.flush();
+
+        final String res = bout.toString().strip();
+        final JSONObject json = (JSONObject) JSONParser.parseJSON(res);
+
+        assertEquals("v", json.optJSONObject("context").optString("k"), json.toString());
     }
 }

@@ -21,8 +21,8 @@ sourceCompatibility = JavaVersion.VERSION_11
 targetCompatibility = JavaVersion.VERSION_11
 
 dependencies {
-    annotationProcessor "io.goodforgod:graalvm-hint-processor:1.0.0"
-    compileOnly "io.goodforgod:graalvm-hint-annotations:1.0.0"
+    annotationProcessor "io.goodforgod:graalvm-hint-processor:1.1.0"
+    compileOnly "io.goodforgod:graalvm-hint-annotations:1.1.0"
 
     api "org.slf4j:slf4j-api:1.7.36"
 

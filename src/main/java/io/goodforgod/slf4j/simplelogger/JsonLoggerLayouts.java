@@ -5,6 +5,7 @@ import java.util.IdentityHashMap;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.slf4j.MDC;
 
 /**
  * JSON logger layout implementations
@@ -181,6 +182,34 @@ final class JsonLoggerLayouts {
         @Override
         public int order() {
             return SimpleLoggerLayouts.LayoutOrder.ENVIRONMENT.ordinal();
+        }
+    }
+
+    static final class MDCLayout implements Layout {
+
+        @Override
+        public void print(SimpleLoggingEvent event) {
+            event.append("\"context\": {");
+            boolean isNotFirst = false;
+            for (var entry : MDC.getCopyOfContextMap().entrySet()) {
+                if (isNotFirst) {
+                    event.append(',');
+                }
+                event.append('\"');
+                event.append(entry.getKey());
+                event.append('\"');
+                event.append(':');
+                event.append('\"');
+                event.append(entry.getValue());
+                event.append('\"');
+                isNotFirst = true;
+            }
+            event.append("}");
+        }
+
+        @Override
+        public int order() {
+            return SimpleLoggerLayouts.LayoutOrder.MDC.ordinal();
         }
     }
 

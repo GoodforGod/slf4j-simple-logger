@@ -40,6 +40,7 @@ public final class SimpleLoggerProperties {
     public static final String SHOW_LOG_NAME_LENGTH = PREFIX + "logNameLength";
     public static final String SHOW_THREAD_NAME = PREFIX + "showThreadName";
     public static final String SHOW_IMPLEMENTATION_VERSION = PREFIX + "showImplementationVersion";
+    public static final String SHOW_MDC = PREFIX + "showMDC";
 
     public static final String ENVIRONMENTS = PREFIX + "environments";
     public static final String ENVIRONMENT_SHOW_NULLABLE = PREFIX + "environmentShowNullable";

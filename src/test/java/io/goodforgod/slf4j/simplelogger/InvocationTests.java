@@ -174,4 +174,23 @@ class InvocationTests extends Assertions {
         assertNull(MDC.get("k"));
         MDC.clear();
     }
+
+    @Test
+    void testMDClogging() {
+        System.setOut(replacement);
+        System.setProperty(SimpleLoggerProperties.SHOW_MDC, "true");
+        System.setProperty(SimpleLoggerProperties.SHOW_DATE_TIME, "false");
+        Logger logger = LoggerFactory.getLogger("testMarker");
+
+        SimpleLogger.init();
+
+        MDC.put("k", "v");
+        logger.info("hello {}", "world");
+        MDC.clear();
+
+        replacement.flush();
+
+        final String res = bout.toString().strip();
+        assertTrue(res.startsWith("[INFO] [k=v] testMarker - hello world"), res);
+    }
 }
